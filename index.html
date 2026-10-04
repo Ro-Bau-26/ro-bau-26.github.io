@@ -576,6 +576,7 @@
         <div class="topbar-actions"><div id="household-switcher-slot"></div><div id="sync-chip-slot"></div></div>
       </div>
 
+      <div id="persist-alert-slot"></div>
       <div id="sync-banner-slot"></div>
 
       <section class="view" id="view-dashboard"></section>
@@ -711,6 +712,7 @@ const state = {
   deviceName: null,          // frei vergebener Name dieses Geräts (z. B. "Mac Büro", "iPad Rob") – per-device, nicht Teil der Sicherung
   lastSyncCheckAt: null,     // ISO: letzter Abgleich/Sicherung/Laden auf diesem Gerät – per-device, nicht Teil der Sicherung
   syncSnoozeUntil: null,     // ISO: Abgleich-Erinnerung bis dahin ausblenden – per-device
+  persistError: null,        // Fehlertext, falls das lokale Speichern fehlschlägt (nicht Teil der Sicherung)
   lastImportInfo: null       // {at, fromDevice, fromExportedAt} der zuletzt auf diesem Gerät geladenen Sicherung – per-device, nicht Teil der Sicherung
 };
 
@@ -722,44 +724,161 @@ function newId(){
   return "id_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2,9);
 }
 
+/* ---- Speicherschicht: IndexedDB (große Quote, robust), Rückfall auf localStorage ----
+   Zwei Datensätze im Store "kv": "data" (Verträge inkl. Anhänge, Mitglieder, Haushalte, Zeitstempel,
+   Gerätename …) und "bg" (Hintergrundbild, getrennt, damit es nicht bei jeder Änderung neu geschrieben wird).
+   persist() bleibt synchron aufrufbar (gebündelt, ~60 ms verzögert); Fehler werden NICHT mehr
+   verschluckt, sondern als dauerhafte Warnung angezeigt. */
+
+const IDB_NAME = "vertragsordner_db";
+const IDB_STORE = "kv";
+const storage = { mode: "none", db: null, timer: null, chain: Promise.resolve(), bgDirty: false };
+
+function idbOpen(){
+  return new Promise(function(resolve, reject){
+    if (!window.indexedDB){ reject(new Error("IndexedDB nicht verfügbar")); return; }
+    let req;
+    try{ req = indexedDB.open(IDB_NAME, 1); }catch(e){ reject(e); return; }
+    req.onupgradeneeded = function(){ if (!req.result.objectStoreNames.contains(IDB_STORE)) req.result.createObjectStore(IDB_STORE); };
+    req.onsuccess = function(){ resolve(req.result); };
+    req.onerror = function(){ reject(req.error || new Error("IndexedDB konnte nicht geöffnet werden")); };
+    req.onblocked = function(){ reject(new Error("IndexedDB blockiert")); };
+  });
+}
+function idbGet(db, key){
+  return new Promise(function(resolve, reject){
+    const r = db.transaction(IDB_STORE, "readonly").objectStore(IDB_STORE).get(key);
+    r.onsuccess = function(){ resolve(r.result); };
+    r.onerror = function(){ reject(r.error); };
+  });
+}
+function idbPutMany(db, entries){
+  return new Promise(function(resolve, reject){
+    const tx = db.transaction(IDB_STORE, "readwrite");
+    const os = tx.objectStore(IDB_STORE);
+    entries.forEach(function(e){ os.put(e.value, e.key); });
+    tx.oncomplete = function(){ resolve(); };
+    tx.onerror = function(){ reject(tx.error || new Error("Schreiben fehlgeschlagen")); };
+    tx.onabort = function(){ reject(tx.error || new Error("Schreiben abgebrochen (vermutlich Speicher voll)")); };
+  });
+}
+
+function dataSnapshot(){
+  return {
+    contracts: state.contracts,
+    members: state.members,
+    households: state.households,
+    dirty: state.dirty,
+    lastSavedAt: state.lastSavedAt,
+    lastLocalChangeAt: state.lastLocalChangeAt,
+    deviceName: state.deviceName,
+    lastImportInfo: state.lastImportInfo,
+    lastSyncCheckAt: state.lastSyncCheckAt,
+    syncSnoozeUntil: state.syncSnoozeUntil
+  };
+}
+function applyStoredData(data, bg){
+  state.contracts = Array.isArray(data.contracts) ? data.contracts : [];
+  state.members = Array.isArray(data.members) ? data.members : [];
+  state.households = Array.isArray(data.households) ? data.households : [];
+  state.dirty = !!data.dirty;
+  state.lastSavedAt = data.lastSavedAt || null;
+  state.lastLocalChangeAt = data.lastLocalChangeAt || null;
+  state.backgroundImage = bg || data.backgroundImage || null;
+  state.deviceName = data.deviceName || null;
+  state.lastImportInfo = data.lastImportInfo || null;
+  state.lastSyncCheckAt = data.lastSyncCheckAt || null;
+  state.syncSnoozeUntil = data.syncSnoozeUntil || null;
+}
+
 function persist(){
-  try{
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({
-      contracts: state.contracts,
-      members: state.members,
-      households: state.households,
-      dirty: state.dirty,
-      lastSavedAt: state.lastSavedAt,
-      lastLocalChangeAt: state.lastLocalChangeAt,
-      backgroundImage: state.backgroundImage,
-      deviceName: state.deviceName,
-      lastImportInfo: state.lastImportInfo,
-      lastSyncCheckAt: state.lastSyncCheckAt,
-      syncSnoozeUntil: state.syncSnoozeUntil
-    }));
-  }catch(e){
-    /* localStorage kann z.B. unter file:// in manchen Browsern fehlen oder voll sein –
-       die manuelle Sicherung (Export/Import) bleibt in dem Fall die maßgebliche Ablage. */
+  if (storage.timer) return;
+  storage.timer = setTimeout(function(){ storage.timer = null; flushPersist(); }, 25);
+}
+function persistBackground(){ storage.bgDirty = true; persist(); }
+
+function setPersistError(msg){
+  const changed = state.persistError !== msg;
+  state.persistError = msg;
+  if (changed){
+    renderPersistAlert();
+    if (msg) toast("Speichern auf diesem Gerät fehlgeschlagen – bitte jetzt eine Sicherung speichern.", "error");
   }
 }
 
-function loadFromStorage(){
+function flushPersist(){
+  if (storage.timer){ clearTimeout(storage.timer); storage.timer = null; }
+  if (storage.mode === "none") return storage.chain;
+  const snap = dataSnapshot();
+  const withBg = storage.bgDirty;
+  const bg = state.backgroundImage;
+  storage.bgDirty = false;
+  storage.chain = storage.chain.then(function(){
+    if (storage.mode === "idb"){
+      const entries = [{ key:"data", value:snap }];
+      if (withBg) entries.push({ key:"bg", value:bg || null });
+      return idbPutMany(storage.db, entries);
+    }
+    /* Rückfall: localStorage (inkl. Hintergrundbild in einem Datensatz) */
+    snap.backgroundImage = bg;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(snap));
+  }).then(function(){
+    setPersistError(null);
+  }).catch(function(e){
+    if (withBg) storage.bgDirty = true;
+    setPersistError((e && (e.name || e.message)) ? String(e.name || e.message) : "unbekannter Fehler");
+  });
+  return storage.chain;
+}
+
+function renderPersistAlert(){
+  const slot = document.getElementById("persist-alert-slot");
+  if (!slot) return;
+  if (!state.persistError){ slot.innerHTML = ""; return; }
+  slot.innerHTML =
+    '<div class="section card" role="alert" style="border-color:var(--status-critical);"><div class="card-pad" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">'+
+      icon("warn")+
+      '<div style="flex:1;min-width:200px;font-size:0.88rem;color:var(--text-secondary);"><strong style="color:var(--text-primary);">Speichern auf diesem Gerät fehlgeschlagen.</strong> Ihre letzten Änderungen sind möglicherweise nicht dauerhaft gespeichert (Speicher voll oder vom Browser gesperrt). Bitte jetzt eine Sicherung speichern.</div>'+
+      '<div><button class="btn btn-primary" id="persist-alert-save" type="button">Sicherung jetzt speichern</button></div>'+
+    '</div></div>';
+  slot.querySelector("#persist-alert-save").addEventListener("click", exportBackup);
+}
+
+/* Beim Verlassen/Ausblenden der Seite sofort schreiben, damit nichts im 60-ms-Puffer hängen bleibt */
+window.addEventListener("pagehide", function(){ flushPersist(); });
+document.addEventListener("visibilitychange", function(){ if (document.visibilityState === "hidden") flushPersist(); });
+
+/* Lädt den gespeicherten Stand; übernimmt einmalig Daten aus der früheren localStorage-Version. */
+async function initStorage(){
   try{
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return;
-    const data = JSON.parse(raw);
-    state.contracts = Array.isArray(data.contracts) ? data.contracts : [];
-    state.members = Array.isArray(data.members) ? data.members : [];
-    state.households = Array.isArray(data.households) ? data.households : [];
-    state.dirty = !!data.dirty;
-    state.lastSavedAt = data.lastSavedAt || null;
-    state.lastLocalChangeAt = data.lastLocalChangeAt || null;
-    state.backgroundImage = data.backgroundImage || null;
-    state.deviceName = data.deviceName || null;
-    state.lastImportInfo = data.lastImportInfo || null;
-    state.lastSyncCheckAt = data.lastSyncCheckAt || null;
-    state.syncSnoozeUntil = data.syncSnoozeUntil || null;
-  }catch(e){ /* korrupter oder fehlender Cache wird ignoriert */ }
+    storage.db = await idbOpen();
+    storage.mode = "idb";
+  }catch(e){
+    storage.mode = (function(){ try{ localStorage.getItem(STORAGE_KEY); return "ls"; }catch(_){ return "none"; } })();
+    if (storage.mode === "none") setPersistError("Kein lokaler Speicher verfügbar");
+  }
+
+  if (storage.mode === "idb"){
+    let data = null, bg = null;
+    try{ data = await idbGet(storage.db, "data"); bg = await idbGet(storage.db, "bg"); }catch(e){ /* wie leer behandeln */ }
+    if (data){
+      applyStoredData(data, bg);
+    } else {
+      /* Erststart mit IndexedDB: ggf. Altbestand aus localStorage übernehmen */
+      let legacy = null;
+      try{ const raw = localStorage.getItem(STORAGE_KEY); if (raw) legacy = JSON.parse(raw); }catch(e){}
+      if (legacy){
+        applyStoredData(legacy, null);
+        storage.bgDirty = true;
+        await flushPersist();
+        if (!state.persistError){ try{ localStorage.removeItem(STORAGE_KEY); }catch(e){} }
+      }
+    }
+    /* Browser bitten, den Speicher dieser Seite nicht ohne Not zu räumen (best effort) */
+    try{ if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); }catch(e){}
+  } else if (storage.mode === "ls"){
+    try{ const raw = localStorage.getItem(STORAGE_KEY); if (raw) applyStoredData(JSON.parse(raw), null); }catch(e){}
+  }
 }
 
 /* Haushalte: beim allerersten Start bzw. beim Laden einer älteren Sicherung ohne
@@ -795,7 +914,7 @@ function applyBackgroundImage(){
 
 function setBackgroundImage(dataUrl){
   state.backgroundImage = dataUrl;
-  persist();
+  persistBackground();
   applyBackgroundImage();
   render();
 }
@@ -962,11 +1081,12 @@ function compareBackupFile(file){
 
 /* ======================= Boot ======================= */
 
-function boot(){
+async function boot(){
   renderNav();
+  document.getElementById("view-dashboard").innerHTML = '<div class="member-sub" style="padding:24px;">Wird geladen …</div>';
   const cmpInput = document.getElementById("compare-file-input");
   if (cmpInput) cmpInput.addEventListener("change", function(){ const f = cmpInput.files[0]; if (f) compareBackupFile(f); cmpInput.value = ""; });
-  loadFromStorage();
+  await initStorage();
   ensureHouseholdsMigrated();
   applyBackgroundImage();
   state.contractsLoaded = true;
@@ -1196,6 +1316,8 @@ function render(){
     } else { chipSlot.innerHTML = ""; }
   }
 
+  renderPersistAlert();
+
   const bannerSlot = document.getElementById("sync-banner-slot");
   if (bannerSlot){
     const now = Date.now();
@@ -1239,6 +1361,14 @@ function formatDateTime(iso){
 
 /* ======================= Sicherung ======================= */
 
+function attachmentStats(){
+  let n = 0, bytes = 0;
+  state.contracts.forEach(function(c){ (c.attachments||[]).forEach(function(a){ n++; bytes += (a.dataUrl||"").length * 0.75; }); });
+  if (!n) return "keine";
+  const mb = bytes/1048576;
+  return n+" Datei"+(n===1?"":"en")+", ca. "+(mb<0.1 ? "<0,1" : mb.toFixed(1).replace(".",","))+" MB (so groß wird auch die Sicherungsdatei)";
+}
+
 function renderBackup(){
   const el = document.getElementById("view-backup");
   el.innerHTML =
@@ -1268,6 +1398,7 @@ function renderBackup(){
             (state.lastImportInfo.fromDevice ? ' von „'+escapeHtml(state.lastImportInfo.fromDevice)+'“' : ' (Gerät nicht benannt)')+
             ', eingespielt am '+escapeHtml(formatDateTime(state.lastImportInfo.at))+'</div>'
           : '')+
+        '<div class="member-sub">Gespeicherte Anhänge auf diesem Gerät: '+escapeHtml(attachmentStats())+'</div>'+
         (state.dirty
           ? '<span class="badge badge-warning" style="width:fit-content;margin-top:4px;">'+icon("warn")+' Ungesicherte Änderungen</span>'
           : '<span class="badge badge-good" style="width:fit-content;margin-top:4px;">'+icon("check")+' Alles gesichert</span>')+
@@ -1276,6 +1407,7 @@ function renderBackup(){
         '<button class="btn btn-primary" id="backup-save-btn" type="button">'+icon("upload")+' Sicherung jetzt speichern</button>'+
         '<button class="btn btn-ghost" id="backup-compare-btn" type="button">'+icon("refresh")+' Mit Sicherungsordner abgleichen</button>'+
         '<button class="btn btn-ghost" id="backup-load-btn" type="button">'+icon("folder")+' Sicherung laden …</button>'+
+        '<button class="btn btn-ghost" id="backup-csv-btn" type="button" title="Alle Verträge als Tabelle (CSV) exportieren – ohne Bankkonten und Anhänge">'+icon("list")+' Verträge als CSV exportieren</button>'+
         '<input type="file" id="backup-file-input" accept="application/json,.json" class="visually-hidden">'+
       '</div>'+
     '</div></div>'+
@@ -1303,6 +1435,7 @@ function renderBackup(){
 
   document.getElementById("backup-save-btn").addEventListener("click", exportBackup);
   document.getElementById("backup-compare-btn").addEventListener("click", startCompare);
+  document.getElementById("backup-csv-btn").addEventListener("click", function(){ exportContractsCSV(state.contracts.slice().sort(function(a,b){ return (a.name||"").localeCompare(b.name||"","de"); })); });
   const fileInput = document.getElementById("backup-file-input");
   document.getElementById("backup-load-btn").addEventListener("click", function(){ fileInput.click(); });
   fileInput.addEventListener("change", function(){
@@ -1337,7 +1470,7 @@ const HELP_TOPICS = [
 
   { title:"Verträge anlegen & Dokumente anhängen", body:
     '<p>Über „Neuer Vertrag“ (unten rechts bzw. in der Seitenleiste) öffnet sich das Erfassungsformular. Pflichtfeld ist nur die Bezeichnung – alle anderen Angaben wie Kategorie, Anbieter, Vertragsnummer, Betrag, Zahlungsrhythmus, Laufzeiten und Notizen sind optional und können jederzeit nachgetragen werden.</p>'+
-    '<p>Unter „Dokument“ lassen sich Fotos oder PDF-Dateien anhängen – entweder direkt fotografieren oder eine vorhandene Datei auswählen. Ein Klick auf ein angehängtes Dokument in der Liste öffnet es in einem neuen Tab, egal ob Foto oder PDF.</p>' },
+    '<p>Unter „Dokument“ lassen sich Fotos oder PDF-Dateien anhängen – über die Schaltfläche „Foto / Scan / Datei hinzufügen“. Auf iPhone und iPad bietet das System dann u. a. „Dokumente scannen“ (Dokumentenkamera: Seiten erkennen, zuschneiden, mehrere Seiten zu einem PDF zusammenfassen), „Foto aufnehmen“, „Fotomediathek“ und „Datei auswählen“ an – so gelangt ein Scan ohne Umweg direkt an den Vertrag. Auf dem Mac erscheint stattdessen die normale Dateiauswahl. Ein Klick auf ein angehängtes Dokument in der Liste öffnet es in einem neuen Tab, egal ob Foto oder PDF.</p>' },
 
   { title:"Zahler:in & Bankkonten", body:
     '<p>Jedem Vertrag kann eine Person aus dem Haushalt als Zahler:in zugeordnet werden. Sobald eine Person ausgewählt ist, erscheint darunter das Feld „Zahlungsquelle“ mit den für diese Person hinterlegten Bankkonten – sind noch keine vorhanden, lässt sich direkt aus dem Vertragsformular heraus eines anlegen.</p>'+
@@ -1388,6 +1521,17 @@ const HELP_TOPICS = [
     '<p>Wichtig: Auf der Internetseite liegt nur die App selbst, <strong>keine Ihrer Daten</strong>. Ihre Verträge werden weiterhin ausschließlich im Speicher des jeweiligen Geräts gehalten und über die Sicherungsdatei zwischen Ihren Geräten abgeglichen (siehe „Sicherung &amp; iCloud-Abgleich“). Eine neue App-Version erscheint erst, wenn die Datei auf der Internetseite ersetzt wurde.</p>'+
     '<p>Eine lokale Datei direkt über „Öffnen in Safari“ oder „Zum Home-Bildschirm“ zu starten, ist dagegen unzuverlässig, weil iOS das für lokale Dateien nur eingeschränkt zulässt.</p>' },
 
+  { title:"Tabelle exportieren (CSV für Excel/Numbers)", body:
+    '<p>In der Vertragsliste exportiert die Schaltfläche „CSV“ die aktuell angezeigten (gefilterten) Verträge als Tabelle, im Bereich „Sicherung“ gibt es „Verträge als CSV exportieren“ für alle Verträge. Die Datei <code>vertragsordner-vertraege-JJJJ-MM-TT.csv</code> lässt sich in Excel, Numbers oder Google Tabellen öffnen – z. B. für eigene Auswertungen oder zum Weitergeben an Steuerberatung bzw. Versicherungsmakler.</p>'+
+    '<p>Enthalten sind Bezeichnung, Haushalt(e), Kategorie, Anbieter, Vertragsnummer, Status, Zahler:in, Betrag, Rhythmus, Jahreskosten, monatlicher Durchschnitt, Vertragsbeginn und -ende, Kündigungsfrist, nächste Kündigungsfrist, nächster Termin, automatische Verlängerung und Notizen. <strong>Nicht enthalten</strong> sind Bankkonten/IBANs, Zugangsdaten und Anhänge.</p>'+
+    '<p>Es gibt bewusst nur einen Export und keinen Import: Die Tabelle ist ein Auswertungs-Werkzeug. Die Sicherungsdatei (JSON) bleibt der einzige Weg, Ihre vollständigen Daten zu sichern und auf ein anderes Gerät zu übertragen.</p>'+
+    '<p>Technisch: Trennzeichen Semikolon, Zeichensatz UTF-8 (Umlaute stimmen), Beträge mit Dezimalkomma, Datum als TT.MM.JJJJ. Falls Excel die Spalten nicht trennt, die Datei per „Daten → Aus Text/CSV“ öffnen.</p>' },
+
+  { title:"Speicher auf dem Gerät & Anhänge", body:
+    '<p>Ihre Daten – inklusive gescannter Dokumente – liegen im lokalen Speicher des Browsers (IndexedDB). Der bietet deutlich mehr Platz als der frühere Speicher und kommt auch mit vielen PDF-Scans zurecht. Beim ersten Start nach dem Update werden vorhandene Daten automatisch übernommen. Im Bereich „Sicherung“ sehen Sie, wie viele Anhänge gespeichert sind und wie groß sie zusammen etwa sind – ungefähr so groß wird auch die Sicherungsdatei.</p>'+
+    '<p><strong>Warnung bei Speicherproblemen:</strong> Kann die App einmal nicht speichern (z. B. Speicher voll oder Browser gesperrt), erscheint oben ein roter Hinweis mit der Schaltfläche „Sicherung jetzt speichern“. Bitte dann sofort eine Sicherung anlegen.</p>'+
+    '<p><strong>Wichtig:</strong> Der Browser-Speicher ist kein Archiv. Safari kann die Daten einer Webseite löschen, wenn sie sehr lange nicht geöffnet wurde, und beim Löschen von Websitedaten gehen sie ebenfalls verloren. Die regelmäßige Sicherungsdatei im iCloud-Ordner bleibt deshalb Ihre eigentliche Absicherung.</p>' },
+
   { title:"Drucken", body:
     '<p>In der gefilterten Vertragsliste erzeugt die Schaltfläche „Drucken“ oberhalb der Liste eine saubere, druckfreundliche Übersichtstabelle genau der aktuell angezeigten Verträge – inklusive der gewählten Filter.</p>'+
     '<p>Im Bearbeitungsfenster eines einzelnen Vertrags druckt das Drucker-Symbol neben dem Schließen-Button ein übersichtliches Einzelblatt mit allen Angaben zu diesem Vertrag, z. B. für Unterlagen oder zur Weitergabe.</p>' },
@@ -1406,6 +1550,9 @@ const HELP_TOPICS = [
       '<li><strong>Systemschrift (SF Pro)</strong> statt nachgeladener Schriften, auch bei Überschriften und beim Namen „Vertragsordner“.</li>'+
       '<li><strong>Hochformat:</strong> die untere Menüleiste bleibt beim Scrollen (z. B. in der Hilfe) fest am unteren Rand; die Einträge teilen sich die Breite gleichmäßig.</li>'+
       '<li><strong>Korrektur:</strong> „Kündigen bis“ wurde in deutscher Zeitzone einen Tag zu früh angezeigt – behoben.</li>'+
+      '<li><strong>Scannen direkt am Vertrag:</strong> „Foto / Scan / Datei hinzufügen“ bietet auf iPhone/iPad jetzt auch „Dokumente scannen“, Fotomediathek und Dateien an.</li>'+
+      '<li><strong>CSV-Export:</strong> Vertragsliste als Tabelle für Excel/Numbers – ohne Bankkonten und Anhänge (nur Export, kein Import).</li>'+
+      '<li><strong>Robusterer Speicher:</strong> Umstellung auf IndexedDB mit deutlich mehr Platz für Anhänge, automatische Übernahme der bisherigen Daten und eine Warnung, falls das Speichern einmal fehlschlägt.</li>'+
       '<li><strong>Bereitstellung:</strong> die App kann als Internetseite (z. B. GitHub Pages) genutzt und auf dem iPad zum Home-Bildschirm hinzugefügt werden; es liegen dort keine Daten.</li>'+
     '</ul>' },
 
@@ -1821,6 +1968,7 @@ function renderContracts(){
         state.members.map(function(m){ return '<option value="'+m.id+'"'+(state.filterPayer===m.id?' selected':'')+'>'+escapeHtml(m.name)+'</option>'; }).join("")+
       '</select>'+
       '<button class="btn btn-ghost" id="print-contracts-btn" type="button" title="Gefilterte Liste drucken">'+icon("print")+' Drucken</button>'+
+      '<button class="btn btn-ghost" id="csv-contracts-btn" type="button" title="Gefilterte Liste als CSV-Tabelle (Excel, Numbers) exportieren">'+icon("list")+' CSV</button>'+
     '</div>'+
     (activePayer
       ? '<div class="badge badge-neutral" id="payer-filter-chip" style="width:fit-content;margin:-4px 0 8px;cursor:pointer;">'+
@@ -1848,6 +1996,7 @@ function renderContracts(){
   const providerChip = document.getElementById("provider-filter-chip");
   if (providerChip) providerChip.addEventListener("click", function(){ state.filterProvider = ""; renderContracts(); });
   document.getElementById("print-contracts-btn").addEventListener("click", function(){ printContractsList(list); });
+  document.getElementById("csv-contracts-btn").addEventListener("click", function(){ exportContractsCSV(list); });
   el.querySelectorAll("[data-open-contract]").forEach(function(card){
     card.addEventListener("click", function(){ openContractModal(card.getAttribute("data-open-contract")); });
   });
@@ -1898,6 +2047,70 @@ function printDoc(title, bodyHTML){
     '<h1 class="print-title">'+escapeHtml(title)+'</h1>'+
     bodyHTML;
   window.print();
+}
+
+/* ======================= CSV-Export (nur Export, kein Import) ======================= */
+
+function csvText(v){
+  /* Text-Zelle: Formel-Präfixe entschärfen (Excel-/Numbers-Injection), bei Bedarf in Anführungszeichen */
+  let t = String(v==null ? "" : v);
+  if (/^[=+\-@\t\r]/.test(t)) t = "'" + t;
+  return /[;"\r\n]/.test(t) ? '"' + t.replace(/"/g, '""') + '"' : t;
+}
+function csvNum(n){ return (Number(n)||0).toFixed(2).replace(".", ","); }
+function csvDate(iso){
+  if (!iso) return "";
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  return m ? m[3]+"."+m[2]+"."+m[1] : "";
+}
+function buildContractsCSV(list){
+  const head = ["Bezeichnung","Haushalt(e)","Kategorie","Anbieter","Vertragsnummer","Status","Zahler:in","Betrag","Rhythmus","Jahreskosten","Monatlich Ø","Vertragsbeginn","Vertragsende","Kündigungsfrist (Monate)","Nächste Kündigungsfrist","Nächster Termin","Automatische Verlängerung","Verlängerung (Monate)","Notizen"];
+  const lines = [head.map(csvText).join(";")];
+  list.forEach(function(c){
+    const cat = CATEGORY_BY_ID[c.category];
+    const f = FREQ_BY_ID[c.frequency];
+    const payer = memberById(c.payerId);
+    const cb = cancelByDate(c);
+    const hasAmount = c.amount!=="" && c.amount!=null;
+    lines.push([
+      csvText(c.name),
+      csvText(householdsOfContract(c).map(function(h){ return h.name; }).join(", ")),
+      csvText(cat ? cat.label : (c.category||"")),
+      csvText(c.provider),
+      csvText(c.contractNumber),
+      csvText(STATUS_BY_ID[c.status] ? STATUS_BY_ID[c.status].label : (c.status||"")),
+      csvText(payer ? payer.name : ""),
+      hasAmount ? csvNum(c.amount) : "",
+      csvText(f ? f.label : ""),
+      hasAmount ? csvNum(annualCost(c)) : "",
+      hasAmount ? csvNum(monthlyEquivalent(c)) : "",
+      csvDate(c.startDate),
+      csvDate(c.endDate),
+      (c.noticePeriodMonths!=null && c.noticePeriodMonths!=="") ? String(c.noticePeriodMonths) : "",
+      cb ? csvDate(dateToISO(cb)) : "",
+      csvDate(c.nextDueDate),
+      c.autoRenew ? "Ja" : "Nein",
+      (c.autoRenew && c.renewalTermMonths!=null && c.renewalTermMonths!=="") ? String(c.renewalTermMonths) : "",
+      csvText(c.notes)
+    ].join(";"));
+  });
+  /* UTF-8 mit BOM, damit Excel/Numbers Umlaute korrekt lesen; Semikolon als Trenner (deutsche Einstellung) */
+  return "﻿" + lines.join("\r\n") + "\r\n";
+}
+function exportContractsCSV(list){
+  if (!list.length){ toast("Keine Verträge zum Exportieren.", "error"); return; }
+  let blob;
+  try{ blob = new Blob([buildContractsCSV(list)], { type:"text/csv;charset=utf-8" }); }
+  catch(e){ toast("CSV konnte nicht erstellt werden.", "error"); return; }
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "vertragsordner-vertraege-" + todayISO() + ".csv";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+  toast("CSV-Datei wird heruntergeladen ("+list.length+" Verträge).");
 }
 
 function printContractsList(list){
@@ -2396,8 +2609,9 @@ function contractModalHTML(c, isNew){
         '<div class="doc-zone">'+
           '<div class="attachment-list" id="attachment-list"></div>'+
           '<div class="doc-actions">'+
-            '<label class="btn btn-ghost" for="file-input">'+icon("camera")+' Foto/PDF hinzufügen</label><input type="file" id="file-input" accept="image/*,application/pdf" capture="environment" class="visually-hidden">'+
+            '<label class="btn btn-ghost" for="file-input">'+icon("camera")+' Foto / Scan / Datei hinzufügen</label><input type="file" id="file-input" accept="image/*,application/pdf" class="visually-hidden">'+
           '</div>'+
+          '<span class="hint">Auf iPhone/iPad: In der Auswahl „Dokumente scannen“ wählen, um direkt zu scannen – oder „Foto aufnehmen“, „Fotomediathek“ bzw. „Datei auswählen“.</span>'+
           '<div class="ai-status" id="doc-status" style="display:none;"></div>'+
         '</div>'+
       '</div>'+
@@ -2861,7 +3075,7 @@ function saveContract(overlay, source, isNew){
 
 /* ======================= Go ======================= */
 
-boot();
+boot().catch(function(e){ console.error(e); toast("Start fehlgeschlagen: "+(e && e.message || e), "error"); });
 
 })();
 </script>
