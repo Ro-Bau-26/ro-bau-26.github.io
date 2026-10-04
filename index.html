@@ -681,7 +681,9 @@ const state = {
   dirty: false,             // unsaved changes since the last exported backup
   lastSavedAt: null,        // ISO timestamp of the last successful export
   lastLocalChangeAt: null,  // ISO timestamp of the last local change
-  backgroundImage: null      // data URL of the chosen background photo, or null (per-device, not part of the backup)
+  backgroundImage: null,     // data URL of the chosen background photo, or null (per-device, not part of the backup)
+  deviceName: null,          // frei vergebener Name dieses Geräts (z. B. "Mac Büro", "iPad Rob") – per-device, nicht Teil der Sicherung
+  lastImportInfo: null       // {at, fromDevice, fromExportedAt} der zuletzt auf diesem Gerät geladenen Sicherung – per-device, nicht Teil der Sicherung
 };
 
 /* ======================= Local storage & backup ======================= */
@@ -701,7 +703,9 @@ function persist(){
       dirty: state.dirty,
       lastSavedAt: state.lastSavedAt,
       lastLocalChangeAt: state.lastLocalChangeAt,
-      backgroundImage: state.backgroundImage
+      backgroundImage: state.backgroundImage,
+      deviceName: state.deviceName,
+      lastImportInfo: state.lastImportInfo
     }));
   }catch(e){
     /* localStorage kann z.B. unter file:// in manchen Browsern fehlen oder voll sein –
@@ -721,6 +725,8 @@ function loadFromStorage(){
     state.lastSavedAt = data.lastSavedAt || null;
     state.lastLocalChangeAt = data.lastLocalChangeAt || null;
     state.backgroundImage = data.backgroundImage || null;
+    state.deviceName = data.deviceName || null;
+    state.lastImportInfo = data.lastImportInfo || null;
   }catch(e){ /* korrupter oder fehlender Cache wird ignoriert */ }
 }
 
@@ -771,8 +777,9 @@ function markDirty(){
 function exportBackup(){
   const payload = {
     app: "vertragsordner",
-    version: 2,
+    version: 3,
     exportedAt: new Date().toISOString(),
+    exportedByDevice: state.deviceName || null,
     members: state.members,
     contracts: state.contracts,
     households: state.households
@@ -810,9 +817,14 @@ function importBackupFile(file){
       toast("Diese Datei sieht nicht wie eine Vertragsordner-Sicherung aus.","error");
       return;
     }
+    const fromDevice = data.exportedByDevice || null;
+    const fromWhen = data.exportedAt ? formatDateTime(data.exportedAt) : null;
+    const provenanceHint = (fromDevice || fromWhen)
+      ? " Diese Datei wurde" + (fromWhen ? " am " + fromWhen : "") + (fromDevice ? " auf „" + fromDevice + "“" : " auf einem nicht benannten Gerät") + " gesichert."
+      : " Für diese Datei ist kein Gerät/Zeitpunkt hinterlegt (ältere Sicherung).";
     confirmDialog(
       "Sicherung laden?",
-      "Der aktuell angezeigte Stand wird durch " + data.contracts.length + " Vertrag/Verträge und " + data.members.length + " Person(en) aus der Datei ersetzt.",
+      "Der aktuell angezeigte Stand wird durch " + data.contracts.length + " Vertrag/Verträge und " + data.members.length + " Person(en) aus der Datei ersetzt." + provenanceHint,
       function(){
         state.contracts = data.contracts;
         state.members = data.members;
@@ -822,6 +834,7 @@ function importBackupFile(file){
         state.dirty = false;
         state.lastSavedAt = data.exportedAt || new Date().toISOString();
         state.lastLocalChangeAt = state.lastSavedAt;
+        state.lastImportInfo = { at: new Date().toISOString(), fromDevice: fromDevice, fromExportedAt: data.exportedAt || null };
         persist();
         render();
         toast("Sicherung geladen.");
@@ -1088,9 +1101,19 @@ function renderBackup(){
 
     '<div class="section card"><div class="card-pad">'+
       '<div class="section-head"><h2>Sicherung &amp; iCloud-Abgleich</h2></div>'+
+      '<div class="field" style="max-width:360px;margin-bottom:16px;">'+
+        '<label for="device-name-input">Name dieses Geräts</label>'+
+        '<input type="text" id="device-name-input" placeholder="z. B. Mac Büro, iPad Rob" value="'+escapeHtml(state.deviceName||"")+'">'+
+        '<span class="hint">Wird in jede Sicherungsdatei geschrieben, damit beim Laden auf einem anderen Gerät erkennbar ist, von wann und von welchem Gerät sie stammt.</span>'+
+      '</div>'+
       '<div style="display:flex;flex-direction:column;gap:4px;margin-bottom:16px;">'+
-        '<div class="member-sub">Letzte Sicherung: '+escapeHtml(formatDateTime(state.lastSavedAt))+(state.lastSavedAt?"":" – noch keine")+'</div>'+
+        '<div class="member-sub">Letzte Sicherung von diesem Gerät: '+escapeHtml(formatDateTime(state.lastSavedAt))+(state.lastSavedAt?"":" – noch keine")+'</div>'+
         '<div class="member-sub">Letzte Änderung auf diesem Gerät: '+escapeHtml(formatDateTime(state.lastLocalChangeAt))+'</div>'+
+        (state.lastImportInfo
+          ? '<div class="member-sub">Zuletzt geladene Sicherung: '+escapeHtml(formatDateTime(state.lastImportInfo.fromExportedAt))+
+            (state.lastImportInfo.fromDevice ? ' von „'+escapeHtml(state.lastImportInfo.fromDevice)+'“' : ' (Gerät nicht benannt)')+
+            ', eingespielt am '+escapeHtml(formatDateTime(state.lastImportInfo.at))+'</div>'
+          : '')+
         (state.dirty
           ? '<span class="badge badge-warning" style="width:fit-content;margin-top:4px;">'+icon("warn")+' Ungesicherte Änderungen</span>'
           : '<span class="badge badge-good" style="width:fit-content;margin-top:4px;">'+icon("check")+' Alles gesichert</span>')+
@@ -1114,6 +1137,13 @@ function renderBackup(){
         '<p style="margin:0;">Tipp: Browser-Einstellung „Vor jedem Download nach Speicherort fragen“ aktivieren – dann lässt sich beim Sichern jedes Mal derselbe iCloud-Ordner wählen und die Datei sauber überschreiben, statt dass sich mehrere Dateien „(1)“, „(2)“ … ansammeln.</p>'+
       '</div>'+
     '</div></div>';
+
+  const deviceNameInput = document.getElementById("device-name-input");
+  deviceNameInput.addEventListener("change", function(){
+    state.deviceName = deviceNameInput.value.trim() || null;
+    persist();
+    render();
+  });
 
   document.getElementById("backup-save-btn").addEventListener("click", exportBackup);
   const fileInput = document.getElementById("backup-file-input");
@@ -1180,7 +1210,8 @@ const HELP_TOPICS = [
     '<p><strong>Vertrag einem anderen Haushalt zuordnen:</strong> Ein eigener „Verschieben“-Button ist dafür nicht nötig – öffnen Sie den Vertrag einfach erneut und wählen Sie bei den Haushalts-Chips den bisherigen Haushalt ab und den gewünschten neuen an. Das funktioniert jederzeit über das normale Bearbeiten, auch für mehrere zugeordnete Haushalte gleichzeitig. Ebenso lässt sich bei jeder Person unter „Mitglieder“ über die gleichen Chips festlegen, welchen Haushalten sie angehört.</p>' },
 
   { title:"Sicherung & iCloud-Abgleich", body:
-    '<p>Die App läuft vollständig lokal auf diesem Gerät, es gibt keinen Server und keine automatische Internetübertragung Ihrer Daten. Damit Ihre Angaben auch auf anderen eigenen Geräten verfügbar sind, speichern Sie regelmäßig eine Sicherungsdatei und legen diese in einem gemeinsamen iCloud-Drive-Ordner ab – die genaue Schritt-für-Schritt-Anleitung finden Sie im Bereich „Sicherung“.</p>' },
+    '<p>Die App läuft vollständig lokal auf diesem Gerät, es gibt keinen Server und keine automatische Internetübertragung Ihrer Daten. Damit Ihre Angaben auch auf anderen eigenen Geräten verfügbar sind, speichern Sie regelmäßig eine Sicherungsdatei und legen diese in einem gemeinsamen iCloud-Drive-Ordner ab – die genaue Schritt-für-Schritt-Anleitung finden Sie im Bereich „Sicherung“.</p>'+
+    '<p><strong>Mehrere Geräte im Einsatz (z. B. Mac, zwei iPads):</strong> Da es keine automatische Synchronisierung gibt, lohnt es sich, im Bereich „Sicherung“ jedem Gerät einen eigenen Namen zu geben (z. B. „Mac Büro“, „iPad Rob“). Dieser Name wird zusammen mit Datum und Uhrzeit in jede Sicherungsdatei geschrieben. Beim Laden einer Sicherung zeigt die App dann an, von welchem Gerät und von wann die Datei stammt – so lässt sich leicht erkennen, ob es die aktuellste ist, bevor der vorhandene Stand überschrieben wird. Im Bereich „Sicherung“ steht außerdem, wann auf diesem Gerät zuletzt gesichert bzw. zuletzt eine Sicherung geladen wurde, und ob es ungesicherte Änderungen gibt.</p>' },
 
   { title:"Hintergrundbild", body:
     '<p>Im Bereich „Sicherung“ lässt sich ein eigenes Foto als Hintergrund wählen. Dieses Hintergrundbild ist bewusst geräteabhängig und wird nicht Teil der Sicherungsdatei – auf jedem Gerät kann also ein anderes Bild hinterlegt sein, ohne dass sich die Dateigröße der eigentlichen Vertragsdaten dadurch unnötig vergrößert.</p>' },
