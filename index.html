@@ -1,0 +1,2614 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Vertragsordner</title>
+
+<!-- iPad/iPhone: "Zum Home-Bildschirm" -> eigenes Icon, startet ohne Safari-Leiste -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Vertragsordner">
+<meta name="theme-color" content="#2a78d6">
+<link rel="apple-touch-icon" href="data:image/png;base64,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">
+<link rel="icon" type="image/png" href="data:image/png;base64,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">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Petrona:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* ---------- Tokens ---------- */
+  :root{
+    color-scheme: light;
+    --page-bg: #f9f9f7;
+    --surface: #ffffff;
+    --surface-2: #fcfcfb;
+    --surface-sunken: #f2f1ec;
+    --text-primary: #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted: #898781;
+    --border: rgba(11,11,11,0.10);
+    --border-strong: rgba(11,11,11,0.16);
+    --gridline: #e1e0d9;
+    --accent: #2a78d6;
+    --accent-ink: #ffffff;
+    --accent-wash: rgba(42,120,214,0.10);
+
+    --cat-1: #2a78d6; --cat-2: #eb6834; --cat-3: #1baf7a; --cat-4: #eda100;
+    --cat-5: #e87ba4; --cat-6: #008300; --cat-7: #4a3aa7; --cat-8: #e34948;
+    --cat-other: #898781;
+
+    --status-good: #0ca30c;
+    --status-warning: #b8790c;
+    --status-serious: #c15a34;
+    --status-critical: #d03b3b;
+
+    --shadow-1: 0 1px 2px rgba(11,11,11,0.06), 0 1px 1px rgba(11,11,11,0.04);
+    --shadow-2: 0 8px 24px rgba(11,11,11,0.12), 0 2px 6px rgba(11,11,11,0.08);
+    --radius-s: 8px;
+    --radius-m: 14px;
+    --radius-l: 20px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      color-scheme: dark;
+      --page-bg: #0d0d0d;
+      --surface: #171716;
+      --surface-2: #1a1a19;
+      --surface-sunken: #131312;
+      --text-primary: #ffffff;
+      --text-secondary: #c3c2b7;
+      --text-muted: #8f8d84;
+      --border: rgba(255,255,255,0.10);
+      --border-strong: rgba(255,255,255,0.18);
+      --gridline: #2c2c2a;
+      --accent: #3987e5;
+      --accent-ink: #ffffff;
+      --accent-wash: rgba(57,135,229,0.16);
+      --cat-1: #3987e5; --cat-2: #d95926; --cat-3: #199e70; --cat-4: #c98500;
+      --cat-5: #d55181; --cat-6: #1a9c1a; --cat-7: #9085e9; --cat-8: #e66767;
+      --cat-other: #8f8d84;
+      --status-good: #17c317; --status-warning: #fab219; --status-serious: #ec835a; --status-critical: #e66767;
+      --shadow-1: 0 1px 2px rgba(0,0,0,0.4);
+      --shadow-2: 0 10px 28px rgba(0,0,0,0.5);
+    }
+  }
+  :root[data-theme="dark"]{
+    color-scheme: dark;
+    --page-bg: #0d0d0d;
+    --surface: #171716;
+    --surface-2: #1a1a19;
+    --surface-sunken: #131312;
+    --text-primary: #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted: #8f8d84;
+    --border: rgba(255,255,255,0.10);
+    --border-strong: rgba(255,255,255,0.18);
+    --gridline: #2c2c2a;
+    --accent: #3987e5;
+    --accent-ink: #ffffff;
+    --accent-wash: rgba(57,135,229,0.16);
+    --cat-1: #3987e5; --cat-2: #d95926; --cat-3: #199e70; --cat-4: #c98500;
+    --cat-5: #d55181; --cat-6: #1a9c1a; --cat-7: #9085e9; --cat-8: #e66767;
+    --cat-other: #8f8d84;
+    --status-good: #17c317; --status-warning: #fab219; --status-serious: #ec835a; --status-critical: #e66767;
+    --shadow-1: 0 1px 2px rgba(0,0,0,0.4);
+    --shadow-2: 0 10px 28px rgba(0,0,0,0.5);
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--page-bg);
+    color:var(--text-primary);
+    font-family:"IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    -webkit-font-smoothing:antialiased;
+    padding-bottom: 88px;
+  }
+  h1,h2,h3,.display{
+    font-family:"Petrona", Georgia, "Times New Roman", serif;
+    font-weight:600;
+    text-wrap:balance;
+    margin:0;
+    letter-spacing:-0.01em;
+  }
+  .mono, .amount{ font-family:"IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace; }
+  .amount{ font-variant-numeric: tabular-nums; }
+  a{ color:var(--accent); }
+  button{ font-family:inherit; }
+  ::selection{ background:var(--accent-wash); }
+  :focus-visible{ outline:2px solid var(--accent); outline-offset:2px; border-radius:4px; }
+
+  .icon{ width:1.1em; height:1.1em; flex:none; display:inline-block; vertical-align:-0.18em; }
+
+  /* ---------- Layout shell ---------- */
+  #app{ min-height:100vh; }
+  .shell{
+    display:flex;
+    max-width:1180px;
+    margin:0 auto;
+  }
+  .sidebar{
+    display:none;
+    flex-direction:column;
+    width:236px;
+    flex:none;
+    padding: 28px 16px;
+    gap:22px;
+    position:sticky;
+    top:0;
+    height:100vh;
+  }
+  .brand{
+    display:flex; align-items:center; gap:10px;
+    padding: 0 8px;
+  }
+  .brand-mark{
+    width:34px;height:34px;border-radius:9px;background:var(--accent);
+    display:flex;align-items:center;justify-content:center;color:var(--accent-ink);
+    flex:none;
+  }
+  .brand-name{ font-family:"Petrona",serif; font-weight:600; font-size:1.18rem; }
+  .nav-list{ display:flex; flex-direction:column; gap:2px; list-style:none; margin:0; padding:0; }
+  .nav-item{
+    display:flex; align-items:center; gap:12px;
+    padding:10px 12px; border-radius:var(--radius-s);
+    color:var(--text-secondary); text-decoration:none; font-size:0.95rem; font-weight:500;
+    cursor:pointer; border:none; background:none; width:100%; text-align:left;
+  }
+  .nav-item:hover{ background:var(--surface-sunken); color:var(--text-primary); }
+  .nav-item.active{ background:var(--accent-wash); color:var(--accent); }
+  .sidebar-cta{
+    margin-top:auto;
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    background:var(--accent); color:var(--accent-ink);
+    border:none; border-radius:var(--radius-s); padding:11px 14px;
+    font-weight:600; font-size:0.92rem; cursor:pointer;
+  }
+  .sidebar-cta:hover{ filter:brightness(1.06); }
+
+  main{ flex:1; min-width:0; padding: 18px 16px 40px; }
+
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding: 4px 2px 18px;
+  }
+  .topbar h1{ font-size:1.4rem; }
+  .topbar-sub{ color:var(--text-secondary); font-size:0.86rem; margin-top:2px; }
+
+  /* Bottom nav (mobile) */
+  .bottom-nav{
+    position:fixed; left:0; right:0; bottom:0; z-index:40;
+    display:flex; justify-content:space-around;
+    background:var(--surface); border-top:1px solid var(--border);
+    padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+  }
+  .bottom-nav button{
+    display:flex; flex-direction:column; align-items:center; gap:2px;
+    background:none; border:none; color:var(--text-muted);
+    font-size:0.68rem; font-weight:600; padding:6px 14px; border-radius:10px; cursor:pointer;
+  }
+  .bottom-nav button.active{ color:var(--accent); }
+  .fab{
+    position:fixed; right:18px; bottom:74px; z-index:41;
+    width:56px;height:56px;border-radius:50%;
+    background:var(--accent); color:var(--accent-ink); border:none;
+    box-shadow:var(--shadow-2); display:flex; align-items:center; justify-content:center;
+    cursor:pointer;
+  }
+  .fab .icon{ width:26px; height:26px; }
+  .fab:hover{ filter:brightness(1.06); }
+
+  @media (min-width:860px){
+    body{ padding-bottom:0; }
+    .sidebar{ display:flex; }
+    .bottom-nav, .fab{ display:none; }
+    main{ padding: 30px 32px 60px; }
+  }
+
+  .view{ display:none; }
+  .view.active{ display:block; }
+
+  /* ---------- Cards / KPIs ---------- */
+  .kpi-row{
+    display:grid; grid-template-columns:repeat(2,1fr); gap:10px;
+    margin-bottom:18px;
+  }
+  @media (min-width:640px){ .kpi-row{ grid-template-columns:repeat(4,1fr); gap:14px; } }
+  .kpi{
+    background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-m);
+    padding:14px 16px; display:flex; flex-direction:column; gap:6px; box-shadow:var(--shadow-1);
+  }
+  .kpi-label{ font-size:0.74rem; color:var(--text-muted); font-weight:600; text-transform:uppercase; letter-spacing:0.04em; }
+  .kpi-value{ font-family:"IBM Plex Mono",monospace; font-size:1.4rem; font-weight:600; font-variant-numeric:tabular-nums; }
+  .kpi-value small{ font-size:0.62em; color:var(--text-muted); font-weight:500; }
+
+  .card{
+    background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-m);
+    box-shadow:var(--shadow-1);
+  }
+  .card-pad{ padding:18px 18px 20px; }
+  .section{ margin-bottom:20px; }
+  .section-head{ display:flex; align-items:baseline; justify-content:space-between; gap:10px; margin-bottom:10px; }
+  .section-head h2{ font-size:1.06rem; }
+  .link-btn{ background:none; border:none; color:var(--accent); font-size:0.84rem; font-weight:600; cursor:pointer; padding:2px; }
+
+  /* Chart */
+  .chart-toggle{ display:inline-flex; background:var(--surface-sunken); border-radius:999px; padding:3px; gap:2px; }
+  .chart-toggle button{
+    border:none; background:none; padding:6px 13px; border-radius:999px; font-size:0.8rem; font-weight:600;
+    color:var(--text-secondary); cursor:pointer;
+  }
+  .chart-toggle button.active{ background:var(--surface); color:var(--text-primary); box-shadow:var(--shadow-1); }
+  .chart-wrap{ position:relative; }
+  .bar-row-label{ font-size:0.82rem; fill:var(--text-primary); font-weight:500; }
+  .bar-row-value{ font-size:0.82rem; fill:var(--text-secondary); font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums; }
+  .bar-row-count{ font-size:0.72rem; fill:var(--text-muted); }
+  .bar-axis-label{ font-size:0.68rem; fill:var(--text-muted); font-family:"IBM Plex Mono",monospace; }
+  .bar-hit{ cursor:pointer; }
+  .bar-hit:hover + .bar-rect, .bar-rect.hovered{ filter:brightness(1.08); }
+  .chart-tooltip{
+    position:absolute; pointer-events:none; z-index:5;
+    background:var(--text-primary); color:var(--page-bg);
+    padding:8px 11px; border-radius:8px; font-size:0.78rem; line-height:1.45;
+    box-shadow:var(--shadow-2); max-width:220px; transform:translate(-50%,-100%); margin-top:-10px;
+    opacity:0; transition:opacity .1s;
+  }
+  :root[data-theme="dark"] .chart-tooltip, @media (prefers-color-scheme:dark){ }
+  .chart-tooltip.show{ opacity:1; }
+  .chart-tooltip b{ font-family:"IBM Plex Mono",monospace; }
+  .chart-empty{ padding:34px 10px; text-align:center; color:var(--text-muted); font-size:0.88rem; }
+  .chart-table{ width:100%; border-collapse:collapse; font-size:0.86rem; }
+  .chart-table td, .chart-table th{ padding:7px 6px; border-bottom:1px solid var(--gridline); text-align:left; }
+  .chart-table td:last-child, .chart-table th:last-child{ text-align:right; font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums; }
+
+  .dot{ width:9px; height:9px; border-radius:50%; flex:none; display:inline-block; }
+
+  .chart-display-row{ margin-bottom:14px; }
+  .tile-grid{
+    display:grid; grid-template-columns:repeat(auto-fill, minmax(158px,1fr)); gap:10px;
+  }
+  .cat-tile{
+    background:var(--surface-2); border:1px solid var(--border); border-radius:var(--radius-m);
+    padding:12px 14px; display:flex; flex-direction:column; gap:7px; cursor:pointer; text-align:left;
+  }
+  .cat-tile:hover{ border-color:var(--border-strong); background:var(--surface-sunken); }
+  .cat-tile-head{ display:flex; align-items:flex-start; gap:7px; }
+  .cat-tile-head .dot{ margin-top:5px; }
+  .cat-tile-label{ font-size:0.78rem; font-weight:600; color:var(--text-secondary); line-height:1.25; }
+  .cat-tile-value{ font-family:"IBM Plex Mono",monospace; font-size:1.2rem; font-weight:600; font-variant-numeric:tabular-nums; color:var(--text-primary); }
+  .cat-tile-sub{ font-size:0.74rem; color:var(--text-muted); }
+  .cat-tile-count{ font-size:0.72rem; color:var(--text-muted); }
+  .chart-count{ font-size:0.82rem; color:var(--text-muted); }
+  .cat-tile-meter{ height:5px; border-radius:3px; background:var(--gridline); overflow:hidden; margin-top:2px; }
+  .cat-tile-meter>span{ display:block; height:100%; border-radius:3px; }
+
+  /* Deadlines */
+  .deadline-row{
+    display:flex; align-items:center; gap:12px; padding:11px 4px;
+    border-bottom:1px solid var(--border);
+  }
+  .deadline-row:last-child{ border-bottom:none; }
+  .deadline-main{ flex:1; min-width:0; }
+  .deadline-name{ font-weight:600; font-size:0.9rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .deadline-sub{ font-size:0.78rem; color:var(--text-secondary); }
+  .badge{
+    display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:999px;
+    font-size:0.72rem; font-weight:700; white-space:nowrap;
+  }
+  .badge .icon{ width:12px; height:12px; }
+  .badge-critical{ background:color-mix(in srgb, var(--status-critical) 16%, transparent); color:var(--status-critical); }
+  .badge-warning{ background:color-mix(in srgb, var(--status-warning) 18%, transparent); color:var(--status-warning); }
+  .badge-good{ background:color-mix(in srgb, var(--status-good) 16%, transparent); color:var(--status-good); }
+  .badge-neutral{ background:var(--surface-sunken); color:var(--text-secondary); }
+
+  .empty-state{
+    text-align:center; padding:44px 18px; display:flex; flex-direction:column; align-items:center; gap:12px;
+  }
+  .empty-state .icon-lg{ width:44px;height:44px; color:var(--text-muted); }
+  .empty-state h3{ font-size:1.1rem; }
+  .empty-state p{ color:var(--text-secondary); font-size:0.9rem; max-width:360px; margin:0; }
+  .btn{
+    border:none; border-radius:var(--radius-s); padding:10px 16px; font-weight:600; font-size:0.88rem;
+    cursor:pointer; display:inline-flex; align-items:center; gap:7px;
+  }
+  .btn-primary{ background:var(--accent); color:var(--accent-ink); }
+  .btn-primary:hover{ filter:brightness(1.06); }
+  .btn-ghost{ background:var(--surface-sunken); color:var(--text-primary); }
+  .btn-ghost:hover{ background:var(--border-strong); }
+  .btn-danger{ background:none; color:var(--status-critical); }
+  .btn:disabled{ opacity:0.5; cursor:not-allowed; }
+
+  /* Contract list */
+  .toolbar{ display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap; }
+  .search-box{
+    flex:1; min-width:180px; display:flex; align-items:center; gap:8px;
+    background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-s);
+    padding:8px 12px; color:var(--text-muted);
+  }
+  .search-box input{ border:none; background:none; outline:none; flex:1; color:var(--text-primary); font-size:0.88rem; }
+  select.filter-select{
+    background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-s);
+    padding:8px 10px; font-size:0.85rem; color:var(--text-primary); font-family:inherit;
+  }
+  .contract-list{ display:flex; flex-direction:column; gap:9px; }
+  .contract-card{
+    background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-m);
+    padding:13px 14px; display:flex; gap:12px; align-items:center; cursor:pointer; box-shadow:var(--shadow-1);
+  }
+  .contract-card:hover{ border-color:var(--border-strong); }
+  .cc-cat{ width:4px; align-self:stretch; border-radius:3px; flex:none; }
+  .cc-body{ flex:1; min-width:0; }
+  .cc-top{ display:flex; justify-content:space-between; gap:8px; align-items:baseline; }
+  .cc-name{ font-weight:600; font-size:0.95rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .cc-amount{ font-family:"IBM Plex Mono",monospace; font-weight:600; font-size:0.9rem; white-space:nowrap; font-variant-numeric:tabular-nums; }
+  .cc-meta{ display:flex; gap:10px; flex-wrap:wrap; margin-top:4px; font-size:0.78rem; color:var(--text-secondary); align-items:center; }
+  .cc-meta span{ display:inline-flex; align-items:center; gap:4px; }
+  .cc-thumb{ width:44px;height:44px;border-radius:8px;object-fit:cover;flex:none;border:1px solid var(--border); }
+
+  /* Household */
+  .member-row{
+    display:flex; align-items:center; gap:12px; padding:12px 4px; border-bottom:1px solid var(--border);
+  }
+  .member-row:last-child{ border-bottom:none; }
+  .avatar{
+    width:38px;height:38px;border-radius:50%; color:#fff; display:flex;align-items:center;justify-content:center;
+    font-weight:700; font-size:0.85rem; flex:none; overflow:hidden;
+  }
+  .avatar img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .avatar-lg{ width:64px; height:64px; font-size:1.3rem; }
+  .member-photo-row{ display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin-bottom:10px; }
+  .member-photo-actions{ display:flex; gap:8px; flex-wrap:wrap; }
+  .member-name{ font-weight:600; font-size:0.92rem; }
+  .member-sub{ font-size:0.78rem; color:var(--text-muted); }
+  .member-open{
+    display:flex; align-items:center; gap:12px; flex:1; min-width:0;
+    background:none; border:none; padding:0; margin:0; cursor:pointer; text-align:left; font:inherit; color:inherit;
+  }
+  .member-open:hover .member-name{ text-decoration:underline; color:var(--accent); }
+
+  /* Modal */
+  .overlay{
+    position:fixed; inset:0; background:rgba(11,11,11,0.45); z-index:60;
+    display:flex; align-items:flex-end; justify-content:center;
+    opacity:0; pointer-events:none; transition:opacity .15s;
+  }
+  .overlay.show{ opacity:1; pointer-events:auto; }
+  @media (min-width:640px){ .overlay{ align-items:center; padding:24px; } }
+  .modal{
+    background:var(--surface); width:100%; max-width:560px; max-height:92vh; overflow-y:auto;
+    border-radius:var(--radius-l); box-shadow:var(--shadow-2);
+    transform:translateY(16px); transition:transform .15s;
+  }
+  .overlay.show .modal{ transform:translateY(0); }
+  .modal-head{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:16px 18px; border-bottom:1px solid var(--border); position:sticky; top:0; background:var(--surface); z-index:2;
+  }
+  .modal-head h2{ font-size:1.12rem; }
+  .icon-btn{ background:none; border:none; color:var(--text-secondary); cursor:pointer; padding:6px; border-radius:8px; display:flex; }
+  .icon-btn:hover{ background:var(--surface-sunken); }
+  .modal-body{ padding:18px; display:flex; flex-direction:column; gap:16px; }
+  .modal-foot{
+    display:flex; gap:10px; justify-content:flex-end; padding:14px 18px; border-top:1px solid var(--border);
+    position:sticky; bottom:0; background:var(--surface);
+  }
+
+  .field{ display:flex; flex-direction:column; gap:5px; }
+  .field label{ font-size:0.78rem; font-weight:600; color:var(--text-secondary); }
+  .field .hint{ font-size:0.73rem; color:var(--text-muted); font-weight:400; }
+  .field input, .field select, .field textarea{
+    background:var(--surface-2); border:1px solid var(--border-strong); border-radius:var(--radius-s);
+    padding:10px 11px; font-size:0.92rem; color:var(--text-primary); font-family:inherit; width:100%;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus{ outline:2px solid var(--accent); outline-offset:0; border-color:transparent; }
+  .field textarea{ resize:vertical; min-height:64px; }
+  .field-row{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .field-with-action{ display:flex; gap:8px; align-items:stretch; }
+  .field-with-action input{ flex:1; min-width:0; }
+  .field-action-btn{
+    flex:none; width:40px; display:flex; align-items:center; justify-content:center;
+    background:var(--surface-2); border:1px solid var(--border-strong); border-radius:var(--radius-s);
+    color:var(--text-secondary); cursor:pointer;
+  }
+  .field-action-btn:hover{ background:var(--surface-sunken); color:var(--accent); border-color:var(--accent); }
+  .subsection-label{ font-size:0.78rem; font-weight:600; color:var(--text-secondary); margin-top:6px; }
+  .checkbox-label{
+    display:flex; align-items:center; gap:9px; font-size:0.88rem; font-weight:500; color:var(--text-primary); cursor:pointer;
+  }
+  .checkbox-label input[type="checkbox"]{ width:17px; height:17px; accent-color:var(--accent); flex:none; cursor:pointer; }
+  .radio-group{ display:flex; gap:8px; flex-wrap:wrap; }
+  .radio-chip{
+    border:1px solid var(--border-strong); background:var(--surface-2); border-radius:999px;
+    padding:7px 13px; font-size:0.82rem; cursor:pointer; color:var(--text-secondary); font-weight:500;
+  }
+  .radio-chip.selected{ background:var(--accent); border-color:var(--accent); color:var(--accent-ink); }
+
+  .doc-zone{
+    border:1.5px dashed var(--border-strong); border-radius:var(--radius-m); padding:16px;
+    display:flex; flex-direction:column; gap:12px; background:var(--surface-2);
+  }
+  .doc-actions{ display:flex; gap:8px; flex-wrap:wrap; }
+  .attachment-list{ display:flex; flex-direction:column; gap:8px; }
+  .attachment-item{
+    display:flex; align-items:center; gap:10px; background:var(--surface); border:1px solid var(--border);
+    border-radius:10px; padding:7px 9px;
+  }
+  .attachment-item img{ width:38px;height:38px;object-fit:cover;border-radius:6px; flex:none; }
+  .attachment-item .attachment-name{ flex:1; min-width:0; font-size:0.82rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .attachment-open{
+    display:flex; align-items:center; gap:10px; flex:1; min-width:0; background:none; border:none; padding:0;
+    text-align:left; cursor:pointer; color:var(--text-primary); font:inherit;
+  }
+  .attachment-open:hover .attachment-name{ text-decoration:underline; color:var(--accent); }
+  .payer-history{ display:flex; flex-direction:column; gap:6px; max-height:180px; overflow-y:auto; }
+  .payer-history-row{
+    display:flex; align-items:baseline; justify-content:space-between; gap:12px;
+    background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:6px 10px;
+  }
+  .payer-history-date{ font-family:"IBM Plex Mono",monospace; font-size:0.76rem; color:var(--text-muted); flex:none; }
+  .payer-history-who{ font-size:0.84rem; font-weight:600; text-align:right; }
+  .ai-status{ display:flex; align-items:center; gap:8px; font-size:0.82rem; color:var(--text-secondary); }
+  .spinner{
+    width:14px;height:14px;border-radius:50%; border:2px solid var(--border-strong); border-top-color:var(--accent);
+    animation:spin .7s linear infinite; flex:none;
+  }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce){ .spinner{ animation-duration:1.6s; } * { scroll-behavior:auto !important; } }
+
+  .toast-host{ position:fixed; left:50%; bottom:96px; transform:translateX(-50%); z-index:80; display:flex; flex-direction:column; gap:8px; align-items:center; }
+  @media (min-width:860px){ .toast-host{ bottom:26px; } }
+  .toast{
+    background:var(--text-primary); color:var(--page-bg); padding:10px 16px; border-radius:10px; font-size:0.85rem;
+    box-shadow:var(--shadow-2); opacity:0; transform:translateY(8px); transition:all .18s; max-width:88vw;
+  }
+  .toast.show{ opacity:1; transform:translateY(0); }
+  .toast.error{ background:var(--status-critical); color:#fff; }
+
+  .confirm-box{ max-width:360px; }
+  .confirm-box .modal-body{ padding-top:6px; }
+  .confirm-box p{ color:var(--text-secondary); font-size:0.9rem; margin:0; line-height:1.5; }
+
+  .pill-filter{ display:flex; gap:6px; overflow-x:auto; padding-bottom:2px; }
+  .pill-filter::-webkit-scrollbar{ display:none; }
+
+  .swatch-picker{ display:flex; gap:8px; flex-wrap:wrap; }
+  .swatch{ width:26px;height:26px;border-radius:50%; border:2px solid transparent; cursor:pointer; }
+  .swatch.selected{ border-color:var(--text-primary); }
+
+  .visually-hidden{ position:absolute; width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap; }
+
+  .nav-item{ position:relative; }
+  .nav-dot{ width:7px;height:7px;border-radius:50%;background:var(--status-warning); margin-left:auto; flex:none; }
+  .bottom-nav button{ position:relative; }
+  .bottom-nav .nav-dot{ position:absolute; top:2px; right:18px; width:6px;height:6px; margin:0; }
+  code{ background:var(--surface-sunken); padding:1px 5px; border-radius:4px; font-family:"IBM Plex Mono",monospace; font-size:0.9em; }
+
+  body.has-bg-image{
+    background-image: linear-gradient(color-mix(in srgb, var(--page-bg) 84%, transparent), color-mix(in srgb, var(--page-bg) 84%, transparent)), var(--bg-photo, none);
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+  }
+  .bg-preview-row{ display:flex; align-items:center; gap:14px; margin-bottom:14px; }
+  .bg-preview-thumb{
+    width:96px; height:64px; border-radius:var(--radius-s); object-fit:cover;
+    border:1px solid var(--border); flex:none;
+  }
+
+  /* Help / Wiki */
+  .help-topic{ border-bottom:1px solid var(--border); padding:4px 0; }
+  .help-topic:last-child{ border-bottom:none; }
+  .help-topic summary{
+    cursor:pointer; padding:12px 4px; font-weight:600; font-size:0.94rem; list-style:none;
+    display:flex; align-items:center; gap:10px; color:var(--text-primary);
+  }
+  .help-topic summary::-webkit-details-marker{ display:none; }
+  .help-topic summary .chev{ transition:transform .15s; flex:none; color:var(--text-muted); }
+  .help-topic[open] summary .chev{ transform:rotate(90deg); }
+  .help-topic-body{ padding:0 4px 16px 34px; color:var(--text-secondary); font-size:0.88rem; line-height:1.65; }
+  .help-topic-body p{ margin:0 0 10px; }
+  .help-topic-body p:last-child{ margin-bottom:0; }
+  .help-topic-body ul, .help-topic-body ol{ margin:0 0 10px; padding-left:20px; }
+  .help-topic-body strong{ color:var(--text-primary); }
+
+  /* Print */
+  #print-area{ display:none; }
+  @media print{
+    body > *:not(#print-area){ display:none !important; }
+    #print-area{ display:block !important; position:absolute; left:0; top:0; width:100%; color:#000; background:#fff; }
+    .print-header{ display:flex; justify-content:space-between; align-items:baseline; border-bottom:2px solid #000; padding-bottom:8px; margin-bottom:16px; }
+    .print-brand{ font-weight:700; font-family:"Petrona",serif; font-size:1.1rem; display:flex; align-items:center; gap:6px; }
+    .print-brand svg{ width:18px; height:18px; }
+    .print-meta{ font-size:0.8rem; color:#444; }
+    .print-title{ font-size:1.3rem; margin:0 0 4px; }
+    .print-subtitle{ font-size:0.85rem; color:#333; margin:0 0 14px; }
+    .print-table{ width:100%; border-collapse:collapse; font-size:0.82rem; }
+    .print-table th, .print-table td{ text-align:left; padding:6px 8px; border-bottom:1px solid #999; }
+    .print-table thead th{ border-bottom:2px solid #000; }
+    .print-fields{ width:100%; border-collapse:collapse; font-size:0.9rem; margin-bottom:14px; }
+    .print-fields th{ text-align:left; width:38%; padding:5px 10px 5px 0; color:#333; font-weight:600; vertical-align:top; }
+    .print-fields td{ padding:5px 0; vertical-align:top; }
+    .print-section-h{ font-size:0.95rem; margin:14px 0 6px; }
+    .print-notes{ font-size:0.88rem; white-space:pre-wrap; }
+    .print-list{ font-size:0.88rem; margin:0; padding-left:18px; }
+    @page{ margin:16mm; }
+  }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <div class="shell">
+    <!-- Desktop sidebar -->
+    <nav class="sidebar" aria-label="Hauptnavigation">
+      <div class="brand">
+        <div class="brand-mark"></div>
+        <div class="brand-name">Vertragsordner</div>
+      </div>
+      <ul class="nav-list" id="sidebar-nav"></ul>
+      <button class="sidebar-cta" id="sidebar-add-btn" type="button"></button>
+    </nav>
+
+    <main id="main-content">
+      <div class="topbar">
+        <div>
+          <h1 id="topbar-title">Übersicht</h1>
+          <div class="topbar-sub" id="topbar-sub"></div>
+        </div>
+        <div id="household-switcher-slot"></div>
+      </div>
+
+      <section class="view" id="view-dashboard"></section>
+      <section class="view" id="view-contracts"></section>
+      <section class="view" id="view-household"></section>
+      <section class="view" id="view-backup"></section>
+      <section class="view" id="view-help"></section>
+    </main>
+  </div>
+
+  <!-- Mobile bottom nav -->
+  <nav class="bottom-nav" id="bottom-nav" aria-label="Hauptnavigation"></nav>
+  <button class="fab" id="fab-add" type="button" aria-label="Neuen Vertrag hinzufügen"></button>
+
+  <div class="toast-host" id="toast-host"></div>
+</div>
+
+<div id="print-area"></div>
+
+<script>
+(function(){
+"use strict";
+
+/* ======================= Constants ======================= */
+
+const CATEGORIES = [
+  { id:"kfz",           label:"Kfz",                                   varName:"--cat-1" },
+  { id:"wohnen",        label:"Wohnen & Hausrat",                      varName:"--cat-2" },
+  { id:"haftung",       label:"Haftpflicht & Recht",                   varName:"--cat-3" },
+  { id:"gesundheit",    label:"Gesundheit & Vorsorge",                 varName:"--cat-4" },
+  { id:"energie",       label:"Energie & Wasser",                      varName:"--cat-5" },
+  { id:"kommunikation", label:"Telefon & Internet",                    varName:"--cat-6" },
+  { id:"medien",        label:"Medien & Mitgliedschaften",             varName:"--cat-7" },
+  { id:"sonstige",      label:"Sonstige Versicherungen & Verträge",    varName:"--cat-8" }
+];
+const CATEGORY_BY_ID = Object.fromEntries(CATEGORIES.map(c=>[c.id,c]));
+
+const FREQUENCIES = [
+  { id:"monatlich",       label:"monatlich",        perYear:12 },
+  { id:"vierteljaehrlich",label:"vierteljährlich",  perYear:4  },
+  { id:"halbjaehrlich",   label:"halbjährlich",     perYear:2  },
+  { id:"jaehrlich",       label:"jährlich",         perYear:1  },
+  { id:"einmalig",        label:"einmalig",         perYear:0  }
+];
+const FREQ_BY_ID = Object.fromEntries(FREQUENCIES.map(f=>[f.id,f]));
+
+const STATUSES = [
+  { id:"aktiv",     label:"Aktiv" },
+  { id:"pausiert",  label:"Pausiert" },
+  { id:"gekuendigt",label:"Gekündigt" },
+  { id:"ausgelaufen",label:"Ausgelaufen" }
+];
+const STATUS_BY_ID = Object.fromEntries(STATUSES.map(s=>[s.id,s]));
+
+const MEMBER_COLORS = ["--cat-1","--cat-2","--cat-3","--cat-4","--cat-5","--cat-6","--cat-7","--cat-8"];
+
+const FIELD_SUGGESTIONS_NOTE = "Vorschlag: Bezeichnung, Kategorie, Anbieter, Vertrags-/Versicherungsnummer, Zahler:in, Betrag & Zahlungsrhythmus, Vertragsbeginn, Vertragsende, Kündigungsfrist, Status, Notizen, gescanntes Dokument.";
+
+/* ======================= Icons ======================= */
+
+const ICON_PATHS = {
+  plus:'<path d="M10 4v12M4 10h12"/>',
+  camera:'<path d="M4 7h2.6L8 5h4l1.4 2H16a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1Z"/><circle cx="10" cy="11" r="3"/>',
+  doc:'<path d="M6 3h6l4 4v10a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"/><path d="M12 3v4h4"/>',
+  trash:'<path d="M4 6h12M8 6V4h4v2M6 6l.8 10a1 1 0 0 0 1 .9h4.4a1 1 0 0 0 1-.9L14 6"/>',
+  chevronRight:'<path d="M8 5l5 5-5 5"/>',
+  search:'<circle cx="9" cy="9" r="5.2"/><path d="M13.2 13.2l4 4"/>',
+  x:'<path d="M5 5l10 10M15 5L5 15"/>',
+  chevronDown:'<path d="M5 8l5 5 5-5"/>',
+  pencil:'<path d="M4 16l.6-3.6L13 4l3 3-8.4 8.4L4 16Z"/>',
+  check:'<path d="M4 10.5l3.6 3.6L16 5.5"/>',
+  warn:'<path d="M10 3 2.5 17h15Z"/><path d="M10 8.2v3.6M10 13.8h.01"/>',
+  sparkle:'<path d="M10 2.5l1.5 5L16.5 9l-5 1.5L10 15.5l-1.5-5L3.5 9l5-1.5Z"/>',
+  users:'<circle cx="7" cy="7" r="2.6"/><circle cx="14.3" cy="9" r="2.1"/><path d="M2.3 16.2c0-2.6 2.1-4.2 4.7-4.2s4.7 1.6 4.7 4.2M12.3 16.2c0-1.9 1.4-3.1 3.3-3.1s3.4 1.2 3.4 3.1"/>',
+  home:'<path d="M3.5 9.3 10 4l6.5 5.3V16a1 1 0 0 1-1 1h-3.2v-5.2H7.7V17H4.5a1 1 0 0 1-1-1Z"/>',
+  list:'<path d="M4 5.5h12M4 10h12M4 14.5h12"/>',
+  folder:'<path d="M3 5.5h5l1.4 1.8H17a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6.5a1 1 0 0 1 1-1Z"/>',
+  upload:'<path d="M10 13V4m0 0L6.5 7.5M10 4l3.5 3.5"/><path d="M4 14v1.5a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V14"/>',
+  refresh:'<path d="M15.8 8A6 6 0 1 0 16 11"/><path d="M16.3 4.5v3.7h-3.7"/>',
+  info:'<circle cx="10" cy="10" r="7.2"/><path d="M10 9v4.2M10 6.6h.01"/>',
+  card:'<rect x="2.8" y="5.3" width="14.4" height="9.4" rx="1.6"/><path d="M2.8 8.6h14.4"/>',
+  link:'<path d="M8.5 11.5a3 3 0 0 0 4.2.3l2-2a3 3 0 0 0-4.2-4.2l-1 1"/><path d="M11.5 8.5a3 3 0 0 0-4.2-.3l-2 2a3 3 0 0 0 4.2 4.2l1-1"/>',
+  phone:'<path d="M5 3.5h2.6l1 3.3-1.6 1.4a9 9 0 0 0 4.8 4.8l1.4-1.6 3.3 1v2.6a1.3 1.3 0 0 1-1.4 1.3A12.8 12.8 0 0 1 4 5a1.3 1.3 0 0 1 1-1.5Z"/>',
+  mail:'<path d="M3.5 5h13a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1h-13a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z"/><path d="M3.7 5.6l6.3 5 6.3-5"/>',
+  building:'<path d="M5 17V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v13"/><path d="M13 8.5h2.5a1 1 0 0 1 1 1V17"/><path d="M3 17h14"/><path d="M7.3 6.3h1M9.7 6.3h1M7.3 9.3h1M9.7 9.3h1M7.3 12.3h1M9.7 12.3h1"/>',
+  help:'<circle cx="10" cy="10" r="7.2"/><path d="M7.6 7.8a2.4 2.4 0 1 1 3.4 2.2c-.7.4-1 .8-1 1.6"/><path d="M10 14.2h.01"/>',
+  print:'<path d="M5.5 7V3.5h9V7"/><rect x="3" y="7" width="14" height="6.5" rx="1.2"/><path d="M5.5 12.5h9V16.5h-9Z"/>'
+};
+function icon(name, extra){
+  return '<svg class="icon '+(extra||'')+'" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(ICON_PATHS[name]||'')+'</svg>';
+}
+
+function escapeHtml(s){
+  return String(s==null?"":s).replace(/[&<>"']/g, function(c){
+    return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
+  });
+}
+
+/* ======================= State ======================= */
+
+const state = {
+  view: "dashboard",
+  contracts: [],
+  members: [],
+  households: [],          // [{id, name, colorIndex, createdAt}] – frei benennbare Haushalte/Standorte (z. B. "Wohnhaus A", "Praxis")
+  activeHousehold: "__all", // "__all" oder die id eines Haushalts – steuert Dashboard/Vertragsliste; nicht Teil der Sicherung
+  contractsLoaded: false,
+  membersLoaded: false,
+  chartMode: "category", // or "payer"
+  chartDisplay: "tiles", // "bars" | "tiles" | "table"
+  search: "",
+  filterCategory: "",
+  filterStatus: "",
+  filterPayer: "",
+  filterProvider: "",
+  editingId: null,       // contract currently open in modal, or "new"
+  draftAttachments: [],  // [{id, contentType, name, dataUrl}] for the open modal
+  draftBankAccounts: [], // [{id, label, iban}] for the open member modal
+  draftPhoto: null,       // data URL of the chosen member photo for the open member modal, or null
+  draftHouseholdIds: [],  // [householdId, ...] für das offene Mitglied- oder Vertrags-Modal
+  dirty: false,             // unsaved changes since the last exported backup
+  lastSavedAt: null,        // ISO timestamp of the last successful export
+  lastLocalChangeAt: null,  // ISO timestamp of the last local change
+  backgroundImage: null      // data URL of the chosen background photo, or null (per-device, not part of the backup)
+};
+
+/* ======================= Local storage & backup ======================= */
+
+const STORAGE_KEY = "vertragsordner_v1";
+
+function newId(){
+  return "id_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2,9);
+}
+
+function persist(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      contracts: state.contracts,
+      members: state.members,
+      households: state.households,
+      dirty: state.dirty,
+      lastSavedAt: state.lastSavedAt,
+      lastLocalChangeAt: state.lastLocalChangeAt,
+      backgroundImage: state.backgroundImage
+    }));
+  }catch(e){
+    /* localStorage kann z.B. unter file:// in manchen Browsern fehlen oder voll sein –
+       die manuelle Sicherung (Export/Import) bleibt in dem Fall die maßgebliche Ablage. */
+  }
+}
+
+function loadFromStorage(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    state.contracts = Array.isArray(data.contracts) ? data.contracts : [];
+    state.members = Array.isArray(data.members) ? data.members : [];
+    state.households = Array.isArray(data.households) ? data.households : [];
+    state.dirty = !!data.dirty;
+    state.lastSavedAt = data.lastSavedAt || null;
+    state.lastLocalChangeAt = data.lastLocalChangeAt || null;
+    state.backgroundImage = data.backgroundImage || null;
+  }catch(e){ /* korrupter oder fehlender Cache wird ignoriert */ }
+}
+
+/* Haushalte: beim allerersten Start bzw. beim Laden einer älteren Sicherung ohne
+   "households" wird automatisch ein Standard-Haushalt angelegt und alle vorhandenen
+   Mitglieder/Verträge diesem zugeordnet, damit nichts verloren geht oder unsichtbar wird. */
+function ensureHouseholdsMigrated(){
+  let changed = false;
+  if (!Array.isArray(state.households)){ state.households = []; changed = true; }
+  if (state.households.length===0){
+    const def = { id:newId(), name:"Mein Haushalt", colorIndex:0, createdAt:new Date().toISOString() };
+    state.households.push(def);
+    state.members.forEach(function(m){ if (!Array.isArray(m.householdIds) || m.householdIds.length===0) m.householdIds=[def.id]; });
+    state.contracts.forEach(function(c){ if (!Array.isArray(c.householdIds) || c.householdIds.length===0) c.householdIds=[def.id]; });
+    changed = true;
+  } else {
+    const allIds = state.households.map(function(h){ return h.id; });
+    state.members.forEach(function(m){ if (!Array.isArray(m.householdIds) || m.householdIds.length===0){ m.householdIds=allIds.slice(); changed=true; } });
+    state.contracts.forEach(function(c){ if (!Array.isArray(c.householdIds) || c.householdIds.length===0){ c.householdIds=allIds.slice(); changed=true; } });
+  }
+  if (changed) persist();
+  return changed;
+}
+
+function applyBackgroundImage(){
+  if (state.backgroundImage){
+    document.body.style.setProperty("--bg-photo", 'url("'+state.backgroundImage+'")');
+    document.body.classList.add("has-bg-image");
+  } else {
+    document.body.classList.remove("has-bg-image");
+    document.body.style.removeProperty("--bg-photo");
+  }
+}
+
+function setBackgroundImage(dataUrl){
+  state.backgroundImage = dataUrl;
+  persist();
+  applyBackgroundImage();
+  render();
+}
+
+function markDirty(){
+  state.dirty = true;
+  state.lastLocalChangeAt = new Date().toISOString();
+  persist();
+}
+
+function exportBackup(){
+  const payload = {
+    app: "vertragsordner",
+    version: 2,
+    exportedAt: new Date().toISOString(),
+    members: state.members,
+    contracts: state.contracts,
+    households: state.households
+  };
+  let blob;
+  try{
+    blob = new Blob([JSON.stringify(payload, null, 2)], { type:"application/json" });
+  }catch(e){
+    toast("Sicherung konnte nicht erstellt werden.","error");
+    return;
+  }
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "vertragsordner-daten.json";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+
+  state.dirty = false;
+  state.lastSavedAt = new Date().toISOString();
+  persist();
+  render();
+  toast("Sicherung wird heruntergeladen.");
+}
+
+function importBackupFile(file){
+  const reader = new FileReader();
+  reader.onload = function(){
+    let data;
+    try{ data = JSON.parse(reader.result); }
+    catch(e){ toast("Datei konnte nicht gelesen werden – ist es eine gültige Sicherungsdatei?","error"); return; }
+    if (!data || !Array.isArray(data.contracts) || !Array.isArray(data.members)){
+      toast("Diese Datei sieht nicht wie eine Vertragsordner-Sicherung aus.","error");
+      return;
+    }
+    confirmDialog(
+      "Sicherung laden?",
+      "Der aktuell angezeigte Stand wird durch " + data.contracts.length + " Vertrag/Verträge und " + data.members.length + " Person(en) aus der Datei ersetzt.",
+      function(){
+        state.contracts = data.contracts;
+        state.members = data.members;
+        state.households = Array.isArray(data.households) ? data.households : [];
+        ensureHouseholdsMigrated(); // ältere Sicherungen ohne Haushalte bekommen automatisch einen Standard-Haushalt
+        state.activeHousehold = "__all";
+        state.dirty = false;
+        state.lastSavedAt = data.exportedAt || new Date().toISOString();
+        state.lastLocalChangeAt = state.lastSavedAt;
+        persist();
+        render();
+        toast("Sicherung geladen.");
+      },
+      "Sicherung laden",
+      false
+    );
+  };
+  reader.onerror = function(){ toast("Datei konnte nicht gelesen werden.","error"); };
+  reader.readAsText(file);
+}
+
+/* ======================= Boot ======================= */
+
+function boot(){
+  renderNav();
+  loadFromStorage();
+  ensureHouseholdsMigrated();
+  applyBackgroundImage();
+  state.contractsLoaded = true;
+  state.membersLoaded = true;
+  render();
+}
+
+/* ======================= Helpers: money & dates ======================= */
+
+const eur = new Intl.NumberFormat("de-DE", { style:"currency", currency:"EUR" });
+function formatEUR(v){ return eur.format(v||0); }
+function formatDate(s){
+  if (!s) return "–";
+  const d = new Date(s+"T00:00:00");
+  if (isNaN(d)) return "–";
+  return new Intl.DateTimeFormat("de-DE",{ day:"2-digit", month:"2-digit", year:"numeric" }).format(d);
+}
+function todayISO(){ return new Date().toISOString().slice(0,10); }
+function addMonthsISO(iso, delta){
+  const d = new Date(iso+"T00:00:00");
+  d.setMonth(d.getMonth()+delta);
+  return d;
+}
+function daysBetween(a,b){ return Math.round((b-a)/86400000); }
+
+function annualCost(c){
+  const f = FREQ_BY_ID[c.frequency];
+  const amt = Number(c.amount)||0;
+  return f ? amt * f.perYear : 0;
+}
+function monthlyEquivalent(c){ return annualCost(c)/12; }
+
+function cancelByDate(c){
+  if (!c.endDate || c.noticePeriodMonths==null || c.noticePeriodMonths==="") return null;
+  const months = Number(c.noticePeriodMonths);
+  if (isNaN(months)) return null;
+  let effectiveEnd = c.endDate;
+  let cb = addMonthsISO(effectiveEnd, -months);
+
+  if (c.autoRenew && c.renewalTermMonths!=null && c.renewalTermMonths!==""){
+    const term = Number(c.renewalTermMonths);
+    if (!isNaN(term) && term>0){
+      const today = new Date(todayISO()+"T00:00:00");
+      let guard = 0;
+      while (cb < today && guard < 200){
+        effectiveEnd = addMonthsISO(effectiveEnd, term).toISOString().slice(0,10);
+        cb = addMonthsISO(effectiveEnd, -months);
+        guard++;
+      }
+    }
+  }
+  cb.effectiveEndDate = effectiveEnd;
+  return cb;
+}
+
+function catColor(id){ return "var("+(CATEGORY_BY_ID[id] ? CATEGORY_BY_ID[id].varName : "--cat-other")+")"; }
+function memberColorVar(m){
+  const idx = state.members.findIndex(function(x){ return x.id===m.id; });
+  return MEMBER_COLORS[(m.colorIndex!=null?m.colorIndex:idx) % MEMBER_COLORS.length];
+}
+function memberById(id){ return state.members.find(function(m){ return m.id===id; }); }
+function householdById(id){ return state.households.find(function(h){ return h.id===id; }); }
+function householdColorVar(h){
+  const idx = state.households.findIndex(function(x){ return x.id===h.id; });
+  return MEMBER_COLORS[(h.colorIndex!=null?h.colorIndex:idx) % MEMBER_COLORS.length];
+}
+function householdsOfContract(c){
+  const ids = Array.isArray(c.householdIds) ? c.householdIds : [];
+  return ids.map(householdById).filter(Boolean);
+}
+function membersForHouseholds(ids){
+  if (!ids || ids.length===0) return state.members.slice();
+  return state.members.filter(function(m){
+    return (m.householdIds||[]).some(function(hid){ return ids.indexOf(hid)>=0; });
+  });
+}
+function contractInActiveHousehold(c){
+  if (state.activeHousehold==="__all") return true;
+  return (c.householdIds||[]).indexOf(state.activeHousehold)>=0;
+}
+function visibleContracts(){
+  return state.contracts.filter(contractInActiveHousehold);
+}
+function householdChipsHTML(idPrefix, selectedIds){
+  if (!state.households.length) return '<div class="hint">Noch kein Haushalt angelegt.</div>';
+  return '<div class="radio-group" id="'+idPrefix+'-chips">'+
+    state.households.map(function(h){
+      const sel = selectedIds.indexOf(h.id)>=0;
+      return '<button type="button" class="radio-chip'+(sel?' selected':'')+'" data-household-chip="'+h.id+'">'+
+        '<span class="dot" style="background:var('+householdColorVar(h)+');margin-right:6px;"></span>'+escapeHtml(h.name)+
+      '</button>';
+    }).join("")+
+  '</div>';
+}
+function memberBankAccounts(id){
+  const m = memberById(id);
+  return (m && Array.isArray(m.bankAccounts)) ? m.bankAccounts : [];
+}
+function bankAccountById(memberId, accountId){
+  return memberBankAccounts(memberId).find(function(a){ return a.id===accountId; });
+}
+function bankAccountLabel(a){
+  return a.iban ? (a.label||"Konto")+" · "+a.iban : (a.label||"Konto");
+}
+function memberInitials(name){
+  const parts = String(name||"?").trim().split(/\s+/);
+  return ((parts[0]||"")[0]||"?").toUpperCase() + ((parts[1]||"")[0]||"").toUpperCase();
+}
+function avatarHTML(m, extraClass){
+  const cls = "avatar"+(extraClass?" "+extraClass:"");
+  if (m.photo){
+    return '<div class="'+cls+'"><img src="'+m.photo+'" alt=""></div>';
+  }
+  return '<div class="'+cls+'" style="background:'+"var("+memberColorVar(m)+")"+'">'+escapeHtml(memberInitials(m.name))+'</div>';
+}
+
+/* ======================= Toasts ======================= */
+
+function toast(msg, type){
+  const host = document.getElementById("toast-host");
+  const el = document.createElement("div");
+  el.className = "toast" + (type==="error" ? " error" : "");
+  el.textContent = msg;
+  host.appendChild(el);
+  requestAnimationFrame(function(){ el.classList.add("show"); });
+  setTimeout(function(){
+    el.classList.remove("show");
+    setTimeout(function(){ el.remove(); }, 220);
+  }, 3200);
+}
+
+/* ======================= Nav ======================= */
+
+const NAV_ITEMS = [
+  { id:"dashboard", label:"Übersicht", icon:"home" },
+  { id:"contracts", label:"Verträge", icon:"list" },
+  { id:"household", label:"Mitglieder", icon:"users" },
+  { id:"backup", label:"Sicherung", icon:"upload" },
+  { id:"help", label:"Hilfe & FAQs", shortLabel:"Hilfe", icon:"help" }
+];
+
+function renderNav(){
+  const sidebarNav = document.getElementById("sidebar-nav");
+  sidebarNav.innerHTML = NAV_ITEMS.map(function(it){
+    return '<li><button class="nav-item" data-view="'+it.id+'" type="button">'+icon(it.icon)+'<span>'+it.label+'</span></button></li>';
+  }).join("");
+  sidebarNav.querySelectorAll("[data-view]").forEach(function(btn){
+    btn.addEventListener("click", function(){ setView(btn.getAttribute("data-view")); });
+  });
+
+  const bottomNav = document.getElementById("bottom-nav");
+  bottomNav.innerHTML = NAV_ITEMS.map(function(it){
+    return '<button data-view="'+it.id+'" type="button">'+icon(it.icon)+'<span>'+(it.shortLabel||it.label)+'</span></button>';
+  }).join("");
+  bottomNav.querySelectorAll("[data-view]").forEach(function(btn){
+    btn.addEventListener("click", function(){ setView(btn.getAttribute("data-view")); });
+  });
+
+  document.getElementById("sidebar-add-btn").innerHTML = icon("plus") + " Neuer Vertrag";
+  document.getElementById("sidebar-add-btn").addEventListener("click", function(){ openContractModal("new"); });
+  document.getElementById("fab-add").innerHTML = icon("plus");
+  document.getElementById("fab-add").addEventListener("click", function(){ openContractModal("new"); });
+  document.querySelector(".brand-mark").innerHTML = icon("folder");
+}
+
+function setView(v){
+  state.view = v;
+  render();
+  window.scrollTo({ top:0, behavior:"auto" });
+}
+
+/* ======================= Master render ======================= */
+
+function render(){
+  document.querySelectorAll(".nav-item, .bottom-nav button").forEach(function(el){
+    el.classList.toggle("active", el.getAttribute("data-view")===state.view);
+  });
+  document.querySelectorAll('[data-view="backup"]').forEach(function(btn){
+    let dot = btn.querySelector(".nav-dot");
+    if (state.dirty){
+      if (!dot){ dot = document.createElement("span"); dot.className = "nav-dot"; btn.appendChild(dot); }
+    } else if (dot){ dot.remove(); }
+  });
+
+  const titles = {
+    dashboard:["Übersicht","Alle Verträge & Versicherungen auf einen Blick"],
+    contracts:["Verträge","Alle Einträge durchsuchen und bearbeiten"],
+    household:["Mitglieder","Personen, ihre Bankkonten und die Haushalte, denen sie angehören"],
+    backup:["Sicherung","Lokale Daten sichern und mit iCloud abgleichen"],
+    help:["Hilfe & FAQs","Wie die einzelnen Funktionen der App funktionieren"]
+  };
+  document.getElementById("topbar-title").textContent = titles[state.view][0];
+  document.getElementById("topbar-sub").textContent = titles[state.view][1];
+
+  const switcherSlot = document.getElementById("household-switcher-slot");
+  if (switcherSlot){
+    const showSwitcher = state.households.length>1 && (state.view==="dashboard" || state.view==="contracts");
+    if (showSwitcher){
+      switcherSlot.innerHTML = '<select class="filter-select" id="household-switch" aria-label="Haushalt wählen">'+
+        '<option value="__all"'+(state.activeHousehold==="__all"?' selected':'')+'>Alle Haushalte</option>'+
+        state.households.map(function(h){ return '<option value="'+h.id+'"'+(state.activeHousehold===h.id?' selected':'')+'>'+escapeHtml(h.name)+'</option>'; }).join("")+
+      '</select>';
+      switcherSlot.querySelector("#household-switch").addEventListener("change", function(e){
+        state.activeHousehold = e.target.value;
+        render();
+      });
+    } else {
+      switcherSlot.innerHTML = "";
+    }
+  }
+
+  document.getElementById("view-dashboard").classList.toggle("active", state.view==="dashboard");
+  document.getElementById("view-contracts").classList.toggle("active", state.view==="contracts");
+  document.getElementById("view-household").classList.toggle("active", state.view==="household");
+  document.getElementById("view-backup").classList.toggle("active", state.view==="backup");
+  document.getElementById("view-help").classList.toggle("active", state.view==="help");
+
+  if (state.view==="dashboard") renderDashboard();
+  if (state.view==="contracts") renderContracts();
+  if (state.view==="household") renderHousehold();
+  if (state.view==="backup") renderBackup();
+  if (state.view==="help") renderHelp();
+}
+
+function formatDateTime(iso){
+  if (!iso) return "–";
+  try{
+    return new Intl.DateTimeFormat("de-DE", { day:"2-digit", month:"2-digit", year:"numeric", hour:"2-digit", minute:"2-digit" }).format(new Date(iso));
+  }catch(e){ return iso; }
+}
+
+/* ======================= Sicherung ======================= */
+
+function renderBackup(){
+  const el = document.getElementById("view-backup");
+  el.innerHTML =
+    '<div class="section card"><div class="card-pad">'+
+      '<div class="section-head"><h2>Hintergrundbild</h2></div>'+
+      '<p style="margin:0 0 14px;color:var(--text-secondary);font-size:0.86rem;">Wählen Sie ein eigenes Foto als Hintergrund – aus Ihrer Fotomediathek, iCloud-Fotos oder den Dateien dieses Geräts.</p>'+
+      (state.backgroundImage
+        ? '<div class="bg-preview-row"><img src="'+state.backgroundImage+'" class="bg-preview-thumb" alt="Aktuelles Hintergrundbild"><button class="btn btn-ghost" id="bg-remove-btn" type="button">'+icon("trash")+' Entfernen</button></div>'
+        : '')+
+      '<label class="btn btn-ghost" for="bg-file-input">'+icon("upload")+' '+(state.backgroundImage? "Anderes Foto wählen":"Foto wählen")+'</label>'+
+      '<input type="file" id="bg-file-input" accept="image/*" class="visually-hidden">'+
+    '</div></div>'+
+
+    '<div class="section card"><div class="card-pad">'+
+      '<div class="section-head"><h2>Sicherung &amp; iCloud-Abgleich</h2></div>'+
+      '<div style="display:flex;flex-direction:column;gap:4px;margin-bottom:16px;">'+
+        '<div class="member-sub">Letzte Sicherung: '+escapeHtml(formatDateTime(state.lastSavedAt))+(state.lastSavedAt?"":" – noch keine")+'</div>'+
+        '<div class="member-sub">Letzte Änderung auf diesem Gerät: '+escapeHtml(formatDateTime(state.lastLocalChangeAt))+'</div>'+
+        (state.dirty
+          ? '<span class="badge badge-warning" style="width:fit-content;margin-top:4px;">'+icon("warn")+' Ungesicherte Änderungen</span>'
+          : '<span class="badge badge-good" style="width:fit-content;margin-top:4px;">'+icon("check")+' Alles gesichert</span>')+
+      '</div>'+
+      '<div style="display:flex;gap:10px;flex-wrap:wrap;">'+
+        '<button class="btn btn-primary" id="backup-save-btn" type="button">'+icon("upload")+' Sicherung jetzt speichern</button>'+
+        '<button class="btn btn-ghost" id="backup-load-btn" type="button">'+icon("folder")+' Sicherung laden …</button>'+
+        '<input type="file" id="backup-file-input" accept="application/json,.json" class="visually-hidden">'+
+      '</div>'+
+    '</div></div>'+
+
+    '<div class="card"><div class="card-pad" style="display:flex;gap:10px;align-items:flex-start;color:var(--text-secondary);font-size:0.86rem;line-height:1.6;">'+
+      icon("info")+
+      '<div>'+
+        '<p style="margin:0 0 8px;">Diese App läuft vollständig lokal in diesem Browser – Ihre Vertragsdaten und gescannten Dokumente verlassen dieses Gerät nicht von selbst, es gibt keinen Server im Hintergrund. Für den Abgleich zwischen Ihren eigenen Geräten über iCloud:</p>'+
+        '<ol style="margin:0 0 8px 18px;padding:0;">'+
+          '<li>„Sicherung jetzt speichern“ anklicken – es wird die Datei <code>vertragsordner-daten.json</code> heruntergeladen.</li>'+
+          '<li>Diese Datei in einen Ordner Ihres iCloud Drive legen (per Finder verschieben, oder den Download-Ordner des Browsers direkt auf diesen iCloud-Ordner stellen).</li>'+
+          '<li>Auf einem anderen Gerät hierher wechseln und über „Sicherung laden …“ dieselbe Datei aus dem iCloud-Ordner öffnen.</li>'+
+        '</ol>'+
+        '<p style="margin:0;">Tipp: Browser-Einstellung „Vor jedem Download nach Speicherort fragen“ aktivieren – dann lässt sich beim Sichern jedes Mal derselbe iCloud-Ordner wählen und die Datei sauber überschreiben, statt dass sich mehrere Dateien „(1)“, „(2)“ … ansammeln.</p>'+
+      '</div>'+
+    '</div></div>';
+
+  document.getElementById("backup-save-btn").addEventListener("click", exportBackup);
+  const fileInput = document.getElementById("backup-file-input");
+  document.getElementById("backup-load-btn").addEventListener("click", function(){ fileInput.click(); });
+  fileInput.addEventListener("change", function(){
+    const file = fileInput.files[0];
+    if (file) importBackupFile(file);
+    fileInput.value = "";
+  });
+
+  const bgInput = document.getElementById("bg-file-input");
+  bgInput.addEventListener("change", function(){
+    const file = bgInput.files[0];
+    if (file) handleBackgroundFileSelected(file);
+    bgInput.value = "";
+  });
+  const bgRemoveBtn = document.getElementById("bg-remove-btn");
+  if (bgRemoveBtn){
+    bgRemoveBtn.addEventListener("click", function(){
+      confirmDialog("Hintergrundbild entfernen", "Das aktuelle Hintergrundbild wird entfernt und die Standarddarstellung genutzt.", function(){
+        setBackgroundImage(null);
+        toast("Hintergrundbild entfernt.");
+      }, "Entfernen", true);
+    });
+  }
+}
+
+/* ======================= Hilfe & FAQs ======================= */
+
+const HELP_TOPICS = [
+  { title:"Erste Schritte", body:
+    '<p>Am einfachsten starten Sie unter <strong>Mitglieder</strong>: Legen Sie dort zuerst Ihren/Ihre Haushalt(e) an (z. B. „Wohnhaus A“ oder „Praxis“) und danach die Personen, die in Ihrem Haushalt Rechnungen bezahlen, und hinterlegen Sie bei Bedarf gleich deren Bankkonten. Danach erfassen Sie unter <strong>Verträge</strong> Ihren ersten Vertrag und ordnen ihm einen oder mehrere Haushalte, eine Kategorie, einen Zahler bzw. eine Zahlerin und – falls vorhanden – ein gescanntes Dokument zu.</p>'+
+    '<p>Alle Zahlen auf der <strong>Übersicht</strong> (jährliche Kosten, anstehende Kündigungsfristen, Ausgabenverteilung) aktualisieren sich automatisch, sobald Verträge vorhanden sind.</p>' },
+
+  { title:"Verträge anlegen & Dokumente anhängen", body:
+    '<p>Über „Neuer Vertrag“ (unten rechts bzw. in der Seitenleiste) öffnet sich das Erfassungsformular. Pflichtfeld ist nur die Bezeichnung – alle anderen Angaben wie Kategorie, Anbieter, Vertragsnummer, Betrag, Zahlungsrhythmus, Laufzeiten und Notizen sind optional und können jederzeit nachgetragen werden.</p>'+
+    '<p>Unter „Dokument“ lassen sich Fotos oder PDF-Dateien anhängen – entweder direkt fotografieren oder eine vorhandene Datei auswählen. Ein Klick auf ein angehängtes Dokument in der Liste öffnet es in einem neuen Tab, egal ob Foto oder PDF.</p>' },
+
+  { title:"Zahler:in & Bankkonten", body:
+    '<p>Jedem Vertrag kann eine Person aus dem Haushalt als Zahler:in zugeordnet werden. Sobald eine Person ausgewählt ist, erscheint darunter das Feld „Zahlungsquelle“ mit den für diese Person hinterlegten Bankkonten – sind noch keine vorhanden, lässt sich direkt aus dem Vertragsformular heraus eines anlegen.</p>'+
+    '<p>Bankkonten verwalten Sie dauerhaft über „Mitglieder“ → Person bearbeiten. Die gewählte Zahlungsquelle wird auf der Vertragskarte als zusätzliche Information angezeigt.</p>' },
+
+  { title:"Verlauf bei Zahler-Wechsel", body:
+    '<p>Ändern Sie bei einem bestehenden Vertrag die Zahler:in oder das Bankkonto, merkt sich die App diesen Wechsel automatisch mit Datum. Im Vertragsformular erscheint dafür unterhalb der Zahlungsquelle ein Verlauf mit allen bisherigen Wechseln – praktisch, um später nachzuvollziehen, wer wann für einen Vertrag aufgekommen ist.</p>' },
+
+  { title:"Kündigungsfristen & automatische Verlängerung", body:
+    '<p>Tragen Sie Vertragsende und Kündigungsfrist (in Monaten vor Vertragsende) ein, berechnet die App automatisch das späteste Kündigungsdatum und zeigt es auf der Übersicht an, sobald es innerhalb der nächsten 90 Tage liegt.</p>'+
+    '<p>Verlängert sich ein Vertrag automatisch, wenn nicht rechtzeitig gekündigt wird, aktivieren Sie „Verlängert sich automatisch“ und geben an, um wie viele Monate sich die Laufzeit jeweils verlängert. Ist die ursprüngliche Frist bereits verstrichen, rechnet die App selbstständig die nächste tatsächliche Kündigungsfrist hoch, statt die Frist fälschlich als überfällig anzuzeigen – erkennbar am kleinen Aktualisieren-Symbol neben dem Datum.</p>' },
+
+  { title:"Portal-Login & Kündigungskontakt", body:
+    '<p>Im Feld „URL / Login zum Vertragspartner“ hinterlegte Adressen lassen sich über das Link-Symbol direkt im Browser öffnen. Im Bereich „Kündigung – Kontakt beim Anbieter“ können Ansprechpartner, Rufnummer und E-Mail-Adresse gespeichert werden; die kleinen Symbole daneben starten bei Bedarf direkt einen Anruf oder eine E-Mail an diese Adresse.</p>' },
+
+  { title:"Ausgaben im Überblick", body:
+    '<p>Der Diagrammbereich auf der Übersicht lässt sich zwischen drei Auswertungen umschalten: „Nach Kategorie“, „Nach Zahler:in“ und „Nach Anbieter“ – jeweils wahlweise als Kacheln, Balkendiagramm oder Tabelle. Bei vielen Anbietern werden automatisch nur die zehn größten einzeln aufgeführt, der Rest wird unter „Weitere“ zusammengefasst.</p>'+
+    '<p>Ein Klick auf eine Kachel oder einen Balken springt direkt zur passend gefilterten Vertragsliste; ein kleiner Chip oberhalb der Liste zeigt den aktiven Filter an und lässt sich mit einem Klick wieder entfernen.</p>' },
+
+  { title:"Haushaltsmitglieder & Fotos", body:
+    '<p>Unter „Mitglieder“ legen Sie Personen an, denen Sie Verträge und Bankkonten zuordnen können. Optional lässt sich pro Person ein Foto hinterlegen, das anstelle der farbigen Initialen angezeigt wird – praktisch zur schnelleren Unterscheidung bei mehreren Personen.</p>'+
+    '<p>Ein Klick auf eine Person in der Liste springt direkt zu den ihr zugeordneten Verträgen.</p>' },
+
+  { title:"Mehrere Haushalte (z. B. Wohnhaus A, Praxis)", body:
+    '<p>Unter „Mitglieder“ lassen sich beliebig viele Haushalte anlegen und frei benennen – z. B. „Wohnhaus A“, „Wohnhaus B“ oder „Praxis“. Jede Person kann mehreren Haushalten gleichzeitig angehören, und auch ein Vertrag kann mehreren Haushalten zugeordnet werden (etwa ein gemeinsam genutzter Vertrag).</p>'+
+    '<p>Sobald mehr als ein Haushalt angelegt ist, erscheint oben rechts auf „Übersicht“ und „Verträge“ eine Auswahl zum Umschalten. „Alle Haushalte“ zeigt dabei die zusammengefasste Gesamtübersicht über alle Haushalte hinweg (jährliche und monatliche Kosten, Diagramme, Kündigungsfristen); die Auswahl eines einzelnen Haushalts blendet alles auf dessen Verträge ein.</p>' },
+
+  { title:"Sicherung & iCloud-Abgleich", body:
+    '<p>Die App läuft vollständig lokal auf diesem Gerät, es gibt keinen Server und keine automatische Internetübertragung Ihrer Daten. Damit Ihre Angaben auch auf anderen eigenen Geräten verfügbar sind, speichern Sie regelmäßig eine Sicherungsdatei und legen diese in einem gemeinsamen iCloud-Drive-Ordner ab – die genaue Schritt-für-Schritt-Anleitung finden Sie im Bereich „Sicherung“.</p>' },
+
+  { title:"Hintergrundbild", body:
+    '<p>Im Bereich „Sicherung“ lässt sich ein eigenes Foto als Hintergrund wählen. Dieses Hintergrundbild ist bewusst geräteabhängig und wird nicht Teil der Sicherungsdatei – auf jedem Gerät kann also ein anderes Bild hinterlegt sein, ohne dass sich die Dateigröße der eigentlichen Vertragsdaten dadurch unnötig vergrößert.</p>' },
+
+  { title:"Auf dem iPad/iPhone als App nutzen", body:
+    '<p>Öffnen Sie die Datei einmal in Safari (z. B. aus der Dateien-App über „Öffnen in Safari“) und tippen Sie dort auf Teilen → „Zum Home-Bildschirm“. Es erscheint ein eigenes Icon mit dem Namen „Vertragsordner“, über das sich die App künftig wie eine eigenständige App öffnen lässt – ganz ohne Safari-Adressleiste.</p>'+
+    '<p>Da es sich um eine lokale Datei und nicht um eine Internetseite handelt, verhält sich Safari beim direkten Öffnen lokaler Dateien je nach iOS-Version gelegentlich etwas unzuverlässig. Funktioniert „Zum Home-Bildschirm“ einmal nicht, hilft meist ein erneuter Versuch über „Öffnen in Safari“.</p>' },
+
+  { title:"Drucken", body:
+    '<p>In der gefilterten Vertragsliste erzeugt die Schaltfläche „Drucken“ oberhalb der Liste eine saubere, druckfreundliche Übersichtstabelle genau der aktuell angezeigten Verträge – inklusive der gewählten Filter.</p>'+
+    '<p>Im Bearbeitungsfenster eines einzelnen Vertrags druckt das Drucker-Symbol neben dem Schließen-Button ein übersichtliches Einzelblatt mit allen Angaben zu diesem Vertrag, z. B. für Unterlagen oder zur Weitergabe.</p>' },
+
+  { title:"Datenschutz & Offline-Funktionsweise", body:
+    '<p>Diese App besteht aus einer einzigen Datei, läuft vollständig im Browser dieses Geräts und greift auf keine externen Server zu. Ihre Vertragsdaten, angehängten Dokumente und Fotos verlassen das jeweilige Gerät nur dann, wenn Sie selbst eine Sicherungsdatei exportieren und bewusst weitergeben oder in iCloud Drive ablegen.</p>' }
+];
+
+function renderHelp(){
+  const el = document.getElementById("view-help");
+  el.innerHTML =
+    '<div class="section card"><div class="card-pad">'+
+      HELP_TOPICS.map(function(t, i){
+        return '<details class="help-topic"'+(i===0?' open':'')+'>'+
+          '<summary>'+icon("chevronRight","chev")+'<span>'+escapeHtml(t.title)+'</span></summary>'+
+          '<div class="help-topic-body">'+t.body+'</div>'+
+        '</details>';
+      }).join("")+
+    '</div></div>'+
+    '<div class="card"><div class="card-pad" style="display:flex;gap:10px;align-items:flex-start;color:var(--text-secondary);font-size:0.86rem;line-height:1.6;">'+
+      icon("info")+
+      '<div>Finden Sie hier keine Antwort auf Ihre Frage? Diese Hilfe wächst mit der App – sagen Sie einfach Bescheid, welche Funktion noch erklärt werden sollte.</div>'+
+    '</div></div>';
+}
+
+/* ======================= Dashboard ======================= */
+
+function activeRecurring(){
+  return visibleContracts().filter(function(c){ return c.status==="aktiv" && c.frequency!=="einmalig"; });
+}
+
+function renderDashboard(){
+  const el = document.getElementById("view-dashboard");
+  if (!state.contractsLoaded){
+    el.innerHTML = '<div class="chart-empty">Wird geladen …</div>';
+    return;
+  }
+  if (state.contracts.length===0){
+    el.innerHTML = emptyStateHTML();
+    wireEmptyState(el);
+    return;
+  }
+
+  const rec = activeRecurring();
+  const annualTotal = rec.reduce(function(s,c){ return s+annualCost(c); }, 0);
+  const monthlyTotal = annualTotal/12;
+  const activeCount = visibleContracts().filter(function(c){ return c.status==="aktiv"; }).length;
+  const upcoming = upcomingDeadlines();
+
+  el.innerHTML =
+    '<div class="kpi-row">'+
+      kpiHTML("Jährliche Kosten", formatEUR(annualTotal), "laufende, aktive Verträge")+
+      kpiHTML("Monatlich Ø", formatEUR(monthlyTotal), "hochgerechnet")+
+      kpiHTML("Aktive Verträge", String(activeCount), "")+
+      kpiHTML("Fristen < 90 Tage", String(upcoming.length), "")+
+    '</div>'+
+
+    '<div class="section card">'+
+      '<div class="card-pad">'+
+        '<div class="section-head">'+
+          '<h2>Ausgaben im Überblick</h2>'+
+          '<div class="chart-toggle" id="chart-toggle">'+
+            '<button data-mode="category" type="button">Nach Kategorie</button>'+
+            '<button data-mode="payer" type="button">Nach Zahler:in</button>'+
+            '<button data-mode="provider" type="button">Nach Anbieter</button>'+
+          '</div>'+
+        '</div>'+
+        '<div class="chart-display-row">'+
+          '<div class="chart-toggle" id="chart-display-toggle">'+
+            '<button data-display="tiles" type="button">Kacheln</button>'+
+            '<button data-display="bars" type="button">Diagramm</button>'+
+            '<button data-display="table" type="button">Tabelle</button>'+
+          '</div>'+
+        '</div>'+
+        '<div id="chart-host"></div>'+
+      '</div>'+
+    '</div>'+
+
+    '<div class="section card">'+
+      '<div class="card-pad">'+
+        '<div class="section-head"><h2>Anstehende Kündigungsfristen</h2></div>'+
+        (upcoming.length ? upcoming.map(deadlineRowHTML).join("") : '<div class="chart-empty">Keine Fristen in den nächsten 90 Tagen.</div>')+
+      '</div>'+
+    '</div>';
+
+  document.querySelectorAll("#chart-toggle button").forEach(function(btn){
+    btn.classList.toggle("active", btn.getAttribute("data-mode")===state.chartMode);
+    btn.addEventListener("click", function(){
+      state.chartMode = btn.getAttribute("data-mode");
+      renderDashboard();
+    });
+  });
+  document.querySelectorAll("#chart-display-toggle button").forEach(function(btn){
+    btn.classList.toggle("active", btn.getAttribute("data-display")===state.chartDisplay);
+    btn.addEventListener("click", function(){
+      state.chartDisplay = btn.getAttribute("data-display");
+      renderDashboard();
+    });
+  });
+
+  renderChart(document.getElementById("chart-host"));
+
+  el.querySelectorAll("[data-open-contract]").forEach(function(row){
+    row.addEventListener("click", function(){ openContractModal(row.getAttribute("data-open-contract")); });
+  });
+}
+
+function kpiHTML(label, value, sub){
+  return '<div class="kpi"><div class="kpi-label">'+escapeHtml(label)+'</div><div class="kpi-value">'+escapeHtml(value)+'</div>'+(sub?'<div class="member-sub">'+escapeHtml(sub)+'</div>':'')+'</div>';
+}
+
+function upcomingDeadlines(){
+  const today = new Date(todayISO()+"T00:00:00");
+  return visibleContracts()
+    .filter(function(c){ return c.status==="aktiv"; })
+    .map(function(c){ return { c:c, cb: cancelByDate(c) }; })
+    .filter(function(x){ return x.cb && daysBetween(today, x.cb) <= 90; })
+    .sort(function(a,b){ return a.cb - b.cb; })
+    .slice(0,8);
+}
+
+function deadlineRowHTML(x){
+  const days = daysBetween(new Date(todayISO()+"T00:00:00"), x.cb);
+  let badge;
+  if (days < 0) badge = '<span class="badge badge-critical">'+icon("warn")+' überfällig</span>';
+  else if (days <= 14) badge = '<span class="badge badge-critical">'+icon("warn")+' '+days+' Tage</span>';
+  else if (days <= 60) badge = '<span class="badge badge-warning">'+days+' Tage</span>';
+  else badge = '<span class="badge badge-neutral">'+days+' Tage</span>';
+  const renewedNote = (x.c.autoRenew && x.cb.effectiveEndDate && x.cb.effectiveEndDate!==x.c.endDate)
+    ? ' <span title="Automatische Verlängerung bereits eingerechnet">'+icon("refresh")+'</span>' : '';
+  return '<div class="deadline-row" data-open-contract="'+x.c.id+'" style="cursor:pointer;">'+
+    '<span class="dot" style="background:'+catColor(x.c.category)+'"></span>'+
+    '<div class="deadline-main">'+
+      '<div class="deadline-name">'+escapeHtml(x.c.name||"(ohne Namen)")+'</div>'+
+      '<div class="deadline-sub">Kündigen bis '+formatDate(x.cb.toISOString().slice(0,10))+renewedNote+'</div>'+
+    '</div>'+
+    badge+
+  '</div>';
+}
+
+/* ---------- Chart ---------- */
+
+function chartData(){
+  const rec = activeRecurring();
+  if (state.chartMode==="category"){
+    const totals = {};
+    rec.forEach(function(c){ totals[c.category] = (totals[c.category]||0) + annualCost(c); });
+    return CATEGORIES.map(function(cat){ return { key:cat.id, label:cat.label, value:totals[cat.id]||0, color:"var("+cat.varName+")" }; })
+      .filter(function(r){ return r.value>0; })
+      .sort(function(a,b){ return b.value-a.value; });
+  }
+  if (state.chartMode==="provider"){
+    const totals = {}, counts = {}, order = [];
+    rec.forEach(function(c){
+      const key = (c.provider||"").trim() || "__none";
+      if (!(key in totals)){ totals[key]=0; counts[key]=0; order.push(key); }
+      totals[key]+=annualCost(c);
+      counts[key]+=1;
+    });
+    let rows = order.map(function(key){
+      return { key:key, label: key==="__none" ? "Ohne Anbieter" : key, value: totals[key], count: counts[key] };
+    }).sort(function(a,b){ return b.value-a.value; });
+    if (rows.length>10){
+      // Aus Performance-/Übersichtsgründen: nur die Top 10 Anbieter einzeln, der Rest gebündelt.
+      const head = rows.slice(0,10);
+      const rest = rows.slice(10);
+      const restSum = rest.reduce(function(s,r){ return s+r.value; },0);
+      const restCount = rest.reduce(function(s,r){ return s+r.count; },0);
+      rows = head.concat([{ key:"__other", label:"Weitere", value:restSum, count:restCount }]);
+    }
+    return rows.map(function(r,i){
+      return Object.assign({}, r, { color: r.key==="__other" ? "var(--cat-other)" : "var(--cat-"+((i%8)+1)+")" });
+    });
+  }
+  const totals = {}, order = [];
+  rec.forEach(function(c){
+    if (!c.payerId) return;
+    if (!(c.payerId in totals)){ totals[c.payerId]=0; order.push(c.payerId); }
+    totals[c.payerId]+=annualCost(c);
+  });
+  let rows = order.map(function(id){
+    const m = memberById(id);
+    return { key:id, label:m ? m.name : "Unbekannt", value:totals[id], color: m ? "var("+memberColorVar(m)+")" : "var(--cat-other)" };
+  }).sort(function(a,b){ return b.value-a.value; });
+  if (rows.length>8){
+    const head = rows.slice(0,7);
+    const restSum = rows.slice(7).reduce(function(s,r){ return s+r.value; },0);
+    rows = head.concat([{ key:"__other", label:"Weitere", value:restSum, color:"var(--cat-other)" }]);
+  }
+  return rows;
+}
+
+function chartModeLabel(){
+  return state.chartMode==="category" ? "Kategorie" : (state.chartMode==="provider" ? "Anbieter" : "Zahler:in");
+}
+function contractCountLabel(n){
+  return n+' Vertrag/Verträge';
+}
+
+function renderChart(host){
+  const data = chartData();
+  const total = data.reduce(function(s,r){ return s+r.value; },0);
+
+  if (data.length===0){
+    host.innerHTML = '<div class="chart-empty">Noch keine aktiven, wiederkehrenden Verträge für diese Auswertung.</div>';
+    return;
+  }
+
+  if (state.chartDisplay==="table"){
+    host.innerHTML = '<div style="overflow-x:auto;"><table class="chart-table"><thead><tr><th>'+chartModeLabel()+'</th><th>Anteil</th><th>Jährlich</th></tr></thead><tbody>'+
+      data.map(function(r){
+        const pct = total? Math.round(r.value/total*100) : 0;
+        const countSuffix = (state.chartMode==="provider")
+          ? ' <span class="chart-count">('+contractCountLabel(r.count)+')</span>' : '';
+        return '<tr><td><span class="dot" style="background:'+r.color+';margin-right:7px;"></span>'+escapeHtml(r.label)+countSuffix+'</td><td>'+pct+' %</td><td class="amount">'+formatEUR(r.value)+'</td></tr>';
+      }).join("")+
+      '</tbody></table></div>';
+    return;
+  }
+
+  if (state.chartDisplay==="tiles"){
+    host.innerHTML = '<div class="tile-grid">'+data.map(function(r){
+      const pct = total? Math.round(r.value/total*100) : 0;
+      const countHTML = (state.chartMode==="provider")
+        ? '<span class="cat-tile-count">'+contractCountLabel(r.count)+'</span>' : '';
+      const ariaCount = (state.chartMode==="provider") ? ', '+contractCountLabel(r.count) : '';
+      return '<div class="cat-tile" data-tile-key="'+r.key+'" tabindex="0" role="button" aria-label="'+escapeHtml(r.label)+ariaCount+', '+formatEUR(r.value)+' pro Jahr, '+pct+' Prozent">'+
+        '<div class="cat-tile-head"><span class="dot" style="background:'+r.color+'"></span><span class="cat-tile-label">'+escapeHtml(r.label)+'</span></div>'+
+        countHTML+
+        '<div class="cat-tile-value">'+formatEUR(r.value)+'</div>'+
+        '<div class="cat-tile-sub">'+pct+' % · '+formatEUR(r.value/12)+' / Monat</div>'+
+        '<div class="cat-tile-meter"><span style="width:'+pct+'%;background:'+r.color+';"></span></div>'+
+      '</div>';
+    }).join("")+'</div>';
+    host.querySelectorAll("[data-tile-key]").forEach(function(el){
+      function activate(){
+        const key = el.getAttribute("data-tile-key");
+        if (key==="__other") return;
+        if (state.chartMode==="category"){ state.filterCategory = key; setView("contracts"); }
+        else if (state.chartMode==="payer"){ state.filterPayer = key; setView("contracts"); }
+        else if (state.chartMode==="provider"){ state.filterProvider = key; setView("contracts"); }
+      }
+      el.addEventListener("click", activate);
+      el.addEventListener("keydown", function(e){ if (e.key==="Enter" || e.key===" "){ e.preventDefault(); activate(); } });
+    });
+    return;
+  }
+
+  const showCount = state.chartMode==="provider";
+  const rowH = showCount ? 46 : 34, gap = 8, topPad = 6, labelColW = 168, axisH = 22;
+  const chartW = 640;
+  const plotW = chartW - labelColW - 54;
+  const maxVal = Math.max.apply(null, data.map(function(r){ return r.value; }));
+  const niceMax = maxVal<=0 ? 1 : maxVal*1.08;
+  const h = topPad + data.length*(rowH+gap) - gap + axisH + 8;
+
+  const ticks = [0, niceMax*0.5, niceMax];
+
+  let svg = '<svg viewBox="0 0 '+chartW+' '+h+'" style="width:100%;height:auto;display:block" role="img" aria-label="Balkendiagramm Ausgaben nach '+chartModeLabel()+'">';
+
+  ticks.forEach(function(t){
+    const x = labelColW + (t/niceMax)*plotW;
+    svg += '<line x1="'+x.toFixed(1)+'" y1="'+topPad+'" x2="'+x.toFixed(1)+'" y2="'+(h-axisH)+'" stroke="var(--gridline)" stroke-width="1" stroke-dasharray="2,3"/>';
+    svg += '<text class="bar-axis-label" x="'+x.toFixed(1)+'" y="'+(h-axisH+15)+'" text-anchor="middle">'+formatEUR(t).replace(/ /g," ")+'</text>';
+  });
+
+  data.forEach(function(r, i){
+    const y = topPad + i*(rowH+gap);
+    const barW = Math.max(2, (r.value/niceMax)*plotW);
+    const cy = y + rowH/2;
+    const pct = total? Math.round(r.value/total*100) : 0;
+    if (showCount){
+      svg += '<text class="bar-row-label" x="0" y="'+(cy-12).toFixed(1)+'">'+escapeHtml(r.label)+'</text>';
+      svg += '<text class="bar-row-value" x="0" y="'+(cy+7).toFixed(1)+'">'+formatEUR(r.value)+' · '+pct+' %</text>';
+      svg += '<text class="bar-row-count" x="0" y="'+(cy+22).toFixed(1)+'">'+contractCountLabel(r.count)+'</text>';
+    } else {
+      svg += '<text class="bar-row-label" x="0" y="'+(cy-6).toFixed(1)+'">'+escapeHtml(r.label)+'</text>';
+      svg += '<text class="bar-row-value" x="0" y="'+(cy+13).toFixed(1)+'">'+formatEUR(r.value)+' · '+pct+' %</text>';
+    }
+    svg += '<rect class="bar-rect" data-idx="'+i+'" x="'+labelColW+'" y="'+(cy-7).toFixed(1)+'" width="'+barW.toFixed(1)+'" height="14" rx="7" fill="'+r.color+'"/>';
+    svg += '<rect class="bar-hit" data-idx="'+i+'" x="'+labelColW+'" y="'+(y-2)+'" width="'+plotW+'" height="'+(rowH+4)+'" fill="transparent"/>';
+  });
+
+  svg += '</svg>';
+
+  host.innerHTML = '<div class="chart-wrap">'+svg+'<div class="chart-tooltip" id="chart-tooltip"></div></div>';
+
+  const wrap = host.querySelector(".chart-wrap");
+  const tooltip = host.querySelector("#chart-tooltip");
+  wrap.querySelectorAll(".bar-hit").forEach(function(hit){
+    const idx = Number(hit.getAttribute("data-idx"));
+    const r = data[idx];
+    const rect = wrap.querySelector('.bar-rect[data-idx="'+idx+'"]');
+    function show(evt){
+      rect.classList.add("hovered");
+      const pct = total? Math.round(r.value/total*100) : 0;
+      const countLine = (state.chartMode==="provider") ? '<br>'+contractCountLabel(r.count) : '';
+      tooltip.innerHTML = '<div style="font-weight:600;margin-bottom:2px;">'+escapeHtml(r.label)+'</div>'+
+        'Jährlich: <b>'+formatEUR(r.value)+'</b><br>Monatlich Ø: <b>'+formatEUR(r.value/12)+'</b><br>Anteil: <b>'+pct+' %</b>'+countLine;
+      const wrapRect = wrap.getBoundingClientRect();
+      const px = evt.clientX - wrapRect.left;
+      const py = evt.clientY - wrapRect.top;
+      tooltip.style.left = Math.min(Math.max(px,60), wrapRect.width-60) + "px";
+      tooltip.style.top = py + "px";
+      tooltip.classList.add("show");
+    }
+    hit.addEventListener("mousemove", show);
+    hit.addEventListener("mouseenter", show);
+    hit.addEventListener("mouseleave", function(){ rect.classList.remove("hovered"); tooltip.classList.remove("show"); });
+    hit.addEventListener("click", function(){
+      if (r.key==="__other") return;
+      if (state.chartMode==="category"){ state.filterCategory = r.key; setView("contracts"); }
+      else if (state.chartMode==="payer"){ state.filterPayer = r.key; setView("contracts"); }
+      else if (state.chartMode==="provider"){ state.filterProvider = r.key; setView("contracts"); }
+    });
+  });
+}
+
+/* ======================= Empty state ======================= */
+
+function emptyStateHTML(){
+  return '<div class="card"><div class="empty-state">'+
+    '<span class="icon-lg">'+icon("folder","icon-lg")+'</span>'+
+    '<h3>Noch keine Verträge erfasst</h3>'+
+    '<p>Legen Sie zuerst die Personen im Haushalt an, die Rechnungen bezahlen, und erfassen Sie dann Ihren ersten Vertrag – mit Foto/PDF-Anhang oder ganz manuell.</p>'+
+    '<div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;">'+
+      '<button class="btn btn-primary" id="empty-add-member">'+icon("users")+' Mitglieder einrichten</button>'+
+      '<button class="btn btn-ghost" id="empty-add-contract">'+icon("plus")+' Vertrag erfassen</button>'+
+    '</div>'+
+    '<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-top:6px;">'+
+      CATEGORIES.map(function(c){ return '<span class="badge badge-neutral"><span class="dot" style="background:var('+c.varName+')"></span>'+escapeHtml(c.label)+'</span>'; }).join("")+
+    '</div>'+
+  '</div></div>';
+}
+function wireEmptyState(el){
+  const a = el.querySelector("#empty-add-member"); if (a) a.addEventListener("click", function(){ setView("household"); });
+  const b = el.querySelector("#empty-add-contract"); if (b) b.addEventListener("click", function(){ openContractModal("new"); });
+}
+
+/* ======================= Contracts list ======================= */
+
+function filteredContractsList(){
+  let list = visibleContracts();
+  if (state.search){
+    const q = state.search.toLowerCase();
+    list = list.filter(function(c){
+      return (c.name||"").toLowerCase().indexOf(q)>=0 ||
+             (c.provider||"").toLowerCase().indexOf(q)>=0 ||
+             (c.contractNumber||"").toLowerCase().indexOf(q)>=0;
+    });
+  }
+  if (state.filterCategory) list = list.filter(function(c){ return c.category===state.filterCategory; });
+  if (state.filterStatus) list = list.filter(function(c){ return c.status===state.filterStatus; });
+  if (state.filterPayer) list = list.filter(function(c){ return c.payerId===state.filterPayer; });
+  if (state.filterProvider){
+    list = list.filter(function(c){
+      return state.filterProvider==="__none" ? !(c.provider||"").trim() : (c.provider||"").trim()===state.filterProvider;
+    });
+  }
+  list.sort(function(a,b){ return (a.name||"").localeCompare(b.name||"", "de"); });
+  return list;
+}
+
+function renderContracts(){
+  const el = document.getElementById("view-contracts");
+  if (!state.contractsLoaded){ el.innerHTML = '<div class="chart-empty">Wird geladen …</div>'; return; }
+
+  const list = filteredContractsList();
+
+  const activePayer = state.filterPayer ? memberById(state.filterPayer) : null;
+  const activeProviderLabel = state.filterProvider ? (state.filterProvider==="__none" ? "Ohne Anbieter" : state.filterProvider) : null;
+
+  el.innerHTML =
+    '<div class="toolbar">'+
+      '<div class="search-box">'+icon("search")+'<input type="text" id="search-input" placeholder="Suchen nach Name, Anbieter, Nummer …" value="'+escapeHtml(state.search)+'"></div>'+
+      '<select class="filter-select" id="filter-category"><option value="">Alle Kategorien</option>'+
+        CATEGORIES.map(function(c){ return '<option value="'+c.id+'"'+(state.filterCategory===c.id?' selected':'')+'>'+escapeHtml(c.label)+'</option>'; }).join("")+
+      '</select>'+
+      '<select class="filter-select" id="filter-status"><option value="">Alle Status</option>'+
+        STATUSES.map(function(s){ return '<option value="'+s.id+'"'+(state.filterStatus===s.id?' selected':'')+'>'+escapeHtml(s.label)+'</option>'; }).join("")+
+      '</select>'+
+      '<select class="filter-select" id="filter-payer"><option value="">Alle Zahler:innen</option>'+
+        state.members.map(function(m){ return '<option value="'+m.id+'"'+(state.filterPayer===m.id?' selected':'')+'>'+escapeHtml(m.name)+'</option>'; }).join("")+
+      '</select>'+
+      '<button class="btn btn-ghost" id="print-contracts-btn" type="button" title="Gefilterte Liste drucken">'+icon("print")+' Drucken</button>'+
+    '</div>'+
+    (activePayer
+      ? '<div class="badge badge-neutral" id="payer-filter-chip" style="width:fit-content;margin:-4px 0 8px;cursor:pointer;">'+
+          icon("users")+' Zahler:in: '+escapeHtml(activePayer.name)+' '+icon("x")+
+        '</div>'
+      : '')+
+    (activeProviderLabel
+      ? '<div class="badge badge-neutral" id="provider-filter-chip" style="width:fit-content;margin:-4px 0 14px;cursor:pointer;">'+
+          icon("building")+' Anbieter: '+escapeHtml(activeProviderLabel)+' '+icon("x")+
+        '</div>'
+      : '')+
+    (state.contracts.length===0 ? emptyStateHTML() :
+      (list.length===0 ? '<div class="card"><div class="chart-empty">Keine Verträge gefunden.</div></div>' :
+        '<div class="contract-list">'+list.map(contractCardHTML).join("")+'</div>'));
+
+  if (state.contracts.length===0){ wireEmptyState(el); return; }
+
+  const si = document.getElementById("search-input");
+  si.addEventListener("input", function(){ state.search = si.value; renderContracts(); });
+  document.getElementById("filter-category").addEventListener("change", function(e){ state.filterCategory = e.target.value; renderContracts(); });
+  document.getElementById("filter-status").addEventListener("change", function(e){ state.filterStatus = e.target.value; renderContracts(); });
+  document.getElementById("filter-payer").addEventListener("change", function(e){ state.filterPayer = e.target.value; renderContracts(); });
+  const chip = document.getElementById("payer-filter-chip");
+  if (chip) chip.addEventListener("click", function(){ state.filterPayer = ""; renderContracts(); });
+  const providerChip = document.getElementById("provider-filter-chip");
+  if (providerChip) providerChip.addEventListener("click", function(){ state.filterProvider = ""; renderContracts(); });
+  document.getElementById("print-contracts-btn").addEventListener("click", function(){ printContractsList(list); });
+  el.querySelectorAll("[data-open-contract]").forEach(function(card){
+    card.addEventListener("click", function(){ openContractModal(card.getAttribute("data-open-contract")); });
+  });
+}
+
+function contractCardHTML(c){
+  const cat = CATEGORY_BY_ID[c.category];
+  const f = FREQ_BY_ID[c.frequency];
+  const payer = memberById(c.payerId);
+  const bankAccount = c.payerId && c.bankAccountId ? bankAccountById(c.payerId, c.bankAccountId) : null;
+  const thumb = (c.attachments && c.attachments[0] && c.attachments[0].contentType && c.attachments[0].contentType.indexOf("image/")===0)
+    ? '<img class="cc-thumb" src="'+c.attachments[0].dataUrl+'" alt="">' : "";
+  const statusBadge = c.status==="aktiv" ? "" : '<span class="badge badge-neutral">'+escapeHtml(STATUS_BY_ID[c.status] ? STATUS_BY_ID[c.status].label : c.status)+'</span>';
+  const showHouseholds = state.activeHousehold==="__all" && state.households.length>1;
+  const householdSpan = showHouseholds
+    ? '<span>'+icon("home")+' '+escapeHtml(householdsOfContract(c).map(function(h){ return h.name; }).join(", ") || "–")+'</span>'
+    : '';
+  return '<div class="contract-card" data-open-contract="'+c.id+'">'+
+    '<span class="cc-cat" style="background:'+catColor(c.category)+'"></span>'+
+    (thumb || '')+
+    '<div class="cc-body">'+
+      '<div class="cc-top"><span class="cc-name">'+escapeHtml(c.name||"(ohne Namen)")+'</span><span class="cc-amount">'+formatEUR(c.amount)+(f&&f.id!=="einmalig"?' <span style="color:var(--text-muted);font-weight:500;">/ '+f.label.replace("lich","")+'</span>':'')+'</span></div>'+
+      '<div class="cc-meta">'+
+        '<span>'+escapeHtml(cat?cat.label:"–")+'</span>'+
+        householdSpan+
+        (payer ? '<span>'+icon("users")+' '+escapeHtml(payer.name)+'</span>' : '')+
+        (bankAccount ? '<span>'+icon("card")+' '+escapeHtml(bankAccountLabel(bankAccount))+'</span>' : '')+
+        (c.endDate ? '<span>bis '+formatDate(c.endDate)+'</span>' : '')+
+        (c.autoRenew ? '<span title="Verlängert sich automatisch, wenn nicht rechtzeitig gekündigt">'+icon("refresh")+' automat. Verlängerung</span>' : '')+
+        statusBadge+
+      '</div>'+
+    '</div>'+
+    icon("chevronRight")+
+  '</div>';
+}
+
+/* ======================= Drucken ======================= */
+
+function printDoc(title, bodyHTML){
+  const area = document.getElementById("print-area");
+  const now = new Intl.DateTimeFormat("de-DE",{ day:"2-digit", month:"2-digit", year:"numeric", hour:"2-digit", minute:"2-digit" }).format(new Date());
+  area.innerHTML =
+    '<div class="print-header">'+
+      '<div class="print-brand">'+icon("folder")+' Vertragsordner</div>'+
+      '<div class="print-meta">Erstellt am '+escapeHtml(now)+'</div>'+
+    '</div>'+
+    '<h1 class="print-title">'+escapeHtml(title)+'</h1>'+
+    bodyHTML;
+  window.print();
+}
+
+function printContractsList(list){
+  const activePayer = state.filterPayer ? memberById(state.filterPayer) : null;
+  const activeProviderLabel = state.filterProvider ? (state.filterProvider==="__none" ? "Ohne Anbieter" : state.filterProvider) : null;
+  const filterParts = [];
+  if (state.filterCategory && CATEGORY_BY_ID[state.filterCategory]) filterParts.push("Kategorie: "+CATEGORY_BY_ID[state.filterCategory].label);
+  if (state.filterStatus && STATUS_BY_ID[state.filterStatus]) filterParts.push("Status: "+STATUS_BY_ID[state.filterStatus].label);
+  if (activePayer) filterParts.push("Zahler:in: "+activePayer.name);
+  if (activeProviderLabel) filterParts.push("Anbieter: "+activeProviderLabel);
+  if (state.search) filterParts.push('Suche: „'+state.search+'“');
+  const subtitle = (filterParts.length ? filterParts.join(" · ")+" · " : "Alle Verträge · ") + list.length+' Vertrag/Verträge';
+
+  const showHouseholdCol = state.households.length>1;
+  const rows = list.map(function(c){
+    const cat = CATEGORY_BY_ID[c.category];
+    const f = FREQ_BY_ID[c.frequency];
+    const payer = memberById(c.payerId);
+    const cb = cancelByDate(c);
+    const householdCol = showHouseholdCol ? '<td>'+escapeHtml(householdsOfContract(c).map(function(h){ return h.name; }).join(", ")||"–")+'</td>' : "";
+    return '<tr>'+
+      '<td>'+escapeHtml(c.name||"–")+'</td>'+
+      householdCol+
+      '<td>'+escapeHtml(cat?cat.label:"–")+'</td>'+
+      '<td>'+escapeHtml(c.provider||"–")+'</td>'+
+      '<td>'+escapeHtml(payer?payer.name:"–")+'</td>'+
+      '<td>'+formatEUR(c.amount)+(f&&f.id!=="einmalig"?' / '+escapeHtml(f.label.replace("lich","")):'')+'</td>'+
+      '<td>'+escapeHtml(STATUS_BY_ID[c.status]?STATUS_BY_ID[c.status].label:(c.status||"–"))+'</td>'+
+      '<td>'+(cb?formatDate(cb.toISOString().slice(0,10)):'–')+'</td>'+
+    '</tr>';
+  }).join("");
+
+  const householdHead = showHouseholdCol ? '<th>Haushalt</th>' : "";
+  const colCount = showHouseholdCol ? 8 : 7;
+  const body =
+    '<p class="print-subtitle">'+escapeHtml(subtitle)+'</p>'+
+    '<table class="print-table"><thead><tr>'+
+      '<th>Bezeichnung</th>'+householdHead+'<th>Kategorie</th><th>Anbieter</th><th>Zahler:in</th><th>Betrag</th><th>Status</th><th>Kündigen bis</th>'+
+    '</tr></thead><tbody>'+(rows || '<tr><td colspan="'+colCount+'">Keine Verträge gefunden.</td></tr>')+'</tbody></table>';
+
+  printDoc("Vertragsübersicht", body);
+}
+
+function printSingleContract(c){
+  const cat = CATEGORY_BY_ID[c.category];
+  const f = FREQ_BY_ID[c.frequency];
+  const payer = memberById(c.payerId);
+  const acct = c.payerId && c.bankAccountId ? bankAccountById(c.payerId, c.bankAccountId) : null;
+  const cb = cancelByDate(c);
+
+  function row(label, value){
+    if (value==null || value==="") return "";
+    return '<tr><th>'+escapeHtml(label)+'</th><td>'+value+'</td></tr>';
+  }
+
+  const body = '<table class="print-fields"><tbody>'+
+      row("Haushalt(e)", escapeHtml(householdsOfContract(c).map(function(h){ return h.name; }).join(", "))) +
+      row("Kategorie", escapeHtml(cat?cat.label:"")) +
+      row("Anbieter / Gesellschaft", escapeHtml(c.provider)) +
+      row("Vertrags-/Versicherungsnr.", escapeHtml(c.contractNumber)) +
+      row("Status", escapeHtml(STATUS_BY_ID[c.status]?STATUS_BY_ID[c.status].label:c.status)) +
+      row("Zahler:in", escapeHtml(payer?payer.name:"")) +
+      row("Zahlungsquelle", escapeHtml(acct?bankAccountLabel(acct):"")) +
+      row("Betrag", formatEUR(c.amount) + (f&&f.id!=="einmalig" ? ' / '+escapeHtml(f.label.replace("lich","")) : '') + (f ? ' · jährlich '+formatEUR(annualCost(c)) : '')) +
+      row("Vertragsbeginn", c.startDate ? formatDate(c.startDate) : "") +
+      row("Vertragsende", c.endDate ? formatDate(c.endDate) : "") +
+      row("Kündigungsfrist", (c.noticePeriodMonths!=null && c.noticePeriodMonths!=="") ? c.noticePeriodMonths+" Monate vor Vertragsende" : "") +
+      row("Automatische Verlängerung", c.autoRenew ? ("Ja"+(c.renewalTermMonths?", jeweils um "+c.renewalTermMonths+" Monate":"")) : "") +
+      row("Nächste Kündigungsfrist", cb ? formatDate(cb.toISOString().slice(0,10)) : "") +
+      row("URL / Login", escapeHtml(c.portalUrl)) +
+      row("Kündigungskontakt", escapeHtml(c.cancelContactName)) +
+      row("Rufnummer", escapeHtml(c.cancelPhone)) +
+      row("E-Mail", escapeHtml(c.cancelEmail)) +
+    '</tbody></table>'+
+    (c.notes ? '<h3 class="print-section-h">Notizen</h3><p class="print-notes">'+escapeHtml(c.notes)+'</p>' : '')+
+    (c.attachments && c.attachments.length ? '<h3 class="print-section-h">Angehängte Dokumente</h3><ul class="print-list">'+c.attachments.map(function(a){ return '<li>'+escapeHtml(a.name||"Dokument")+'</li>'; }).join("")+'</ul>' : '');
+
+  printDoc(c.name || "Vertrag", body);
+}
+
+/* ======================= Household ======================= */
+
+function renderHousehold(){
+  const el = document.getElementById("view-household");
+  if (!state.membersLoaded){ el.innerHTML = '<div class="chart-empty">Wird geladen …</div>'; return; }
+
+  el.innerHTML =
+    '<div class="section card"><div class="card-pad">'+
+      '<div class="section-head"><h2>Haushalte</h2><button class="link-btn" id="add-household-btn">'+icon("plus")+' Hinzufügen</button></div>'+
+      (state.households.length ? state.households.map(householdRowHTML).join("") : '<div class="chart-empty">Noch kein Haushalt angelegt.</div>')+
+    '</div></div>'+
+    '<div class="section card"><div class="card-pad">'+
+      '<div class="section-head"><h2>Mitglieder</h2><button class="link-btn" id="add-member-btn">'+icon("plus")+' Hinzufügen</button></div>'+
+      (state.members.length ? state.members.map(memberRowHTML).join("") : '<div class="chart-empty">Noch niemand erfasst. Fügen Sie die Personen hinzu, die Rechnungen im Haushalt bezahlen.</div>')+
+    '</div></div>'+
+    '<div class="card"><div class="card-pad" style="display:flex;gap:10px;align-items:flex-start;color:var(--text-secondary);font-size:0.86rem;">'+
+      icon("info")+'<div>Ein Haushalt ist z. B. „Wohnhaus A“ oder „Praxis“ – frei benennbar. Jede Person kann mehreren Haushalten angehören, jeder Vertrag kann ebenfalls mehreren Haushalten zugeordnet sein. Oben rechts auf Übersicht und Verträge lässt sich zwischen den Haushalten umschalten, sobald mehr als einer angelegt ist. Jede Person erhält zusätzlich eine eigene Farbe, die im Diagramm „Nach Zahler:in“ verwendet wird. Zum Entfernen dürfen ihr keine Verträge mehr zugeordnet sein.</div>'+
+    '</div></div>';
+
+  document.getElementById("add-household-btn").addEventListener("click", function(){ openHouseholdModal(); });
+  el.querySelectorAll("[data-edit-household]").forEach(function(btn){
+    btn.addEventListener("click", function(e){ e.stopPropagation(); openHouseholdModal(btn.getAttribute("data-edit-household")); });
+  });
+  el.querySelectorAll("[data-del-household]").forEach(function(btn){
+    btn.addEventListener("click", function(e){
+      e.stopPropagation();
+      const id = btn.getAttribute("data-del-household");
+      if (state.households.length<=1){ toast("Es muss mindestens ein Haushalt bestehen bleiben.","error"); return; }
+      const contractCount = state.contracts.filter(function(c){ return (c.householdIds||[]).indexOf(id)>=0; }).length;
+      const memberCount = state.members.filter(function(m){ return (m.householdIds||[]).indexOf(id)>=0; }).length;
+      const detail = (contractCount || memberCount)
+        ? " Er ist aktuell "+contractCount+" Vertrag/Verträgen und "+memberCount+" Person(en) zugeordnet – diese Zuordnung wird dabei entfernt, die Einträge selbst bleiben erhalten."
+        : "";
+      confirmDialog("Haushalt entfernen?", "Dieser Haushalt wird endgültig gelöscht."+detail, function(){
+        state.contracts.forEach(function(c){ if (Array.isArray(c.householdIds)) c.householdIds = c.householdIds.filter(function(hid){ return hid!==id; }); });
+        state.members.forEach(function(m){ if (Array.isArray(m.householdIds)) m.householdIds = m.householdIds.filter(function(hid){ return hid!==id; }); });
+        state.households = state.households.filter(function(h){ return h.id!==id; });
+        if (state.activeHousehold===id) state.activeHousehold = "__all";
+        ensureHouseholdsMigrated();
+        markDirty();
+        render();
+        toast("Haushalt entfernt.");
+      });
+    });
+  });
+
+  document.getElementById("add-member-btn").addEventListener("click", openMemberModal);
+  el.querySelectorAll("[data-open-member]").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      state.filterPayer = btn.getAttribute("data-open-member");
+      state.filterCategory = "";
+      state.filterStatus = "";
+      state.search = "";
+      setView("contracts");
+    });
+  });
+  el.querySelectorAll("[data-edit-member]").forEach(function(btn){
+    btn.addEventListener("click", function(e){
+      e.stopPropagation();
+      openMemberModal(btn.getAttribute("data-edit-member"));
+    });
+  });
+  el.querySelectorAll("[data-del-member]").forEach(function(btn){
+    btn.addEventListener("click", function(e){
+      e.stopPropagation();
+      const id = btn.getAttribute("data-del-member");
+      const inUse = state.contracts.some(function(c){ return c.payerId===id; });
+      if (inUse){ toast("Diese Person ist noch Verträgen zugeordnet – bitte zuerst dort ändern.", "error"); return; }
+      confirmDialog("Person entfernen?", "Diese Person wird aus dem Haushalt entfernt. Bereits erfasste Verträge sind nicht betroffen.", function(){
+        state.members = state.members.filter(function(m){ return m.id!==id; });
+        markDirty();
+        render();
+        toast("Entfernt.");
+      });
+    });
+  });
+}
+
+function memberRowHTML(m){
+  const count = state.contracts.filter(function(c){ return c.payerId===m.id; }).length;
+  const acctCount = (m.bankAccounts||[]).length;
+  const sub = count+' Vertrag/Verträge'+(acctCount ? ' · '+acctCount+' Bankkonto/Bankkonten' : '');
+  return '<div class="member-row">'+
+    '<button class="member-open" data-open-member="'+m.id+'" type="button" title="Verträge dieser Person anzeigen">'+
+      avatarHTML(m)+
+      '<div style="flex:1;min-width:0;"><div class="member-name">'+escapeHtml(m.name)+'</div><div class="member-sub">'+sub+'</div></div>'+
+    '</button>'+
+    '<button class="icon-btn" data-edit-member="'+m.id+'" aria-label="Bearbeiten" type="button">'+icon("pencil")+'</button>'+
+    '<button class="icon-btn" data-del-member="'+m.id+'" aria-label="Entfernen" type="button">'+icon("trash")+'</button>'+
+  '</div>';
+}
+
+function householdRowHTML(h){
+  const contractCount = state.contracts.filter(function(c){ return (c.householdIds||[]).indexOf(h.id)>=0; }).length;
+  const memberCount = state.members.filter(function(m){ return (m.householdIds||[]).indexOf(h.id)>=0; }).length;
+  const sub = contractCount+' Vertrag/Verträge · '+memberCount+' Person(en)';
+  return '<div class="member-row">'+
+    '<span class="dot" style="background:var('+householdColorVar(h)+');flex:none;width:12px;height:12px;"></span>'+
+    '<div style="flex:1;min-width:0;"><div class="member-name">'+escapeHtml(h.name)+'</div><div class="member-sub">'+sub+'</div></div>'+
+    '<button class="icon-btn" data-edit-household="'+h.id+'" aria-label="Bearbeiten" type="button">'+icon("pencil")+'</button>'+
+    '<button class="icon-btn" data-del-household="'+h.id+'" aria-label="Entfernen" type="button">'+icon("trash")+'</button>'+
+  '</div>';
+}
+
+function householdModalHTML(existing){
+  return ''+
+    '<div class="modal-head"><h2>'+(existing?"Haushalt bearbeiten":"Haushalt hinzufügen")+'</h2><button class="icon-btn" data-close type="button">'+icon("x")+'</button></div>'+
+    '<div class="modal-body">'+
+      '<div class="field"><label for="household-name-input">Name</label><input id="household-name-input" type="text" placeholder="z. B. Wohnhaus A oder Praxis" value="'+escapeHtml(existing?existing.name:"")+'" autofocus></div>'+
+      '<div class="field"><label>Farbe</label><div class="swatch-picker" id="household-color-picker"></div></div>'+
+    '</div>'+
+    '<div class="modal-foot"><button class="btn btn-ghost" data-close type="button">Abbrechen</button><button class="btn btn-primary" id="household-save-btn" type="button">'+icon("check")+' Speichern</button></div>';
+}
+
+function openHouseholdModal(id){
+  const existing = id ? householdById(id) : null;
+  let colorIndex = existing ? (existing.colorIndex!=null ? existing.colorIndex : 0) : (state.households.length % MEMBER_COLORS.length);
+
+  const overlay = buildOverlay("modal", householdModalHTML(existing));
+  const picker = overlay.querySelector("#household-color-picker");
+  function renderPicker(){
+    picker.innerHTML = MEMBER_COLORS.map(function(varName, i){
+      return '<span class="swatch'+(i===colorIndex?' selected':'')+'" data-swatch-idx="'+i+'" style="background:var('+varName+');"></span>';
+    }).join("");
+    picker.querySelectorAll("[data-swatch-idx]").forEach(function(sw){
+      sw.addEventListener("click", function(){ colorIndex = Number(sw.getAttribute("data-swatch-idx")); renderPicker(); });
+    });
+  }
+  renderPicker();
+
+  const input = overlay.querySelector("#household-name-input");
+  setTimeout(function(){ input.focus(); }, 30);
+
+  overlay.querySelector("#household-save-btn").addEventListener("click", function(){
+    const name = input.value.trim();
+    if (!name){ input.focus(); return; }
+    if (existing){
+      existing.name = name;
+      existing.colorIndex = colorIndex;
+    } else {
+      state.households.push({ id:newId(), name:name, colorIndex:colorIndex, createdAt:new Date().toISOString() });
+    }
+    markDirty();
+    render();
+    toast(existing ? "Gespeichert." : "Haushalt hinzugefügt.");
+    closeOverlay(overlay);
+  });
+  input.addEventListener("keydown", function(e){ if (e.key==="Enter") overlay.querySelector("#household-save-btn").click(); });
+}
+
+function memberModalHTML(existing){
+  return ''+
+    '<div class="modal-head"><h2>'+(existing?"Person bearbeiten":"Person hinzufügen")+'</h2><button class="icon-btn" data-close type="button">'+icon("x")+'</button></div>'+
+    '<div class="modal-body">'+
+      '<div class="field">'+
+        '<label>Foto (optional)</label>'+
+        '<div class="member-photo-row" id="member-photo-row"></div>'+
+        '<input type="file" id="member-photo-input" accept="image/*" class="visually-hidden">'+
+      '</div>'+
+      '<div class="field"><label for="member-name-input">Name</label><input id="member-name-input" type="text" placeholder="z. B. Sabine" value="'+escapeHtml(existing?existing.name:"")+'" autofocus></div>'+
+      '<div class="field">'+
+        '<label>Haushalt(e)</label>'+
+        '<div id="member-household-chips"></div>'+
+        '<span class="hint">Eine Person kann mehreren Haushalten angehören.</span>'+
+      '</div>'+
+      '<div class="field">'+
+        '<label>Bankkonten (Zahlungsquelle)</label>'+
+        '<div class="attachment-list" id="bank-account-list"></div>'+
+        '<div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">'+
+          '<input type="text" id="bank-account-label-input" placeholder="Bezeichnung, z. B. Girokonto" style="flex:1;min-width:130px;">'+
+          '<input type="text" id="bank-account-iban-input" placeholder="IBAN / Kontonummer (optional)" style="flex:1;min-width:130px;">'+
+          '<button class="btn btn-ghost" id="bank-account-add-btn" type="button">'+icon("plus")+'</button>'+
+        '</div>'+
+        '<span class="hint">Wird bei Verträgen dieser Person als Zahlungsquelle zur Auswahl angeboten.</span>'+
+      '</div>'+
+    '</div>'+
+    '<div class="modal-foot"><button class="btn btn-ghost" data-close type="button">Abbrechen</button><button class="btn btn-primary" id="member-save-btn" type="button">'+icon("check")+' Speichern</button></div>';
+}
+
+function renderBankAccountList(overlay){
+  const host = overlay.querySelector("#bank-account-list");
+  if (!host) return;
+  if (!state.draftBankAccounts.length){ host.innerHTML = ""; return; }
+  host.innerHTML = state.draftBankAccounts.map(function(a, i){
+    return '<div class="attachment-item">'+
+      '<span style="color:var(--text-muted);flex:none;">'+icon("card")+'</span>'+
+      '<span class="attachment-name">'+escapeHtml(bankAccountLabel(a))+'</span>'+
+      '<button class="icon-btn" data-remove-bankacct="'+i+'" type="button" aria-label="Entfernen">'+icon("x")+'</button>'+
+    '</div>';
+  }).join("");
+  host.querySelectorAll("[data-remove-bankacct]").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      state.draftBankAccounts.splice(Number(btn.getAttribute("data-remove-bankacct")),1);
+      renderBankAccountList(overlay);
+    });
+  });
+}
+
+function renderMemberPhotoRow(overlay, existing){
+  const host = overlay.querySelector("#member-photo-row");
+  if (!host) return;
+  const nameInput = overlay.querySelector("#member-name-input");
+  const name = nameInput ? nameInput.value : (existing ? existing.name : "");
+  const colorVar = existing ? memberColorVar(existing) : MEMBER_COLORS[state.members.length % MEMBER_COLORS.length];
+  const photo = state.draftPhoto;
+  host.innerHTML =
+    '<div class="avatar avatar-lg"'+(photo ? '' : ' style="background:var('+colorVar+')"')+'>'+
+      (photo ? '<img src="'+photo+'" alt="">' : escapeHtml(memberInitials(name)))+
+    '</div>'+
+    '<div class="member-photo-actions">'+
+      '<label class="btn btn-ghost" for="member-photo-input">'+icon("camera")+' '+(photo?"Foto ändern":"Foto wählen")+'</label>'+
+      (photo ? '<button class="btn btn-ghost" id="member-photo-remove-btn" type="button">'+icon("trash")+' Entfernen</button>' : '')+
+    '</div>';
+  const removeBtn = host.querySelector("#member-photo-remove-btn");
+  if (removeBtn){
+    removeBtn.addEventListener("click", function(){
+      state.draftPhoto = null;
+      renderMemberPhotoRow(overlay, existing);
+    });
+  }
+}
+
+function renderMemberHouseholdChips(overlay){
+  const host = overlay.querySelector("#member-household-chips");
+  if (!host) return;
+  host.innerHTML = householdChipsHTML("member-household", state.draftHouseholdIds);
+  host.querySelectorAll("[data-household-chip]").forEach(function(chip){
+    chip.addEventListener("click", function(){
+      const hid = chip.getAttribute("data-household-chip");
+      const idx = state.draftHouseholdIds.indexOf(hid);
+      if (idx>=0) state.draftHouseholdIds.splice(idx,1); else state.draftHouseholdIds.push(hid);
+      renderMemberHouseholdChips(overlay);
+    });
+  });
+}
+
+function openMemberModal(id, onSaved){
+  const existing = id ? memberById(id) : null;
+  state.draftBankAccounts = existing ? (existing.bankAccounts||[]).slice() : [];
+  state.draftPhoto = existing ? (existing.photo || null) : null;
+  state.draftHouseholdIds = existing ? (existing.householdIds||[]).slice() : state.households.map(function(h){ return h.id; });
+
+  const overlay = buildOverlay('modal', memberModalHTML(existing));
+  renderBankAccountList(overlay);
+  renderMemberPhotoRow(overlay, existing);
+  renderMemberHouseholdChips(overlay);
+
+  const input = overlay.querySelector("#member-name-input");
+  setTimeout(function(){ input.focus(); }, 30);
+  input.addEventListener("input", function(){ if (!state.draftPhoto) renderMemberPhotoRow(overlay, existing); });
+
+  const photoInput = overlay.querySelector("#member-photo-input");
+  photoInput.addEventListener("change", function(){
+    const file = photoInput.files[0];
+    photoInput.value = "";
+    if (!file) return;
+    if (!file.type || file.type.indexOf("image/")!==0){ toast("Bitte ein Foto wählen.","error"); return; }
+    if (file.size > MAX_ATTACHMENT_MB*1024*1024){ toast("Foto ist größer als "+MAX_ATTACHMENT_MB+" MB.","error"); return; }
+    downscaleImageToDataUrl(file, MAX_AVATAR_DIM).then(function(dataUrl){
+      state.draftPhoto = dataUrl;
+      renderMemberPhotoRow(overlay, existing);
+    }).catch(function(){
+      toast("Foto konnte nicht gelesen werden.","error");
+    });
+  });
+
+  const labelInput = overlay.querySelector("#bank-account-label-input");
+  const ibanInput = overlay.querySelector("#bank-account-iban-input");
+  const addAcctBtn = overlay.querySelector("#bank-account-add-btn");
+  function addDraftAccount(){
+    const label = labelInput.value.trim();
+    const iban = ibanInput.value.trim();
+    if (!label && !iban) { labelInput.focus(); return; }
+    state.draftBankAccounts.push({ id:newId(), label: label || "Konto", iban: iban });
+    labelInput.value = ""; ibanInput.value = "";
+    renderBankAccountList(overlay);
+    labelInput.focus();
+  }
+  addAcctBtn.addEventListener("click", addDraftAccount);
+  [labelInput, ibanInput].forEach(function(el){
+    el.addEventListener("keydown", function(e){ if (e.key==="Enter"){ e.preventDefault(); addDraftAccount(); } });
+  });
+
+  overlay.querySelector("#member-save-btn").addEventListener("click", function(){
+    const name = input.value.trim();
+    if (!name){ input.focus(); return; }
+    if (existing){
+      existing.name = name;
+      existing.bankAccounts = state.draftBankAccounts.slice();
+      existing.photo = state.draftPhoto || null;
+      existing.householdIds = state.draftHouseholdIds.slice();
+    } else {
+      state.members.push({
+        id:newId(), name:name, colorIndex: state.members.length % MEMBER_COLORS.length,
+        createdAt: new Date().toISOString(), bankAccounts: state.draftBankAccounts.slice(),
+        photo: state.draftPhoto || null, householdIds: state.draftHouseholdIds.slice()
+      });
+    }
+    markDirty();
+    render();
+    toast(existing ? "Gespeichert." : "Hinzugefügt.");
+    closeOverlay(overlay);
+    if (typeof onSaved === "function") onSaved();
+  });
+  input.addEventListener("keydown", function(e){ if (e.key==="Enter") overlay.querySelector("#member-save-btn").click(); });
+}
+
+/* ======================= Overlay / modal infrastructure ======================= */
+
+function buildOverlay(modalClass, innerHTML){
+  const overlay = document.createElement("div");
+  overlay.className = "overlay";
+  overlay.innerHTML = '<div class="'+modalClass+'" role="dialog" aria-modal="true">'+innerHTML+'</div>';
+  document.body.appendChild(overlay);
+  overlay.addEventListener("mousedown", function(e){ if (e.target===overlay) closeOverlay(overlay); });
+  overlay.querySelectorAll("[data-close]").forEach(function(b){ b.addEventListener("click", function(){ closeOverlay(overlay); }); });
+  function escHandler(e){ if (e.key==="Escape") closeOverlay(overlay); }
+  document.addEventListener("keydown", escHandler);
+  overlay._escHandler = escHandler;
+  requestAnimationFrame(function(){ overlay.classList.add("show"); });
+  return overlay;
+}
+function closeOverlay(overlay){
+  overlay.classList.remove("show");
+  document.removeEventListener("keydown", overlay._escHandler);
+  setTimeout(function(){ overlay.remove(); }, 180);
+}
+
+function confirmDialog(title, body, onConfirm, confirmLabel, danger){
+  confirmLabel = confirmLabel || "Entfernen";
+  const btnClass = danger===false ? "btn-primary" : "btn-danger";
+  const overlay = buildOverlay("modal confirm-box", ''+
+    '<div class="modal-head"><h2>'+escapeHtml(title)+'</h2><button class="icon-btn" data-close type="button">'+icon("x")+'</button></div>'+
+    '<div class="modal-body"><p>'+escapeHtml(body)+'</p></div>'+
+    '<div class="modal-foot"><button class="btn btn-ghost" data-close type="button">Abbrechen</button><button class="btn '+btnClass+'" id="confirm-yes" type="button">'+escapeHtml(confirmLabel)+'</button></div>'
+  );
+  overlay.querySelector("#confirm-yes").addEventListener("click", function(){ closeOverlay(overlay); onConfirm(); });
+}
+
+/* ======================= Contract modal ======================= */
+
+function blankContract(){
+  return { name:"", category:"kfz", provider:"", contractNumber:"", payerId:"", bankAccountId:"", amount:"", frequency:"monatlich",
+    startDate:"", endDate:"", noticePeriodMonths:"", autoRenew:false, renewalTermMonths:"", status:"aktiv", notes:"", attachments:[],
+    portalUrl:"", cancelContactName:"", cancelPhone:"", cancelEmail:"" };
+}
+
+function openContractModal(id){
+  state.editingId = id;
+  const isNew = id==="new";
+  const source = isNew ? blankContract() : Object.assign({}, state.contracts.find(function(c){ return c.id===id; }));
+  state.draftAttachments = (source.attachments || []).slice();
+  if (isNew){
+    state.draftHouseholdIds = state.activeHousehold!=="__all" ? [state.activeHousehold] : (state.households.length ? [state.households[0].id] : []);
+  } else {
+    state.draftHouseholdIds = (source.householdIds||[]).slice();
+  }
+
+  const overlay = buildOverlay("modal", contractModalHTML(source, isNew));
+  wireContractModal(overlay, source, isNew);
+}
+
+function payerSelectHTML(members, selectedId){
+  if (!members.length){
+    return '<div class="hint">Niemand aus dem/den gewählten Haushalt(en) erfasst. <a href="#" id="quick-add-member">Jetzt anlegen</a></div>';
+  }
+  return '<select id="f-payer"><option value="">– auswählen –</option>'+
+    members.map(function(m){ return '<option value="'+m.id+'"'+(selectedId===m.id?' selected':'')+'>'+escapeHtml(m.name)+'</option>'; }).join("")+
+  '</select>';
+}
+
+function bankAccountFieldHTML(payerId, selectedId){
+  if (!payerId){
+    return '<div class="hint">Bitte zuerst eine Zahler:in wählen.</div>';
+  }
+  const accounts = memberBankAccounts(payerId);
+  if (!accounts.length){
+    const m = memberById(payerId);
+    return '<div class="hint">Für '+escapeHtml(m?m.name:"diese Person")+' sind noch keine Bankkonten hinterlegt. <a href="#" id="quick-add-bankaccount">Jetzt hinterlegen</a></div>';
+  }
+  return '<select id="f-bankaccount"><option value="">– auswählen –</option>'+
+    accounts.map(function(a){ return '<option value="'+a.id+'"'+(selectedId===a.id?' selected':'')+'>'+escapeHtml(bankAccountLabel(a))+'</option>'; }).join("")+
+  '</select>';
+}
+
+function payerHistoryHTML(history){
+  if (!Array.isArray(history) || history.length===0) return "";
+  const rows = history.slice().reverse().map(function(h){
+    const who = h.payerName
+      ? escapeHtml(h.payerName) + (h.bankAccountLabel ? ' · '+escapeHtml(h.bankAccountLabel) : '')
+      : '<span style="color:var(--text-muted);">– kein Zahler:in –</span>';
+    return '<div class="payer-history-row">'+
+      '<span class="payer-history-date">'+escapeHtml(formatDateTime(h.date))+'</span>'+
+      '<span class="payer-history-who">'+who+'</span>'+
+    '</div>';
+  }).join("");
+  return '<div class="field">'+
+    '<label>Verlauf Zahler:in</label>'+
+    '<div class="payer-history">'+rows+'</div>'+
+  '</div>';
+}
+
+function contractModalHTML(c, isNew){
+  return ''+
+    '<div class="modal-head"><h2>'+(isNew?"Neuer Vertrag":"Vertrag bearbeiten")+'</h2>'+
+      '<div style="display:flex;align-items:center;gap:4px;">'+
+        (isNew ? '' : '<button class="icon-btn" id="print-contract-btn" type="button" title="Diesen Vertrag drucken">'+icon("print")+'</button>')+
+        '<button class="icon-btn" data-close type="button">'+icon("x")+'</button>'+
+      '</div>'+
+    '</div>'+
+    '<div class="modal-body">'+
+
+      '<div class="field">'+
+        '<label>Dokument (optional)</label>'+
+        '<div class="doc-zone">'+
+          '<div class="attachment-list" id="attachment-list"></div>'+
+          '<div class="doc-actions">'+
+            '<label class="btn btn-ghost" for="file-input">'+icon("camera")+' Foto/PDF hinzufügen</label><input type="file" id="file-input" accept="image/*,application/pdf" capture="environment" class="visually-hidden">'+
+          '</div>'+
+          '<div class="ai-status" id="doc-status" style="display:none;"></div>'+
+        '</div>'+
+      '</div>'+
+
+      '<div class="field"><label for="f-name">Bezeichnung</label><input id="f-name" type="text" placeholder="z. B. KFZ-Haftpflicht VW Golf" value="'+escapeHtml(c.name)+'"></div>'+
+
+      '<div class="field">'+
+        '<label>Haushalt(e)</label>'+
+        '<div id="contract-household-chips"></div>'+
+        '<span class="hint">Ein Vertrag kann mehreren Haushalten zugeordnet sein (z. B. gemeinsam genutzte Verträge).</span>'+
+      '</div>'+
+
+      '<div class="field-row">'+
+        '<div class="field"><label for="f-category">Kategorie</label><select id="f-category">'+CATEGORIES.map(function(cat){ return '<option value="'+cat.id+'"'+(c.category===cat.id?' selected':'')+'>'+escapeHtml(cat.label)+'</option>'; }).join("")+'</select></div>'+
+        '<div class="field"><label for="f-status">Status</label><select id="f-status">'+STATUSES.map(function(s){ return '<option value="'+s.id+'"'+(c.status===s.id?' selected':'')+'>'+escapeHtml(s.label)+'</option>'; }).join("")+'</select></div>'+
+      '</div>'+
+
+      '<div class="field-row">'+
+        '<div class="field"><label for="f-provider">Anbieter / Gesellschaft</label><input id="f-provider" type="text" value="'+escapeHtml(c.provider)+'"></div>'+
+        '<div class="field"><label for="f-number">Vertrags-/Versicherungsnr.</label><input id="f-number" type="text" value="'+escapeHtml(c.contractNumber)+'"></div>'+
+      '</div>'+
+
+      '<div class="field"><label for="f-portal-url">URL / Login zum Vertragspartner</label>'+
+        '<div class="field-with-action">'+
+          '<input id="f-portal-url" type="text" inputmode="url" placeholder="z. B. https://meinkonto.anbieter.de" value="'+escapeHtml(c.portalUrl)+'">'+
+          '<button class="field-action-btn" id="open-portal-btn" type="button" title="Link öffnen">'+icon("link")+'</button>'+
+        '</div>'+
+      '</div>'+
+
+      '<div class="field-row">'+
+        '<div class="field" id="payer-field">'+
+          '<label for="f-payer">Zahler:in</label>'+
+          payerSelectHTML(membersForHouseholds(state.draftHouseholdIds), c.payerId)+
+        '</div>'+
+        '<div class="field"><label for="f-bankaccount">Zahlungsquelle (Bankkonto)</label>'+
+          '<div id="bankaccount-field">'+bankAccountFieldHTML(c.payerId, c.bankAccountId)+'</div>'+
+        '</div>'+
+      '</div>'+
+
+      payerHistoryHTML(c.payerHistory)+
+
+      '<div class="field-row">'+
+        '<div class="field"><label for="f-amount">Betrag (€) pro Zahlung</label><input id="f-amount" type="number" min="0" step="0.01" value="'+escapeHtml(c.amount)+'"></div>'+
+        '<div class="field"><label for="f-frequency">Zahlungsrhythmus</label><select id="f-frequency">'+FREQUENCIES.map(function(f){ return '<option value="'+f.id+'"'+(c.frequency===f.id?' selected':'')+'>'+escapeHtml(f.label)+'</option>'; }).join("")+'</select></div>'+
+      '</div>'+
+
+      '<div class="field-row">'+
+        '<div class="field"><label for="f-start">Vertragsbeginn</label><input id="f-start" type="date" value="'+escapeHtml(c.startDate)+'"></div>'+
+        '<div class="field"><label for="f-end">Vertragsende / Verlängerung</label><input id="f-end" type="date" value="'+escapeHtml(c.endDate)+'"></div>'+
+      '</div>'+
+
+      '<div class="field"><label for="f-notice">Kündigungsfrist (Monate vor Vertragsende)</label><input id="f-notice" type="number" min="0" step="1" value="'+escapeHtml(c.noticePeriodMonths)+'"><span class="hint">Wird genutzt, um anstehende Fristen auf der Übersicht anzuzeigen.</span></div>'+
+
+      '<div class="field">'+
+        '<label class="checkbox-label"><input type="checkbox" id="f-autorenew"'+(c.autoRenew?' checked':'')+'> Verlängert sich automatisch, wenn nicht rechtzeitig gekündigt</label>'+
+      '</div>'+
+      '<div class="field" id="renewal-term-field" style="'+(c.autoRenew?'':'display:none;')+'">'+
+        '<label for="f-renewal-term">Verlängert sich jeweils um (Monate)</label>'+
+        '<input id="f-renewal-term" type="number" min="1" step="1" placeholder="z. B. 12" value="'+escapeHtml(c.renewalTermMonths)+'">'+
+        '<span class="hint">Die Übersicht rechnet automatisch die nächste tatsächliche Kündigungsfrist, wenn eine frühere Frist bereits verstrichen ist.</span>'+
+      '</div>'+
+
+      '<div class="subsection-label">Kündigung – Kontakt beim Anbieter</div>'+
+      '<div class="field-row">'+
+        '<div class="field"><label for="f-cancel-contact">Ansprechpartner</label><input id="f-cancel-contact" type="text" placeholder="z. B. Kundenservice" value="'+escapeHtml(c.cancelContactName)+'"></div>'+
+        '<div class="field"><label for="f-cancel-phone">Rufnummer</label>'+
+          '<div class="field-with-action">'+
+            '<input id="f-cancel-phone" type="tel" inputmode="tel" placeholder="z. B. 0800 123456" value="'+escapeHtml(c.cancelPhone)+'">'+
+            '<button class="field-action-btn" id="call-cancel-btn" type="button" title="Anrufen">'+icon("phone")+'</button>'+
+          '</div>'+
+        '</div>'+
+      '</div>'+
+      '<div class="field"><label for="f-cancel-email">E-Mail</label>'+
+        '<div class="field-with-action">'+
+          '<input id="f-cancel-email" type="email" inputmode="email" placeholder="z. B. kuendigung@anbieter.de" value="'+escapeHtml(c.cancelEmail)+'">'+
+          '<button class="field-action-btn" id="mail-cancel-btn" type="button" title="E-Mail schreiben">'+icon("mail")+'</button>'+
+        '</div>'+
+      '</div>'+
+
+      '<div class="field"><label for="f-notes">Notizen</label><textarea id="f-notes" placeholder="z. B. Deckungssumme, Selbstbeteiligung, Kontakt …">'+escapeHtml(c.notes)+'</textarea></div>'+
+
+    '</div>'+
+    '<div class="modal-foot">'+
+      (isNew ? '' : '<button class="btn btn-danger" id="delete-btn" type="button" style="margin-right:auto;">'+icon("trash")+' Löschen</button>')+
+      '<button class="btn btn-ghost" data-close type="button">Abbrechen</button>'+
+      '<button class="btn btn-primary" id="save-btn" type="button">'+icon("check")+' Speichern</button>'+
+    '</div>';
+}
+
+function renderAttachmentList(overlay){
+  const host = overlay.querySelector("#attachment-list");
+  if (!host) return;
+  if (state.draftAttachments.length===0){ host.innerHTML = ""; return; }
+  host.innerHTML = state.draftAttachments.map(function(a, i){
+    const isImg = a.contentType && a.contentType.indexOf("image/")===0;
+    return '<div class="attachment-item">'+
+      '<button class="attachment-open" data-open-att="'+i+'" type="button" title="Dokument öffnen">'+
+        (isImg ? '<img src="'+a.dataUrl+'" alt="">' : '<span style="color:var(--text-muted);flex:none;">'+icon("doc")+'</span>')+
+        '<span class="attachment-name">'+escapeHtml(a.name||"Dokument")+'</span>'+
+      '</button>'+
+      '<button class="icon-btn" data-remove-att="'+i+'" type="button" aria-label="Entfernen">'+icon("x")+'</button>'+
+    '</div>';
+  }).join("");
+  host.querySelectorAll("[data-open-att]").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      const a = state.draftAttachments[Number(btn.getAttribute("data-open-att"))];
+      if (a) openAttachment(a);
+    });
+  });
+  host.querySelectorAll("[data-remove-att]").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      state.draftAttachments.splice(Number(btn.getAttribute("data-remove-att")),1);
+      renderAttachmentList(overlay);
+    });
+  });
+}
+
+function dataUrlToBlob(dataUrl){
+  const commaIdx = dataUrl.indexOf(",");
+  const meta = dataUrl.slice(0, commaIdx);
+  const body = dataUrl.slice(commaIdx+1);
+  const typeMatch = meta.match(/^data:([^;]+)/);
+  const contentType = typeMatch ? typeMatch[1] : "application/octet-stream";
+  if (/;base64/.test(meta)){
+    const byteChars = atob(body);
+    const byteNumbers = new Array(byteChars.length);
+    for (let i=0; i<byteChars.length; i++){ byteNumbers[i] = byteChars.charCodeAt(i); }
+    return new Blob([new Uint8Array(byteNumbers)], { type: contentType });
+  }
+  return new Blob([decodeURIComponent(body)], { type: contentType });
+}
+
+function openAttachment(a){
+  if (!a || !a.dataUrl) return;
+  try{
+    const blob = dataUrlToBlob(a.dataUrl);
+    const blobUrl = URL.createObjectURL(blob);
+    const win = window.open(blobUrl, "_blank");
+    setTimeout(function(){ URL.revokeObjectURL(blobUrl); }, 60000);
+    if (!win){ toast("Öffnen wurde vom Browser blockiert. Bitte Pop-ups für diese Seite erlauben.","error"); }
+  }catch(e){
+    // Ausweichlösung, falls die Blob-Umwandlung fehlschlägt
+    window.open(a.dataUrl, "_blank");
+  }
+}
+
+function setDocStatus(overlay, html, show){
+  const el = overlay.querySelector("#doc-status");
+  if (!el) return;
+  el.style.display = show ? "flex" : "none";
+  el.innerHTML = html || "";
+}
+
+function refreshContractPayerField(overlay){
+  const field = overlay.querySelector("#payer-field");
+  if (!field) return;
+  const members = membersForHouseholds(state.draftHouseholdIds);
+  const payerSelectEl = overlay.querySelector("#f-payer");
+  const currentPayerId = payerSelectEl ? payerSelectEl.value : "";
+  const stillValid = members.some(function(m){ return m.id===currentPayerId; });
+  field.innerHTML = '<label for="f-payer">Zahler:in</label>' + payerSelectHTML(members, stillValid ? currentPayerId : "");
+  wireContractPayerField(overlay);
+  if (!stillValid){
+    const bf = overlay.querySelector("#bankaccount-field");
+    if (bf) bf.innerHTML = bankAccountFieldHTML("", "");
+  }
+}
+
+function wireContractPayerField(overlay){
+  const quickAdd = overlay.querySelector("#quick-add-member");
+  if (quickAdd){
+    quickAdd.addEventListener("click", function(e){
+      e.preventDefault();
+      openMemberModal(null, function(){ refreshContractPayerField(overlay); });
+    });
+  }
+  const payerSelect = overlay.querySelector("#f-payer");
+  if (payerSelect){
+    payerSelect.addEventListener("change", function(){
+      const bfield = overlay.querySelector("#bankaccount-field");
+      if (bfield){ bfield.innerHTML = bankAccountFieldHTML(payerSelect.value, ""); }
+      wireBankAccountField(overlay);
+    });
+  }
+}
+
+function renderContractHouseholdChips(overlay){
+  const host = overlay.querySelector("#contract-household-chips");
+  if (!host) return;
+  host.innerHTML = householdChipsHTML("contract-household", state.draftHouseholdIds);
+  host.querySelectorAll("[data-household-chip]").forEach(function(chip){
+    chip.addEventListener("click", function(){
+      const hid = chip.getAttribute("data-household-chip");
+      const idx = state.draftHouseholdIds.indexOf(hid);
+      if (idx>=0) state.draftHouseholdIds.splice(idx,1); else state.draftHouseholdIds.push(hid);
+      renderContractHouseholdChips(overlay);
+      refreshContractPayerField(overlay);
+    });
+  });
+}
+
+function wireBankAccountField(overlay){
+  const qa = overlay.querySelector("#quick-add-bankaccount");
+  if (!qa) return;
+  qa.addEventListener("click", function(e){
+    e.preventDefault();
+    const payerSelect = overlay.querySelector("#f-payer");
+    const payerId = payerSelect ? payerSelect.value : "";
+    if (!payerId) return;
+    openMemberModal(payerId, function(){
+      const field = overlay.querySelector("#bankaccount-field");
+      if (field){ field.innerHTML = bankAccountFieldHTML(payerId, ""); }
+      wireBankAccountField(overlay);
+    });
+  });
+}
+
+function wireContractModal(overlay, source, isNew){
+  renderAttachmentList(overlay);
+  wireBankAccountField(overlay);
+  renderContractHouseholdChips(overlay);
+  wireContractPayerField(overlay);
+
+  const autoRenewCheckbox = overlay.querySelector("#f-autorenew");
+  if (autoRenewCheckbox){
+    autoRenewCheckbox.addEventListener("change", function(){
+      overlay.querySelector("#renewal-term-field").style.display = autoRenewCheckbox.checked ? "" : "none";
+    });
+  }
+
+  const portalBtn = overlay.querySelector("#open-portal-btn");
+  if (portalBtn){
+    portalBtn.addEventListener("click", function(){
+      const raw = overlay.querySelector("#f-portal-url").value.trim();
+      if (!raw){ toast("Bitte zuerst eine URL eintragen.","error"); return; }
+      const url = /^https?:\/\//i.test(raw) ? raw : "https://"+raw;
+      window.open(url, "_blank");
+    });
+  }
+  const callBtn = overlay.querySelector("#call-cancel-btn");
+  if (callBtn){
+    callBtn.addEventListener("click", function(){
+      const raw = overlay.querySelector("#f-cancel-phone").value.trim();
+      if (!raw){ toast("Bitte zuerst eine Rufnummer eintragen.","error"); return; }
+      window.location.href = "tel:"+raw.replace(/\s+/g,"");
+    });
+  }
+  const mailBtn = overlay.querySelector("#mail-cancel-btn");
+  if (mailBtn){
+    mailBtn.addEventListener("click", function(){
+      const raw = overlay.querySelector("#f-cancel-email").value.trim();
+      if (!raw){ toast("Bitte zuerst eine E-Mail-Adresse eintragen.","error"); return; }
+      window.location.href = "mailto:"+raw;
+    });
+  }
+
+  const fileInput = overlay.querySelector("#file-input");
+  if (fileInput){
+    fileInput.addEventListener("change", function(){
+      const file = fileInput.files[0];
+      if (!file) return;
+      handleFileSelected(overlay, file);
+      fileInput.value = "";
+    });
+  }
+
+  const delBtn = overlay.querySelector("#delete-btn");
+  if (delBtn){
+    delBtn.addEventListener("click", function(){
+      confirmDialog("Vertrag löschen?", "Der Eintrag „"+(source.name||"ohne Namen")+"“ wird endgültig entfernt.", function(){
+        state.contracts = state.contracts.filter(function(c){ return c.id!==source.id; });
+        markDirty();
+        render();
+        toast("Vertrag gelöscht.");
+        closeOverlay(overlay);
+      });
+    });
+  }
+
+  overlay.querySelector("#save-btn").addEventListener("click", function(){ saveContract(overlay, source, isNew); });
+
+  const printBtn = overlay.querySelector("#print-contract-btn");
+  if (printBtn){
+    printBtn.addEventListener("click", function(){ printSingleContract(collectContractFormSnapshot(overlay, source)); });
+  }
+}
+
+function collectContractFormSnapshot(overlay, source){
+  const val = function(sel){ const el = overlay.querySelector(sel); return el ? el.value : ""; };
+  return Object.assign({}, source, {
+    name: val("#f-name").trim(),
+    householdIds: state.draftHouseholdIds.slice(),
+    category: val("#f-category"),
+    provider: val("#f-provider").trim(),
+    contractNumber: val("#f-number").trim(),
+    portalUrl: val("#f-portal-url").trim(),
+    cancelContactName: val("#f-cancel-contact").trim(),
+    cancelPhone: val("#f-cancel-phone").trim(),
+    cancelEmail: val("#f-cancel-email").trim(),
+    payerId: val("#f-payer") || "",
+    bankAccountId: val("#f-bankaccount") || "",
+    amount: val("#f-amount")===""? 0 : Number(val("#f-amount")),
+    frequency: val("#f-frequency"),
+    startDate: val("#f-start"),
+    endDate: val("#f-end"),
+    noticePeriodMonths: val("#f-notice")===""? null : Number(val("#f-notice")),
+    autoRenew: !!(overlay.querySelector("#f-autorenew") && overlay.querySelector("#f-autorenew").checked),
+    renewalTermMonths: val("#f-renewal-term")===""? "" : Number(val("#f-renewal-term")),
+    status: val("#f-status"),
+    notes: val("#f-notes"),
+    attachments: state.draftAttachments
+  });
+}
+
+const MAX_ATTACHMENT_MB = 20;
+const MAX_IMAGE_DIM = 1600;
+const MAX_BG_DIM = 2400;
+const MAX_AVATAR_DIM = 480;
+
+function readFileAsDataUrl(file){
+  return new Promise(function(resolve, reject){
+    const reader = new FileReader();
+    reader.onload = function(){ resolve(reader.result); };
+    reader.onerror = function(){ reject(new Error("read_failed")); };
+    reader.readAsDataURL(file);
+  });
+}
+
+function downscaleImageToDataUrl(file, maxDim){
+  const limit = maxDim || MAX_IMAGE_DIM;
+  return new Promise(function(resolve, reject){
+    const reader = new FileReader();
+    reader.onload = function(){
+      const img = new Image();
+      img.onload = function(){
+        let w = img.naturalWidth, h = img.naturalHeight;
+        if (Math.max(w,h) > limit){
+          const scale = limit / Math.max(w,h);
+          w = Math.round(w*scale); h = Math.round(h*scale);
+        }
+        try{
+          const canvas = document.createElement("canvas");
+          canvas.width = w; canvas.height = h;
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, w, h);
+          resolve(canvas.toDataURL("image/jpeg", 0.82));
+        }catch(e){
+          resolve(reader.result); // Canvas nicht verfügbar – Originalbild verwenden
+        }
+      };
+      img.onerror = function(){ resolve(reader.result); };
+      img.src = reader.result;
+    };
+    reader.onerror = function(){ reject(new Error("read_failed")); };
+    reader.readAsDataURL(file);
+  });
+}
+
+function handleFileSelected(overlay, file){
+  const isImage = file.type && file.type.indexOf("image/")===0;
+  const isPdf = file.type==="application/pdf";
+  if (!isImage && !isPdf){ toast("Bitte ein Foto oder eine PDF-Datei wählen.","error"); return; }
+  if (file.size > MAX_ATTACHMENT_MB*1024*1024){ toast("Datei ist größer als "+MAX_ATTACHMENT_MB+" MB.","error"); return; }
+
+  setDocStatus(overlay, '<span class="spinner"></span> Dokument wird verarbeitet …', true);
+  const work = isImage ? downscaleImageToDataUrl(file) : readFileAsDataUrl(file);
+  work.then(function(dataUrl){
+    state.draftAttachments.push({ id:newId(), contentType: isImage ? "image/jpeg" : file.type, name:file.name, dataUrl:dataUrl });
+    renderAttachmentList(overlay);
+    setDocStatus(overlay, "", false);
+  }).catch(function(){
+    setDocStatus(overlay, "", false);
+    toast("Datei konnte nicht gelesen werden.","error");
+  });
+}
+
+function handleBackgroundFileSelected(file){
+  if (!file.type || file.type.indexOf("image/")!==0){ toast("Bitte ein Foto wählen.","error"); return; }
+  if (file.size > MAX_ATTACHMENT_MB*1024*1024){ toast("Foto ist größer als "+MAX_ATTACHMENT_MB+" MB.","error"); return; }
+  toast("Hintergrundbild wird verarbeitet …");
+  downscaleImageToDataUrl(file, MAX_BG_DIM).then(function(dataUrl){
+    setBackgroundImage(dataUrl);
+    toast("Hintergrundbild gespeichert.");
+  }).catch(function(){
+    toast("Foto konnte nicht gelesen werden.","error");
+  });
+}
+
+function payerHistorySnapshot(payerId, bankAccountId){
+  if (!payerId){
+    return { date:new Date().toISOString(), payerId:"", payerName:"", bankAccountId:"", bankAccountLabel:"" };
+  }
+  const m = memberById(payerId);
+  const acct = bankAccountId ? bankAccountById(payerId, bankAccountId) : null;
+  return {
+    date: new Date().toISOString(),
+    payerId: payerId,
+    payerName: m ? m.name : "",
+    bankAccountId: bankAccountId || "",
+    bankAccountLabel: acct ? bankAccountLabel(acct) : ""
+  };
+}
+
+function saveContract(overlay, source, isNew){
+  const val = function(sel){ const el = overlay.querySelector(sel); return el ? el.value : ""; };
+  const name = val("#f-name").trim();
+  if (!name){ toast("Bitte eine Bezeichnung eingeben.","error"); overlay.querySelector("#f-name").focus(); return; }
+  if (!state.draftHouseholdIds.length){ toast("Bitte mindestens einen Haushalt auswählen.","error"); return; }
+  const amountRaw = val("#f-amount");
+  const payerId = val("#f-payer") || "";
+  const bankAccountId = val("#f-bankaccount") || "";
+
+  const payerChanged = payerId !== (source.payerId||"");
+  const acctChanged = bankAccountId !== (source.bankAccountId||"");
+  let payerHistory = Array.isArray(source.payerHistory) ? source.payerHistory.slice() : [];
+  if ((isNew && payerId) || (!isNew && (payerChanged || acctChanged))){
+    payerHistory.push(payerHistorySnapshot(payerId, bankAccountId));
+  }
+
+  const payload = {
+    name: name,
+    householdIds: state.draftHouseholdIds.slice(),
+    category: val("#f-category"),
+    provider: val("#f-provider").trim(),
+    contractNumber: val("#f-number").trim(),
+    portalUrl: val("#f-portal-url").trim(),
+    cancelContactName: val("#f-cancel-contact").trim(),
+    cancelPhone: val("#f-cancel-phone").trim(),
+    cancelEmail: val("#f-cancel-email").trim(),
+    payerId: payerId,
+    bankAccountId: bankAccountId,
+    payerHistory: payerHistory,
+    amount: amountRaw===""? 0 : Number(amountRaw),
+    frequency: val("#f-frequency"),
+    startDate: val("#f-start"),
+    endDate: val("#f-end"),
+    noticePeriodMonths: val("#f-notice")===""? null : Number(val("#f-notice")),
+    autoRenew: !!(overlay.querySelector("#f-autorenew") && overlay.querySelector("#f-autorenew").checked),
+    renewalTermMonths: val("#f-renewal-term")===""? "" : Number(val("#f-renewal-term")),
+    status: val("#f-status"),
+    notes: val("#f-notes").trim(),
+    attachments: state.draftAttachments,
+    updatedAt: new Date().toISOString()
+  };
+
+  if (isNew){
+    state.contracts.push(Object.assign({ id:newId(), createdAt:new Date().toISOString() }, payload));
+  } else {
+    const idx = state.contracts.findIndex(function(c){ return c.id===source.id; });
+    if (idx>=0){ state.contracts[idx] = Object.assign({}, source, payload); }
+  }
+  markDirty();
+  toast(isNew?"Vertrag gespeichert.":"Änderungen gespeichert.");
+  closeOverlay(overlay);
+  render();
+}
+
+/* ======================= Go ======================= */
+
+boot();
+
+})();
+</script>
+</body>
+</html>
