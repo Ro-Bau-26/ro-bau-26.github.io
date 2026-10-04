@@ -849,6 +849,7 @@ function boot(){
 /* ======================= Helpers: money & dates ======================= */
 
 const eur = new Intl.NumberFormat("de-DE", { style:"currency", currency:"EUR" });
+const eurNoDecimals = new Intl.NumberFormat("de-DE", { style:"currency", currency:"EUR", maximumFractionDigits:0 });
 function formatEUR(v){ return eur.format(v||0); }
 function formatDate(s){
   if (!s) return "–";
@@ -1175,7 +1176,8 @@ const HELP_TOPICS = [
 
   { title:"Mehrere Haushalte (z. B. Wohnhaus A, Praxis)", body:
     '<p>Unter „Mitglieder“ lassen sich beliebig viele Haushalte anlegen und frei benennen – z. B. „Wohnhaus A“, „Wohnhaus B“ oder „Praxis“. Jede Person kann mehreren Haushalten gleichzeitig angehören, und auch ein Vertrag kann mehreren Haushalten zugeordnet werden (etwa ein gemeinsam genutzter Vertrag).</p>'+
-    '<p>Sobald mehr als ein Haushalt angelegt ist, erscheint oben rechts auf „Übersicht“ und „Verträge“ eine Auswahl zum Umschalten. „Alle Haushalte“ zeigt dabei die zusammengefasste Gesamtübersicht über alle Haushalte hinweg (jährliche und monatliche Kosten, Diagramme, Kündigungsfristen); die Auswahl eines einzelnen Haushalts blendet alles auf dessen Verträge ein.</p>' },
+    '<p>Sobald mehr als ein Haushalt angelegt ist, erscheint oben rechts auf „Übersicht“ und „Verträge“ eine Auswahl zum Umschalten. „Alle Haushalte“ zeigt dabei die zusammengefasste Gesamtübersicht über alle Haushalte hinweg (jährliche und monatliche Kosten, Diagramme, Kündigungsfristen); die Auswahl eines einzelnen Haushalts blendet alles auf dessen Verträge ein.</p>'+
+    '<p><strong>Vertrag einem anderen Haushalt zuordnen:</strong> Ein eigener „Verschieben“-Button ist dafür nicht nötig – öffnen Sie den Vertrag einfach erneut und wählen Sie bei den Haushalts-Chips den bisherigen Haushalt ab und den gewünschten neuen an. Das funktioniert jederzeit über das normale Bearbeiten, auch für mehrere zugeordnete Haushalte gleichzeitig. Ebenso lässt sich bei jeder Person unter „Mitglieder“ über die gleichen Chips festlegen, welchen Haushalten sie angehört.</p>' },
 
   { title:"Sicherung & iCloud-Abgleich", body:
     '<p>Die App läuft vollständig lokal auf diesem Gerät, es gibt keinen Server und keine automatische Internetübertragung Ihrer Daten. Damit Ihre Angaben auch auf anderen eigenen Geräten verfügbar sind, speichern Sie regelmäßig eine Sicherungsdatei und legen diese in einem gemeinsamen iCloud-Drive-Ordner ab – die genaue Schritt-für-Schritt-Anleitung finden Sie im Bereich „Sicherung“.</p>' },
@@ -1445,6 +1447,30 @@ function renderChart(host){
 
   const ticks = [0, niceMax*0.5, niceMax];
 
+  // Reserve a little breathing room between the label text and the bar start,
+  // and cut off labels/values that would otherwise run into the bar (the
+  // overlap this fixes). Approximate character widths so this stays correct
+  // however wide the chart is rendered.
+  const labelGap = 10;
+  const maxTextW = labelColW - labelGap;
+  function fitChartText(str, fontSize, monospace){
+    const avgCharW = fontSize * (monospace ? 0.62 : 0.56);
+    const maxChars = Math.max(3, Math.floor(maxTextW/avgCharW));
+    if (str.length<=maxChars) return str;
+    return str.slice(0, maxChars-1).replace(/\s+$/,"")+"…";
+  }
+  // For the amount/percent line, drop the cents before resorting to an
+  // ellipsis, so very large totals keep their percentage figure readable.
+  function fitChartValue(value, pct, fontSize){
+    const full = formatEUR(value)+' · '+pct+' %';
+    const avgCharW = fontSize*0.62;
+    const maxChars = Math.max(3, Math.floor(maxTextW/avgCharW));
+    if (full.length<=maxChars) return full;
+    const short = eurNoDecimals.format(value||0)+' · '+pct+' %';
+    if (short.length<=maxChars) return short;
+    return fitChartText(short, fontSize, true);
+  }
+
   let svg = '<svg viewBox="0 0 '+chartW+' '+h+'" style="width:100%;height:auto;display:block" role="img" aria-label="Balkendiagramm Ausgaben nach '+chartModeLabel()+'">';
 
   ticks.forEach(function(t){
@@ -1458,13 +1484,16 @@ function renderChart(host){
     const barW = Math.max(2, (r.value/niceMax)*plotW);
     const cy = y + rowH/2;
     const pct = total? Math.round(r.value/total*100) : 0;
+    const labelText = fitChartText(r.label, 13.12, false);
+    const valueText = fitChartValue(r.value, pct, 13.12);
     if (showCount){
-      svg += '<text class="bar-row-label" x="0" y="'+(cy-12).toFixed(1)+'">'+escapeHtml(r.label)+'</text>';
-      svg += '<text class="bar-row-value" x="0" y="'+(cy+7).toFixed(1)+'">'+formatEUR(r.value)+' · '+pct+' %</text>';
-      svg += '<text class="bar-row-count" x="0" y="'+(cy+22).toFixed(1)+'">'+contractCountLabel(r.count)+'</text>';
+      const countText = fitChartText(contractCountLabel(r.count), 11.52, false);
+      svg += '<text class="bar-row-label" x="0" y="'+(cy-12).toFixed(1)+'"><title>'+escapeHtml(r.label)+'</title>'+escapeHtml(labelText)+'</text>';
+      svg += '<text class="bar-row-value" x="0" y="'+(cy+7).toFixed(1)+'">'+escapeHtml(valueText)+'</text>';
+      svg += '<text class="bar-row-count" x="0" y="'+(cy+22).toFixed(1)+'">'+escapeHtml(countText)+'</text>';
     } else {
-      svg += '<text class="bar-row-label" x="0" y="'+(cy-6).toFixed(1)+'">'+escapeHtml(r.label)+'</text>';
-      svg += '<text class="bar-row-value" x="0" y="'+(cy+13).toFixed(1)+'">'+formatEUR(r.value)+' · '+pct+' %</text>';
+      svg += '<text class="bar-row-label" x="0" y="'+(cy-6).toFixed(1)+'"><title>'+escapeHtml(r.label)+'</title>'+escapeHtml(labelText)+'</text>';
+      svg += '<text class="bar-row-value" x="0" y="'+(cy+13).toFixed(1)+'">'+escapeHtml(valueText)+'</text>';
     }
     svg += '<rect class="bar-rect" data-idx="'+i+'" x="'+labelColW+'" y="'+(cy-7).toFixed(1)+'" width="'+barW.toFixed(1)+'" height="14" rx="7" fill="'+r.color+'"/>';
     svg += '<rect class="bar-hit" data-idx="'+i+'" x="'+labelColW+'" y="'+(y-2)+'" width="'+plotW+'" height="'+(rowH+4)+'" fill="transparent"/>';
