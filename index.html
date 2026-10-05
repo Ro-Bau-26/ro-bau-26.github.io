@@ -484,6 +484,23 @@
   .pc-row:first-of-type{ border-top:0; }
   .pc-name{ flex:1; font-size:0.9rem; font-weight:600; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .pc-sub{ font-size:0.76rem; color:var(--text-muted); font-weight:400; }
+  .cv-toggle-row{ margin:-2px 0 12px; }
+  .prov-letter{ font-size:0.78rem; font-weight:700; color:var(--text-muted); margin:14px 4px 6px; letter-spacing:0.04em; }
+  .prov-list{ display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:10px; }
+  @media (max-width:640px){ .prov-list{ grid-template-columns:1fr; } }
+  .prov-card{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-m); padding:13px 14px; box-shadow:var(--shadow-1); display:flex; flex-direction:column; gap:10px; min-width:0; }
+  .prov-head{ display:flex; align-items:center; gap:12px; min-width:0; }
+  .prov-avatar{ width:40px; height:40px; border-radius:50%; flex:none; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:1.05rem; }
+  .prov-name{ font-weight:700; font-size:1rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .prov-sub{ font-size:0.78rem; color:var(--text-muted); }
+  .prov-contact{ display:flex; flex-wrap:wrap; gap:6px; }
+  .contact-chip{ display:inline-flex; align-items:center; gap:6px; max-width:100%; padding:6px 10px; border-radius:999px; background:var(--surface-sunken); color:var(--text-primary); text-decoration:none; font-size:0.82rem; font-weight:600; }
+  .contact-chip:hover{ background:var(--surface-2); color:var(--accent); }
+  .contact-chip span{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .contact-chip small{ font-weight:400; color:var(--text-muted); }
+  .prov-contract{ display:flex; align-items:center; gap:10px; padding:8px 0; border-top:1px solid var(--border); cursor:pointer; min-width:0; }
+  .prov-contract .pc-name{ flex:1; }
+  .prov-contract-amt{ font-size:0.84rem; font-weight:600; white-space:nowrap; font-variant-numeric:tabular-nums; }
   .ai-status{ display:flex; align-items:center; gap:8px; font-size:0.82rem; color:var(--text-secondary); }
   .spinner{
     width:14px;height:14px;border-radius:50%; border:2px solid var(--border-strong); border-top-color:var(--accent);
@@ -711,6 +728,7 @@ const state = {
   members: [],
   households: [],          // [{id, name, colorIndex, createdAt}] – frei benennbare Haushalte/Standorte (z. B. "Wohnhaus A", "Praxis")
   activeHousehold: "__all", // "__all" oder die id eines Haushalts – steuert Dashboard/Vertragsliste; nicht Teil der Sicherung
+  contractsView: "list",   // "list" | "provider" – Darstellung der Vertragsliste (nicht gespeichert)
   contractsLoaded: false,
   membersLoaded: false,
   chartMode: "category", // or "payer"
@@ -1584,7 +1602,7 @@ const HELP_TOPICS = [
         '<li><a href="https://arbeiterkammer.at/mb_konsumentenschutz" target="_blank" rel="noopener noreferrer">Konsumentenschutz (u. a. Versicherungen, Haushalts- und KFZ-Versicherung, Mietvertrag)</a></li>'+
       '</ul></div>'+
     '</div>'+
-    '<p><strong>Das brauchen Sie aus der App:</strong> Bezeichnung und Anbieter, Vertrags- bzw. Versicherungsnummer, das späteste Kündigungsdatum („Kündigen bis“) und – falls hinterlegt – den Kündigungskontakt bzw. das Kundenportal. Wenn der Anbieter eine Kündigung direkt im Kundenportal oder per Formular auf seiner Webseite anbietet, genügt oft dieser Weg.</p>'+
+    '<p><strong>Das brauchen Sie aus der App:</strong> Bezeichnung und Anbieter, Vertrags- bzw. Versicherungsnummer, das späteste Kündigungsdatum („Kündigen bis“) und – falls hinterlegt – den Kontakt beim Anbieter bzw. das Kundenportal. Wenn der Anbieter eine Kündigung direkt im Kundenportal oder per Formular auf seiner Webseite anbietet, genügt oft dieser Weg.</p>'+
     '<p><strong>Tipps:</strong> Kündigen Sie schriftlich und so, dass Sie den Zugang belegen können (z. B. Einschreiben oder die Bestätigung des Portals). Hängen Sie Schreiben und Bestätigung als Dokument an den Vertrag und stellen Sie danach den Status auf „Gekündigt“ (siehe „Vorzeitig gekündigt“).</p>'+
     '<p><em>Hinweis:</em> Die Musterbriefe sind Vorlagen und keine Rechtsberatung; Fristen und Formvorschriften unterscheiden sich je nach Land und Vertragsart. Die Webseiten Dritter können sich ändern – führt ein Link ins Leere, suchen Sie auf der jeweiligen Startseite nach „Musterbriefe“.</p>' },
 
@@ -1592,8 +1610,10 @@ const HELP_TOPICS = [
     '<p>Für Leistungen, die erst bei Durchführung bezahlt werden (Feuerlöscherprüfung, Heizungswartung, Schornsteinfeger …), tragen Sie als Betrag die Kosten pro Termin ein und wählen als „Zahlungsrhythmus / Intervall“ den Abstand zwischen zwei Terminen – auch „alle 2 Jahre“, „alle 3 Jahre“ oder „alle 5 Jahre“ stehen zur Wahl. Die Übersicht rechnet das automatisch auf Jahres- und Monatskosten um (z. B. 120 € alle 2 Jahre = 60 € pro Jahr).</p>'+
     '<p>Im Feld „Nächster Termin“ halten Sie fest, wann die Leistung wieder fällig ist. Dieses Datum erscheint auf der Vertragskarte und unter „Anstehende Fristen &amp; Termine“ auf der Übersicht, sobald es weniger als 90 Tage entfernt ist. Nach dem Termin tragen Sie einfach das nächste Datum ein. Eine eigene Kategorie gibt es dafür nicht – passend ist meist „Wohnen &amp; Hausrat“ oder „Sonstige“.</p>' },
 
-  { title:"Portal-Login & Kündigungskontakt", body:
-    '<p>Im Feld „URL / Login zum Vertragspartner“ hinterlegte Adressen lassen sich über das Link-Symbol direkt im Browser öffnen. Im Bereich „Kündigung – Kontakt beim Anbieter“ können Ansprechpartner, Rufnummer und E-Mail-Adresse gespeichert werden; die kleinen Symbole daneben starten bei Bedarf direkt einen Anruf oder eine E-Mail an diese Adresse.</p>' },
+  { title:"Kontakte beim Anbieter & Ansicht „Nach Anbieter“", body:
+    '<p><strong>Im Vertrag</strong> pflegen Sie den Abschnitt „Kontakt beim Anbieter“: Ansprechpartner, zwei Rufnummern („Service / Kündigung“ und „Schaden / Hotline“) sowie E-Mail-Adresse. Zusätzlich lässt sich beim Feld „URL / Login zum Vertragspartner“ die Adresse des Kundenportals hinterlegen. Die kleinen Symbole neben den Feldern öffnen die Adresse im Browser, starten einen Anruf bzw. eine E-Mail. (Ältere Einträge behalten ihre Angaben; die bisherige Rufnummer steht jetzt unter „Service / Kündigung“.)</p>'+
+    '<p><strong>Kontakte nachschlagen:</strong> In der Ansicht „Verträge“ schaltet der Umschalter <em>Liste | Nach Anbieter</em> die Darstellung um. „Nach Anbieter“ zeigt eine Karte pro Anbieter, alphabetisch mit Anfangsbuchstaben – ähnlich einem Adressbuch: oben Name, Anzahl der Verträge und Jahreskosten, darunter Rufnummern, E-Mail und Portal als antippbare Schaltflächen (Anruf, E-Mail, Webseite) und darunter die zugehörigen Verträge. Ein Antippen eines Vertrags öffnet ihn.</p>'+
+    '<p><strong>Gut zu wissen:</strong> Es gibt kein zweites Kontaktverzeichnis, das Sie pflegen müssten – die Kartenansicht fasst die Angaben aus allen Verträgen eines Anbieters automatisch zusammen (gleiche Nummern und Adressen nur einmal; Groß-/Kleinschreibung beim Anbieternamen ist egal). Geändert wird immer im Vertrag. Verträge ohne Anbieter stehen unter „Ohne Anbieter“. Die Suche berücksichtigt in beiden Ansichten auch Ansprechpartner, Rufnummern und E-Mail; Kategorie- und Statusfilter gelten ebenfalls. Die Ansicht wird nicht gespeichert: Nach dem Neuladen steht wieder „Liste“.</p>' },
 
   { title:"Ausgaben im Überblick", body:
     '<p>Der Diagrammbereich auf der Übersicht lässt sich zwischen drei Auswertungen umschalten: „Nach Kategorie“, „Nach Zahler:in“ und „Nach Anbieter“ – jeweils wahlweise als Kacheln, Balkendiagramm oder Tabelle. Bei vielen Anbietern werden automatisch nur die zehn größten einzeln aufgeführt, der Rest wird unter „Weitere“ zusammengefasst.</p>'+
@@ -1657,6 +1677,8 @@ const HELP_TOPICS = [
       '<li><strong>Korrektur:</strong> „Kündigen bis“ wurde in deutscher Zeitzone einen Tag zu früh angezeigt – behoben.</li>'+
       '<li><strong>Anhänge komfortabler:</strong> mehrere Dateien auf einmal wählen (iPhone, iPad, Mac), Dateien am Mac/PC per Drag &amp; Drop in das Vertragsfenster ziehen, kopierte Bilder mit Cmd/Strg+V einfügen. Details unter „Dokumente anhängen“.</li>'+
       '<li><strong>Anhänge nur im Vertrag:</strong> Die Vertragsliste zeigt keine Vorschaubilder mehr; Fotos und PDFs sind ausschließlich im geöffneten Vertrag sichtbar. Der Anhänge-Button heißt „Foto / Scan / Datei hinzufügen“.</li>'+
+      '<li><strong>Kontakte &amp; Ansicht „Nach Anbieter“:</strong> neuer Umschalter in den Verträgen mit Anbieter-Karten (Anruf, E-Mail, Portal, zugehörige Verträge), zweite Rufnummer „Schaden / Hotline“ und erweiterte Suche.</li>'+
+      '<li><strong>Korrektur:</strong> Beim Tippen ins Suchfeld der Verträge bleibt der Cursor jetzt im Feld (zuvor brach die Eingabe nach jedem Buchstaben ab).</li>'+
       '<li><strong>Preisverlauf:</strong> Beitragsänderungen werden pro Vertrag mit Datum, Grund und Veränderung in Euro/Prozent festgehalten; Abzeichen in der Vertragsliste und eine Übersichtskarte „Preisänderungen der letzten 12 Monate“.</li>'+
       '<li><strong>Kündigungsschreiben:</strong> neues Hilfe-Thema mit Links zu den kostenlosen Musterbriefen der Verbraucherzentrale (Deutschland) und der Arbeiterkammer (Österreich), getrennt dargestellt.</li>'+
       '<li><strong>CSV-Export:</strong> Vertragsliste als Tabelle für Excel/Numbers – ohne Bankkonten und Anhänge (nur Export, kein Import).</li>'+
@@ -1783,7 +1805,7 @@ function priceChangesCardHTML(){
   return '<div class="section card"><div class="card-pad">'+
     '<div class="section-head"><h2>Preisänderungen der letzten 12 Monate</h2></div>'+
     '<p style="margin:0 0 12px;font-size:0.9rem;">Auswirkung auf Ihre Jahreskosten: <span class="price-delta '+(total>0?"up":"down")+'">'+escapeHtml(signedEUR(total))+(pct!=null?' ('+escapeHtml(signedPct(pct))+')':'')+' pro Jahr</span>'+
-      ' <span class="member-sub">≈ '+escapeHtml(signedEUR(total/12))+' pro Monat · '+items.length+' Vertrag'+(items.length===1?'':'e')+'</span></p>'+
+      ' <span class="member-sub">≈ '+escapeHtml(signedEUR(total/12))+' pro Monat · '+items.length+(items.length===1?' Vertrag':' Verträge')+'</span></p>'+
     shown.map(function(x){
       return '<div class="pc-row" data-open-contract="'+x.c.id+'">'+
         '<span class="dot" style="background:'+catColor(x.c.category)+'"></span>'+
@@ -2067,7 +2089,11 @@ function filteredContractsList(){
     list = list.filter(function(c){
       return (c.name||"").toLowerCase().indexOf(q)>=0 ||
              (c.provider||"").toLowerCase().indexOf(q)>=0 ||
-             (c.contractNumber||"").toLowerCase().indexOf(q)>=0;
+             (c.contractNumber||"").toLowerCase().indexOf(q)>=0 ||
+             (c.cancelContactName||"").toLowerCase().indexOf(q)>=0 ||
+             (c.cancelEmail||"").toLowerCase().indexOf(q)>=0 ||
+             (c.cancelPhone||"").replace(/\s+/g,"").indexOf(q.replace(/\s+/g,""))>=0 ||
+             (c.servicePhone||"").replace(/\s+/g,"").indexOf(q.replace(/\s+/g,""))>=0;
     });
   }
   if (state.filterCategory) list = list.filter(function(c){ return c.category===state.filterCategory; });
@@ -2082,18 +2108,109 @@ function filteredContractsList(){
   return list;
 }
 
+/* ======================= Ansicht „Nach Anbieter“ ======================= */
+
+function telHref(raw){ return "tel:" + String(raw).replace(/[^\d+]/g, ""); }
+function portalHref(raw){ raw = String(raw).trim(); return /^https?:\/\//i.test(raw) ? raw : "https://"+raw; }
+function portalLabel(raw){ return String(raw).trim().replace(/^https?:\/\//i,"").replace(/^www\./i,"").replace(/\/$/,""); }
+
+function providerGroups(list){
+  const map = {};
+  list.forEach(function(c){
+    const name = (c.provider||"").trim();
+    const key = name.toLowerCase();
+    if (!map[key]) map[key] = { key:key, name:name, contracts:[] };
+    else if (name && !/^[A-ZÄÖÜ]/.test(map[key].name) && /^[A-ZÄÖÜ]/.test(name)) map[key].name = name;
+    map[key].contracts.push(c);
+  });
+  const groups = Object.keys(map).map(function(k){ return map[k]; });
+  groups.sort(function(a,b){
+    if (!a.name) return 1; if (!b.name) return -1;
+    return a.name.localeCompare(b.name, "de");
+  });
+  return groups;
+}
+
+/* Kontaktdaten eines Anbieters = Zusammenschau der Felder aus allen seinen Verträgen (ohne Dubletten) */
+function providerContacts(g){
+  const phones = [], mails = [], portals = [], names = [];
+  const seenP = {}, seenM = {}, seenU = {}, seenN = {};
+  g.contracts.forEach(function(c){
+    [[c.servicePhone, "Schaden / Hotline"], [c.cancelPhone, "Service / Kündigung"]].forEach(function(pr){
+      const v = (pr[0]||"").trim(); if (!v) return;
+      const k = v.replace(/[^\d+]/g,""); if (!k || seenP[k]) return;
+      seenP[k] = true; phones.push({ value:v, label:pr[1] });
+    });
+    const m = (c.cancelEmail||"").trim(); if (m && !seenM[m.toLowerCase()]){ seenM[m.toLowerCase()] = true; mails.push(m); }
+    const u = (c.portalUrl||"").trim(); if (u){ const k = portalLabel(u).toLowerCase(); if (!seenU[k]){ seenU[k] = true; portals.push(u); } }
+    const n = (c.cancelContactName||"").trim(); if (n && !seenN[n.toLowerCase()]){ seenN[n.toLowerCase()] = true; names.push(n); }
+  });
+  return { phones:phones, mails:mails, portals:portals, names:names };
+}
+
+function providerCardHTML(g){
+  const label = g.name || "Ohne Anbieter";
+  const ci = providerContacts(g);
+  const annual = g.contracts.filter(function(c){ return c.status==="aktiv"; }).reduce(function(sum,c){ return sum+annualCost(c); }, 0);
+  const color = "var("+MEMBER_COLORS[Math.abs(hashStr(g.key)) % MEMBER_COLORS.length]+")";
+  const chips = []
+    .concat(ci.phones.map(function(p){ return '<a class="contact-chip" href="'+escapeHtml(telHref(p.value))+'">'+icon("phone")+'<span>'+escapeHtml(p.value)+' <small>'+escapeHtml(p.label)+'</small></span></a>'; }))
+    .concat(ci.mails.map(function(m){ return '<a class="contact-chip" href="mailto:'+escapeHtml(m)+'">'+icon("mail")+'<span>'+escapeHtml(m)+'</span></a>'; }))
+    .concat(ci.portals.map(function(u){ return '<a class="contact-chip" href="'+escapeHtml(portalHref(u))+'" target="_blank" rel="noopener noreferrer">'+icon("link")+'<span>'+escapeHtml(portalLabel(u))+'</span></a>'; }));
+  return '<div class="prov-card">'+
+    '<div class="prov-head">'+
+      '<div class="prov-avatar" style="background:'+color+'">'+escapeHtml(g.name ? g.name.charAt(0).toUpperCase() : "–")+'</div>'+
+      '<div style="min-width:0;"><div class="prov-name">'+escapeHtml(label)+'</div>'+
+        '<div class="prov-sub">'+g.contracts.length+(g.contracts.length===1?' Vertrag':' Verträge')+(annual>0 ? ' · '+escapeHtml(formatEUR(annual))+' / Jahr' : '')+'</div></div>'+
+    '</div>'+
+    (ci.names.length ? '<div class="prov-sub">Ansprechpartner: '+escapeHtml(ci.names.join(", "))+'</div>' : '')+
+    (chips.length ? '<div class="prov-contact">'+chips.join("")+'</div>' : '<div class="prov-sub">Keine Kontaktdaten hinterlegt – im Vertrag unter „Kontakt beim Anbieter“ ergänzen.</div>')+
+    '<div>'+g.contracts.map(function(c){
+      const f = FREQ_BY_ID[c.frequency];
+      return '<div class="prov-contract" data-open-contract="'+c.id+'">'+
+        '<span class="dot" style="background:'+catColor(c.category)+'"></span>'+
+        '<div class="pc-name">'+escapeHtml(c.name||"(ohne Namen)")+(c.status!=="aktiv" ? ' <span class="badge badge-neutral">'+escapeHtml(STATUS_BY_ID[c.status]?STATUS_BY_ID[c.status].label:c.status)+'</span>' : '')+'</div>'+
+        '<span class="prov-contract-amt">'+escapeHtml(formatEUR(c.amount))+(freqSuffix(f)?' <span style="color:var(--text-muted);font-weight:500;">'+escapeHtml(freqSuffix(f))+'</span>':'')+'</span>'+
+        icon("chevronRight")+
+      '</div>';
+    }).join("")+'</div>'+
+  '</div>';
+}
+function hashStr(str){ let h = 0; for (let i=0;i<str.length;i++){ h = ((h<<5)-h) + str.charCodeAt(i); h |= 0; } return h; }
+
+function providerViewHTML(list){
+  const groups = providerGroups(list);
+  let out = "", letter = null, open = false;
+  groups.forEach(function(g){
+    const ch = g.name ? (/[A-Za-zÄÖÜäöü]/.test(g.name.charAt(0)) ? g.name.charAt(0).toUpperCase() : "#") : "";
+    if (ch !== letter){
+      if (open) out += '</div>';
+      letter = ch;
+      out += (ch ? '<div class="prov-letter">'+escapeHtml(ch)+'</div>' : '<div class="prov-letter">Ohne Anbieter</div>') + '<div class="prov-list">';
+      open = true;
+    }
+    out += providerCardHTML(g);
+  });
+  if (open) out += '</div>';
+  return out;
+}
+
 function renderContracts(){
   const el = document.getElementById("view-contracts");
   if (!state.contractsLoaded){ el.innerHTML = '<div class="chart-empty">Wird geladen …</div>'; return; }
 
   const list = filteredContractsList();
 
+  /* Fokus und Cursorposition des Suchfelds über das Neuzeichnen hinweg erhalten (sonst bricht die Eingabe nach jedem Buchstaben ab) */
+  const prevSearch = document.activeElement && document.activeElement.id==="search-input" ? document.activeElement : null;
+  const prevSel = prevSearch ? [prevSearch.selectionStart, prevSearch.selectionEnd] : null;
+
   const activePayer = state.filterPayer ? memberById(state.filterPayer) : null;
   const activeProviderLabel = state.filterProvider ? (state.filterProvider==="__none" ? "Ohne Anbieter" : state.filterProvider) : null;
 
   el.innerHTML =
     '<div class="toolbar">'+
-      '<div class="search-box">'+icon("search")+'<input type="text" id="search-input" placeholder="Suchen nach Name, Anbieter, Nummer …" value="'+escapeHtml(state.search)+'"></div>'+
+      '<div class="search-box">'+icon("search")+'<input type="text" id="search-input" placeholder="Suchen nach Name, Anbieter, Nummer, Kontakt …" value="'+escapeHtml(state.search)+'"></div>'+
       '<select class="filter-select" id="filter-category"><option value="">Alle Kategorien</option>'+
         CATEGORIES.map(function(c){ return '<option value="'+c.id+'"'+(state.filterCategory===c.id?' selected':'')+'>'+escapeHtml(c.label)+'</option>'; }).join("")+
       '</select>'+
@@ -2106,6 +2223,10 @@ function renderContracts(){
       '<button class="btn btn-ghost" id="print-contracts-btn" type="button" title="Gefilterte Liste drucken">'+icon("print")+' Drucken</button>'+
       '<button class="btn btn-ghost" id="csv-contracts-btn" type="button" title="Gefilterte Liste als CSV-Tabelle (Excel, Numbers) exportieren">'+icon("list")+' CSV</button>'+
     '</div>'+
+    '<div class="cv-toggle-row"><div class="chart-toggle" id="contracts-view-toggle">'+
+      '<button data-cv="list" type="button" class="'+(state.contractsView==="list"?"active":"")+'">Liste</button>'+
+      '<button data-cv="provider" type="button" class="'+(state.contractsView==="provider"?"active":"")+'">Nach Anbieter</button>'+
+    '</div></div>'+
     (activePayer
       ? '<div class="badge badge-neutral" id="payer-filter-chip" style="width:fit-content;margin:-4px 0 8px;cursor:pointer;">'+
           icon("users")+' Zahler:in: '+escapeHtml(activePayer.name)+' '+icon("x")+
@@ -2118,10 +2239,13 @@ function renderContracts(){
       : '')+
     (state.contracts.length===0 ? emptyStateHTML() :
       (list.length===0 ? '<div class="card"><div class="chart-empty">Keine Verträge gefunden.</div></div>' :
-        '<div class="contract-list">'+list.map(contractCardHTML).join("")+'</div>'));
+        (state.contractsView==="provider" ? providerViewHTML(list) : '<div class="contract-list">'+list.map(contractCardHTML).join("")+'</div>')));
 
   if (state.contracts.length===0){ wireEmptyState(el); return; }
 
+  el.querySelectorAll("#contracts-view-toggle button").forEach(function(btn){
+    btn.addEventListener("click", function(){ state.contractsView = btn.getAttribute("data-cv"); renderContracts(); });
+  });
   const si = document.getElementById("search-input");
   si.addEventListener("input", function(){ state.search = si.value; renderContracts(); });
   document.getElementById("filter-category").addEventListener("change", function(e){ state.filterCategory = e.target.value; renderContracts(); });
@@ -2136,6 +2260,10 @@ function renderContracts(){
   el.querySelectorAll("[data-open-contract]").forEach(function(card){
     card.addEventListener("click", function(){ openContractModal(card.getAttribute("data-open-contract")); });
   });
+  if (prevSearch){
+    si.focus();
+    try{ si.setSelectionRange(prevSel[0], prevSel[1]); }catch(e){}
+  }
 }
 
 /* ======================= Preisverlauf ======================= */
@@ -2437,8 +2565,9 @@ function printSingleContract(c){
       row("Nächster Termin", c.nextDueDate ? formatDate(c.nextDueDate) : "") +
       row("Nächste Kündigungsfrist", cb ? formatDate(dateToISO(cb)) : "") +
       row("URL / Login", escapeHtml(c.portalUrl)) +
-      row("Kündigungskontakt", escapeHtml(c.cancelContactName)) +
-      row("Rufnummer", escapeHtml(c.cancelPhone)) +
+      row("Ansprechpartner", escapeHtml(c.cancelContactName)) +
+      row("Rufnummer (Service / Kündigung)", escapeHtml(c.cancelPhone)) +
+      row("Rufnummer Schaden / Hotline", escapeHtml(c.servicePhone)) +
       row("E-Mail", escapeHtml(c.cancelEmail)) +
     '</tbody></table>'+
     (c.notes ? '<h3 class="print-section-h">Notizen</h3><p class="print-notes">'+escapeHtml(c.notes)+'</p>' : '')+
@@ -2791,7 +2920,7 @@ function confirmDialog(title, body, onConfirm, confirmLabel, danger){
 function blankContract(){
   return { name:"", category:"kfz", provider:"", contractNumber:"", payerId:"", bankAccountId:"", amount:"", frequency:"monatlich",
     startDate:"", endDate:"", nextDueDate:"", noticePeriodMonths:"", autoRenew:false, renewalTermMonths:"", status:"aktiv", notes:"", attachments:[],
-    portalUrl:"", cancelContactName:"", cancelPhone:"", cancelEmail:"", priceHistory:[] };
+    portalUrl:"", cancelContactName:"", cancelPhone:"", cancelEmail:"", servicePhone:"", priceHistory:[] };
 }
 
 function openContractModal(id){
@@ -2934,20 +3063,28 @@ function contractModalHTML(c, isNew){
         '<span class="hint">Die Übersicht rechnet automatisch die nächste tatsächliche Kündigungsfrist, wenn eine frühere Frist bereits verstrichen ist.</span>'+
       '</div>'+
 
-      '<div class="subsection-label">Kündigung – Kontakt beim Anbieter</div>'+
+      '<div class="subsection-label">Kontakt beim Anbieter</div>'+
       '<div class="field-row">'+
         '<div class="field"><label for="f-cancel-contact">Ansprechpartner</label><input id="f-cancel-contact" type="text" placeholder="z. B. Kundenservice" value="'+escapeHtml(c.cancelContactName)+'"></div>'+
-        '<div class="field"><label for="f-cancel-phone">Rufnummer</label>'+
+        '<div class="field"><label for="f-cancel-phone">Rufnummer (Service / Kündigung)</label>'+
           '<div class="field-with-action">'+
             '<input id="f-cancel-phone" type="tel" inputmode="tel" placeholder="z. B. 0800 123456" value="'+escapeHtml(c.cancelPhone)+'">'+
             '<button class="field-action-btn" id="call-cancel-btn" type="button" title="Anrufen">'+icon("phone")+'</button>'+
           '</div>'+
         '</div>'+
       '</div>'+
-      '<div class="field"><label for="f-cancel-email">E-Mail</label>'+
-        '<div class="field-with-action">'+
-          '<input id="f-cancel-email" type="email" inputmode="email" placeholder="z. B. kuendigung@anbieter.de" value="'+escapeHtml(c.cancelEmail)+'">'+
-          '<button class="field-action-btn" id="mail-cancel-btn" type="button" title="E-Mail schreiben">'+icon("mail")+'</button>'+
+      '<div class="field-row">'+
+        '<div class="field"><label for="f-service-phone">Rufnummer Schaden / Hotline</label>'+
+          '<div class="field-with-action">'+
+            '<input id="f-service-phone" type="tel" inputmode="tel" placeholder="z. B. Schadenmeldung 24 h" value="'+escapeHtml(c.servicePhone)+'">'+
+            '<button class="field-action-btn" id="call-service-btn" type="button" title="Anrufen">'+icon("phone")+'</button>'+
+          '</div>'+
+        '</div>'+
+        '<div class="field"><label for="f-cancel-email">E-Mail</label>'+
+          '<div class="field-with-action">'+
+            '<input id="f-cancel-email" type="email" inputmode="email" placeholder="z. B. service@anbieter.de" value="'+escapeHtml(c.cancelEmail)+'">'+
+            '<button class="field-action-btn" id="mail-cancel-btn" type="button" title="E-Mail schreiben">'+icon("mail")+'</button>'+
+          '</div>'+
         '</div>'+
       '</div>'+
 
@@ -3120,6 +3257,14 @@ function wireContractModal(overlay, source, isNew){
       window.location.href = "tel:"+raw.replace(/\s+/g,"");
     });
   }
+  const callServiceBtn = overlay.querySelector("#call-service-btn");
+  if (callServiceBtn){
+    callServiceBtn.addEventListener("click", function(){
+      const raw = overlay.querySelector("#f-service-phone").value.trim();
+      if (!raw){ toast("Bitte zuerst eine Rufnummer eintragen.","error"); return; }
+      window.location.href = "tel:"+raw.replace(/\s+/g,"");
+    });
+  }
   const mailBtn = overlay.querySelector("#mail-cancel-btn");
   if (mailBtn){
     mailBtn.addEventListener("click", function(){
@@ -3194,6 +3339,7 @@ function collectContractFormSnapshot(overlay, source){
     cancelContactName: val("#f-cancel-contact").trim(),
     cancelPhone: val("#f-cancel-phone").trim(),
     cancelEmail: val("#f-cancel-email").trim(),
+    servicePhone: val("#f-service-phone").trim(),
     payerId: val("#f-payer") || "",
     bankAccountId: val("#f-bankaccount") || "",
     amount: val("#f-amount")===""? 0 : Number(val("#f-amount")),
@@ -3366,6 +3512,7 @@ function saveContract(overlay, source, isNew, priceMeta){
     cancelContactName: val("#f-cancel-contact").trim(),
     cancelPhone: val("#f-cancel-phone").trim(),
     cancelEmail: val("#f-cancel-email").trim(),
+    servicePhone: val("#f-service-phone").trim(),
     payerId: payerId,
     bankAccountId: bankAccountId,
     payerHistory: payerHistory,
