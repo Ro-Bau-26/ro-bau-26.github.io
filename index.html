@@ -2635,7 +2635,7 @@ function contractModalHTML(c, isNew){
           '<div class="doc-actions">'+
             '<label class="btn btn-ghost" for="file-input">'+icon("camera")+' Foto / Scan / Datei hinzufügen</label><input type="file" id="file-input" accept="image/*,application/pdf" multiple class="visually-hidden">'+
           '</div>'+
-          '<span class="hint">Mehrere Dateien lassen sich gleichzeitig auswählen. Am Mac/PC: Dateien einfach in dieses Feld ziehen oder ein kopiertes Bild mit Cmd/Strg+V einfügen.<br>Auf iPhone/iPad: „Foto aufnehmen“, „Fotomediathek“ oder „Datei auswählen“. Einen Scan finden Sie meist unter „Datei auswählen“ → Menü (…) oben rechts → „Dokumente scannen“.</span>'+
+          '<span class="hint">Mehrere Dateien lassen sich gleichzeitig auswählen. Am Mac/PC: Dateien einfach in dieses Feld ziehen (das ganze Vertragsfenster ist Ablagefläche) oder ein kopiertes Bild mit Cmd/Strg+V einfügen.<br>Auf iPhone/iPad: „Foto aufnehmen“, „Fotomediathek“ oder „Datei auswählen“. Einen Scan finden Sie meist unter „Datei auswählen“ → Menü (…) oben rechts → „Dokumente scannen“.</span>'+
           '<div class="ai-status" id="doc-status" style="display:none;"></div>'+
         '</div>'+
       '</div>'+
@@ -2902,19 +2902,29 @@ function wireContractModal(overlay, source, isNew){
     });
   }
 
+  /* Drag & Drop: gesamtes Vertragsfenster ist Ablagefläche (größeres Ziel), das Dokumentfeld leuchtet als Hinweis auf.
+     dropEffect wird bewusst NICHT gesetzt – Safari/Chrome lehnen sonst bei abweichendem effectAllowed den Drop ab. */
   const docZone = overlay.querySelector(".doc-zone");
   if (docZone){
     let dragDepth = 0;
-    const hasFiles = function(e){ return e.dataTransfer && Array.prototype.indexOf.call(e.dataTransfer.types||[], "Files")>=0; };
-    docZone.addEventListener("dragenter", function(e){ if (!hasFiles(e)) return; e.preventDefault(); dragDepth++; docZone.classList.add("drag-over"); });
-    docZone.addEventListener("dragover", function(e){ if (!hasFiles(e)) return; e.preventDefault(); e.dataTransfer.dropEffect = "copy"; });
-    docZone.addEventListener("dragleave", function(){ dragDepth = Math.max(0, dragDepth-1); if (!dragDepth) docZone.classList.remove("drag-over"); });
-    docZone.addEventListener("drop", function(e){
+    const hasFiles = function(e){
+      const dt = e.dataTransfer;
+      if (!dt) return false;
+      if (dt.types && Array.prototype.indexOf.call(dt.types, "Files")>=0) return true;
+      return !!(dt.files && dt.files.length);
+    };
+    const clear = function(){ dragDepth = 0; docZone.classList.remove("drag-over"); };
+    overlay.addEventListener("dragenter", function(e){ if (!hasFiles(e)) return; e.preventDefault(); dragDepth++; docZone.classList.add("drag-over"); });
+    overlay.addEventListener("dragover", function(e){ if (!hasFiles(e)) return; e.preventDefault(); docZone.classList.add("drag-over"); });
+    overlay.addEventListener("dragleave", function(){ dragDepth = Math.max(0, dragDepth-1); if (!dragDepth) docZone.classList.remove("drag-over"); });
+    overlay.addEventListener("drop", function(e){
       if (!hasFiles(e)) return;
-      e.preventDefault(); dragDepth = 0; docZone.classList.remove("drag-over");
+      e.preventDefault(); clear();
       handleFilesSelected(overlay, e.dataTransfer.files);
     });
+    overlay.addEventListener("dragend", clear);
   }
+
 
   const delBtn = overlay.querySelector("#delete-btn");
   if (delBtn){
