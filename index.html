@@ -360,7 +360,6 @@
   .cc-amount{ font-family:var(--font-sans); font-weight:600; font-size:0.9rem; white-space:nowrap; font-variant-numeric:tabular-nums; }
   .cc-meta{ display:flex; gap:10px; flex-wrap:wrap; margin-top:4px; font-size:0.78rem; color:var(--text-secondary); align-items:center; }
   .cc-meta span{ display:inline-flex; align-items:center; gap:4px; }
-  .cc-thumb{ width:44px;height:44px;border-radius:8px;object-fit:cover;flex:none;border:1px solid var(--border); }
 
   /* Household */
   .member-row{
@@ -1470,7 +1469,7 @@ const HELP_TOPICS = [
 
   { title:"Verträge anlegen & Dokumente anhängen", body:
     '<p>Über „Neuer Vertrag“ (unten rechts bzw. in der Seitenleiste) öffnet sich das Erfassungsformular. Pflichtfeld ist nur die Bezeichnung – alle anderen Angaben wie Kategorie, Anbieter, Vertragsnummer, Betrag, Zahlungsrhythmus, Laufzeiten und Notizen sind optional und können jederzeit nachgetragen werden.</p>'+
-    '<p>Unter „Dokument“ lassen sich Fotos oder PDF-Dateien anhängen – über die Schaltfläche „Foto / Scan / Datei hinzufügen“. Auf iPhone und iPad bietet das System dann u. a. „Dokumente scannen“ (Dokumentenkamera: Seiten erkennen, zuschneiden, mehrere Seiten zu einem PDF zusammenfassen), „Foto aufnehmen“, „Fotomediathek“ und „Datei auswählen“ an – so gelangt ein Scan ohne Umweg direkt an den Vertrag. Auf dem Mac erscheint stattdessen die normale Dateiauswahl. Ein Klick auf ein angehängtes Dokument in der Liste öffnet es in einem neuen Tab, egal ob Foto oder PDF.</p>' },
+    '<p>Unter „Dokument“ lassen sich Fotos oder PDF-Dateien anhängen – über die Schaltfläche „Foto / Scan / Datei hinzufügen“. Auf iPhone und iPad bietet das System dort „Fotomediathek“, „Foto aufnehmen“ und „Datei auswählen“ an. Einen Scan legen Sie am einfachsten über „Datei auswählen“ an: Im geöffneten Dateien-Fenster finden Sie oben rechts im Menü (…) meist den Punkt „Dokumente scannen“ – alternativ vorher in der Notizen- oder Dateien-App scannen und das PDF danach hier auswählen. Ob und wo dieser Punkt erscheint, bestimmt iOS; die App kann die Scan-Funktion nicht selbst erzwingen. Angehängte Dokumente sind nur im geöffneten Vertrag sichtbar, nicht in der Vertragsliste. Ein Klick auf ein angehängtes Dokument im Vertrag öffnet es in einem neuen Tab, egal ob Foto oder PDF.</p>' },
 
   { title:"Zahler:in & Bankkonten", body:
     '<p>Jedem Vertrag kann eine Person aus dem Haushalt als Zahler:in zugeordnet werden. Sobald eine Person ausgewählt ist, erscheint darunter das Feld „Zahlungsquelle“ mit den für diese Person hinterlegten Bankkonten – sind noch keine vorhanden, lässt sich direkt aus dem Vertragsformular heraus eines anlegen.</p>'+
@@ -1550,7 +1549,7 @@ const HELP_TOPICS = [
       '<li><strong>Systemschrift (SF Pro)</strong> statt nachgeladener Schriften, auch bei Überschriften und beim Namen „Vertragsordner“.</li>'+
       '<li><strong>Hochformat:</strong> die untere Menüleiste bleibt beim Scrollen (z. B. in der Hilfe) fest am unteren Rand; die Einträge teilen sich die Breite gleichmäßig.</li>'+
       '<li><strong>Korrektur:</strong> „Kündigen bis“ wurde in deutscher Zeitzone einen Tag zu früh angezeigt – behoben.</li>'+
-      '<li><strong>Scannen direkt am Vertrag:</strong> „Foto / Scan / Datei hinzufügen“ bietet auf iPhone/iPad jetzt auch „Dokumente scannen“, Fotomediathek und Dateien an.</li>'+
+      '<li><strong>Anhänge nur im Vertrag:</strong> Die Vertragsliste zeigt keine Vorschaubilder mehr; Fotos und PDFs sind ausschließlich im geöffneten Vertrag sichtbar. Der Anhänge-Button heißt „Foto / Scan / Datei hinzufügen“.</li>'+
       '<li><strong>CSV-Export:</strong> Vertragsliste als Tabelle für Excel/Numbers – ohne Bankkonten und Anhänge (nur Export, kein Import).</li>'+
       '<li><strong>Robusterer Speicher:</strong> Umstellung auf IndexedDB mit deutlich mehr Platz für Anhänge, automatische Übernahme der bisherigen Daten und eine Warnung, falls das Speichern einmal fehlschlägt.</li>'+
       '<li><strong>Bereitstellung:</strong> die App kann als Internetseite (z. B. GitHub Pages) genutzt und auf dem iPad zum Home-Bildschirm hinzugefügt werden; es liegen dort keine Daten.</li>'+
@@ -2007,8 +2006,6 @@ function contractCardHTML(c){
   const f = FREQ_BY_ID[c.frequency];
   const payer = memberById(c.payerId);
   const bankAccount = c.payerId && c.bankAccountId ? bankAccountById(c.payerId, c.bankAccountId) : null;
-  const thumb = (c.attachments && c.attachments[0] && c.attachments[0].contentType && c.attachments[0].contentType.indexOf("image/")===0)
-    ? '<img class="cc-thumb" src="'+c.attachments[0].dataUrl+'" alt="">' : "";
   const statusBadge = c.status==="aktiv" ? "" : '<span class="badge badge-neutral">'+escapeHtml(STATUS_BY_ID[c.status] ? STATUS_BY_ID[c.status].label : c.status)+'</span>';
   const showHouseholds = state.activeHousehold==="__all" && state.households.length>1;
   const householdSpan = showHouseholds
@@ -2016,7 +2013,6 @@ function contractCardHTML(c){
     : '';
   return '<div class="contract-card" data-open-contract="'+c.id+'">'+
     '<span class="cc-cat" style="background:'+catColor(c.category)+'"></span>'+
-    (thumb || '')+
     '<div class="cc-body">'+
       '<div class="cc-top"><span class="cc-name">'+escapeHtml(c.name||"(ohne Namen)")+'</span><span class="cc-amount">'+formatEUR(c.amount)+(freqSuffix(f)?' <span style="color:var(--text-muted);font-weight:500;">'+freqSuffix(f)+'</span>':'')+'</span></div>'+
       '<div class="cc-meta">'+
@@ -2611,7 +2607,7 @@ function contractModalHTML(c, isNew){
           '<div class="doc-actions">'+
             '<label class="btn btn-ghost" for="file-input">'+icon("camera")+' Foto / Scan / Datei hinzufügen</label><input type="file" id="file-input" accept="image/*,application/pdf" class="visually-hidden">'+
           '</div>'+
-          '<span class="hint">Auf iPhone/iPad: In der Auswahl „Dokumente scannen“ wählen, um direkt zu scannen – oder „Foto aufnehmen“, „Fotomediathek“ bzw. „Datei auswählen“.</span>'+
+          '<span class="hint">Auf iPhone/iPad: „Foto aufnehmen“, „Fotomediathek“ oder „Datei auswählen“. Einen Scan finden Sie meist unter „Datei auswählen“ → Menü (…) oben rechts → „Dokumente scannen“.</span>'+
           '<div class="ai-status" id="doc-status" style="display:none;"></div>'+
         '</div>'+
       '</div>'+
