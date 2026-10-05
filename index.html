@@ -444,6 +444,13 @@
     display:flex; flex-direction:column; gap:12px; background:var(--surface-2);
   }
   .doc-zone.drag-over{ border-color:var(--accent); background:var(--surface-3, var(--surface-2)); box-shadow:0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent); }
+  .help-countries{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin:0 0 10px; }
+  @media (max-width:640px){ .help-countries{ grid-template-columns:1fr; } }
+  .help-country{ border:1px solid var(--border); border-left:4px solid var(--accent); border-radius:var(--radius-m); padding:12px 14px; background:var(--surface-2); }
+  .help-country.at{ border-left-color:var(--cat-2); }
+  .help-country h4{ margin:0 0 8px; font-size:0.95rem; }
+  .help-country ul{ margin:0; padding-left:18px; }
+  .help-country li{ margin:0 0 6px; }
   .doc-actions{ display:flex; gap:8px; flex-wrap:wrap; }
   .attachment-list{ display:flex; flex-direction:column; gap:8px; }
   .attachment-item{
@@ -1532,6 +1539,25 @@ const HELP_TOPICS = [
     '</ol>'+
     '<p>Das genügt für den Überblick und als Nachweis. Eine eigene Verbuchung von Zahlungen und Erstattungen ist bewusst nicht vorgesehen, damit die App eine schlanke Vertragsübersicht bleibt und keine Buchführung wird.</p>' },
 
+  { title:"Kündigungsschreiben (Musterbriefe)", body:
+    '<p>Die App erstellt keine Kündigungsschreiben selbst und gibt auch keine Daten an Webseiten weiter. Kostenlose Musterbriefe bieten die Verbraucherschutz-Einrichtungen an. Die Links unten führen auf deren Übersichtsseiten; die Briefe laden Sie dort als Datei (Word/PDF) herunter und füllen sie lokal auf Ihrem Gerät aus – Ihre Angaben müssen Sie nirgends im Internet eintippen. Mit dem Antippen eines Links verlassen Sie die App.</p>'+
+    '<div class="help-countries">'+
+      '<div class="help-country de"><h4>Deutschland – Verbraucherzentrale</h4><ul>'+
+        '<li><a href="https://www.verbraucherzentrale.de/musterbriefe" target="_blank" rel="noopener noreferrer">Alle Musterbriefe (Übersicht)</a></li>'+
+        '<li><a href="https://www.verbraucherzentrale.de/musterbriefe/vertraege-reklamation" target="_blank" rel="noopener noreferrer">Verträge &amp; Reklamation (allgemeine Kündigung, Abos, Mitgliedschaften)</a></li>'+
+        '<li><a href="https://www.verbraucherzentrale.de/musterbriefe/geld-versicherungen" target="_blank" rel="noopener noreferrer">Geld &amp; Versicherungen</a></li>'+
+        '<li><a href="https://www.verbraucherzentrale.de/musterbriefe/digitale-welt" target="_blank" rel="noopener noreferrer">Digitale Welt (Handy, Internet, Online-Dienste)</a></li>'+
+        '<li><a href="https://www.verbraucherzentrale.de/musterbriefe/energie" target="_blank" rel="noopener noreferrer">Energie (Strom, Gas)</a></li>'+
+      '</ul></div>'+
+      '<div class="help-country at"><h4>Österreich – Arbeiterkammer</h4><ul>'+
+        '<li><a href="https://www.arbeiterkammer.at/musterbriefe" target="_blank" rel="noopener noreferrer">Musterbriefe-Datenbank (Übersicht)</a></li>'+
+        '<li><a href="https://arbeiterkammer.at/mb_konsumentenschutz" target="_blank" rel="noopener noreferrer">Konsumentenschutz (u. a. Versicherungen, Haushalts- und KFZ-Versicherung, Mietvertrag)</a></li>'+
+      '</ul></div>'+
+    '</div>'+
+    '<p><strong>Das brauchen Sie aus der App:</strong> Bezeichnung und Anbieter, Vertrags- bzw. Versicherungsnummer, das späteste Kündigungsdatum („Kündigen bis“) und – falls hinterlegt – den Kündigungskontakt bzw. das Kundenportal. Wenn der Anbieter eine Kündigung direkt im Kundenportal oder per Formular auf seiner Webseite anbietet, genügt oft dieser Weg.</p>'+
+    '<p><strong>Tipps:</strong> Kündigen Sie schriftlich und so, dass Sie den Zugang belegen können (z. B. Einschreiben oder die Bestätigung des Portals). Hängen Sie Schreiben und Bestätigung als Dokument an den Vertrag und stellen Sie danach den Status auf „Gekündigt“ (siehe „Vorzeitig gekündigt“).</p>'+
+    '<p><em>Hinweis:</em> Die Musterbriefe sind Vorlagen und keine Rechtsberatung; Fristen und Formvorschriften unterscheiden sich je nach Land und Vertragsart. Die Webseiten Dritter können sich ändern – führt ein Link ins Leere, suchen Sie auf der jeweiligen Startseite nach „Musterbriefe“.</p>' },
+
   { title:"Serviceverträge & Prüfintervalle (z. B. Heizungswartung)", body:
     '<p>Für Leistungen, die erst bei Durchführung bezahlt werden (Feuerlöscherprüfung, Heizungswartung, Schornsteinfeger …), tragen Sie als Betrag die Kosten pro Termin ein und wählen als „Zahlungsrhythmus / Intervall“ den Abstand zwischen zwei Terminen – auch „alle 2 Jahre“, „alle 3 Jahre“ oder „alle 5 Jahre“ stehen zur Wahl. Die Übersicht rechnet das automatisch auf Jahres- und Monatskosten um (z. B. 120 € alle 2 Jahre = 60 € pro Jahr).</p>'+
     '<p>Im Feld „Nächster Termin“ halten Sie fest, wann die Leistung wieder fällig ist. Dieses Datum erscheint auf der Vertragskarte und unter „Anstehende Fristen &amp; Termine“ auf der Übersicht, sobald es weniger als 90 Tage entfernt ist. Nach dem Termin tragen Sie einfach das nächste Datum ein. Eine eigene Kategorie gibt es dafür nicht – passend ist meist „Wohnen &amp; Hausrat“ oder „Sonstige“.</p>' },
@@ -1601,6 +1627,7 @@ const HELP_TOPICS = [
       '<li><strong>Korrektur:</strong> „Kündigen bis“ wurde in deutscher Zeitzone einen Tag zu früh angezeigt – behoben.</li>'+
       '<li><strong>Anhänge komfortabler:</strong> mehrere Dateien auf einmal wählen (iPhone, iPad, Mac), Dateien am Mac/PC per Drag &amp; Drop in das Vertragsfenster ziehen, kopierte Bilder mit Cmd/Strg+V einfügen. Details unter „Dokumente anhängen“.</li>'+
       '<li><strong>Anhänge nur im Vertrag:</strong> Die Vertragsliste zeigt keine Vorschaubilder mehr; Fotos und PDFs sind ausschließlich im geöffneten Vertrag sichtbar. Der Anhänge-Button heißt „Foto / Scan / Datei hinzufügen“.</li>'+
+      '<li><strong>Kündigungsschreiben:</strong> neues Hilfe-Thema mit Links zu den kostenlosen Musterbriefen der Verbraucherzentrale (Deutschland) und der Arbeiterkammer (Österreich), getrennt dargestellt.</li>'+
       '<li><strong>CSV-Export:</strong> Vertragsliste als Tabelle für Excel/Numbers – ohne Bankkonten und Anhänge (nur Export, kein Import).</li>'+
       '<li><strong>Robusterer Speicher:</strong> Umstellung auf IndexedDB mit deutlich mehr Platz für Anhänge, automatische Übernahme der bisherigen Daten und eine Warnung, falls das Speichern einmal fehlschlägt.</li>'+
       '<li><strong>Bereitstellung:</strong> die App kann als Internetseite (z. B. GitHub Pages) genutzt und auf dem iPad zum Home-Bildschirm hinzugefügt werden; es liegen dort keine Daten.</li>'+
