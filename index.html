@@ -443,6 +443,7 @@
     border:1.5px dashed var(--border-strong); border-radius:var(--radius-m); padding:16px;
     display:flex; flex-direction:column; gap:12px; background:var(--surface-2);
   }
+  .doc-zone.drag-over{ border-color:var(--accent); background:var(--surface-3, var(--surface-2)); box-shadow:0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent); }
   .doc-actions{ display:flex; gap:8px; flex-wrap:wrap; }
   .attachment-list{ display:flex; flex-direction:column; gap:8px; }
   .attachment-item{
@@ -1078,6 +1079,32 @@ function compareBackupFile(file){
   reader.readAsText(file);
 }
 
+/* Dateien, die versehentlich neben das Dokumentfeld gezogen werden, sollen die App nicht verlassen
+   (der Browser würde sonst die Datei öffnen und die Seite ersetzen). */
+["dragover","drop"].forEach(function(ev){
+  window.addEventListener(ev, function(e){
+    if (e.dataTransfer && Array.prototype.indexOf.call(e.dataTransfer.types||[], "Files")>=0) e.preventDefault();
+  });
+});
+
+/* Einfügen (Cmd/Strg+V) eines kopierten Bildes/PDFs, solange ein Vertrag geöffnet ist */
+document.addEventListener("paste", function(e){
+  const input = document.getElementById("file-input");
+  if (!input || !e.clipboardData) return;
+  const overlay = input.closest(".overlay");
+  const files = Array.prototype.filter.call(e.clipboardData.files || [], function(f){ return f.type && (f.type.indexOf("image/")===0 || f.type==="application/pdf"); });
+  if (!overlay || !files.length) return;
+  e.preventDefault();
+  const nd = new Date(), z2 = function(n){ return (n<10?"0":"")+n; };
+  const stamp = dateToISO(nd)+"_"+z2(nd.getHours())+"-"+z2(nd.getMinutes())+"-"+z2(nd.getSeconds());
+  const named = files.map(function(f, i){
+    if (f.name && !/^image\.(png|jpe?g|gif)$/i.test(f.name)) return f;
+    const ext = f.type==="application/pdf" ? "pdf" : "jpg";
+    try{ return new File([f], "Einfügung_"+stamp+(files.length>1?"_"+(i+1):"")+"."+ext, { type:f.type }); }catch(err){ return f; }
+  });
+  handleFilesSelected(overlay, named);
+});
+
 /* ======================= Boot ======================= */
 
 async function boot(){
@@ -1469,7 +1496,7 @@ const HELP_TOPICS = [
 
   { title:"Verträge anlegen & Dokumente anhängen", body:
     '<p>Über „Neuer Vertrag“ (unten rechts bzw. in der Seitenleiste) öffnet sich das Erfassungsformular. Pflichtfeld ist nur die Bezeichnung – alle anderen Angaben wie Kategorie, Anbieter, Vertragsnummer, Betrag, Zahlungsrhythmus, Laufzeiten und Notizen sind optional und können jederzeit nachgetragen werden.</p>'+
-    '<p>Unter „Dokument“ lassen sich Fotos oder PDF-Dateien anhängen – über die Schaltfläche „Foto / Scan / Datei hinzufügen“. Auf iPhone und iPad bietet das System dort „Fotomediathek“, „Foto aufnehmen“ und „Datei auswählen“ an. Einen Scan legen Sie am einfachsten über „Datei auswählen“ an: Im geöffneten Dateien-Fenster finden Sie oben rechts im Menü (…) meist den Punkt „Dokumente scannen“ – alternativ vorher in der Notizen- oder Dateien-App scannen und das PDF danach hier auswählen. Ob und wo dieser Punkt erscheint, bestimmt iOS; die App kann die Scan-Funktion nicht selbst erzwingen. Angehängte Dokumente sind nur im geöffneten Vertrag sichtbar, nicht in der Vertragsliste. Ein Klick auf ein angehängtes Dokument im Vertrag öffnet es in einem neuen Tab, egal ob Foto oder PDF.</p>' },
+    '<p>Unter „Dokument“ lassen sich Fotos oder PDF-Dateien anhängen – über die Schaltfläche „Foto / Scan / Datei hinzufügen“. Auf iPhone und iPad bietet das System dort „Fotomediathek“, „Foto aufnehmen“ und „Datei auswählen“ an. Einen Scan legen Sie am einfachsten über „Datei auswählen“ an: Im geöffneten Dateien-Fenster finden Sie oben rechts im Menü (…) meist den Punkt „Dokumente scannen“ – alternativ vorher in der Notizen- oder Dateien-App scannen und das PDF danach hier auswählen. Ob und wo dieser Punkt erscheint, bestimmt iOS; die App kann die Scan-Funktion nicht selbst erzwingen. Angehängte Dokumente sind nur im geöffneten Vertrag sichtbar, nicht in der Vertragsliste. </p><p><strong>Mehrere Dokumente, Drag &amp; Drop, Einfügen:</strong> In der Dateiauswahl lassen sich mehrere Dateien gleichzeitig markieren. Am Mac/PC können Sie Dateien (Fotos, PDFs) direkt aus dem Finder bzw. Explorer in das gestrichelte Dokumentfeld ziehen, oder ein kopiertes Bild (z. B. einen Screenshot) mit Cmd/Strg+V einfügen, während der Vertrag geöffnet ist. Fotos werden dabei automatisch verkleinert, PDFs unverändert übernommen (maximal 20 MB je Datei).</p><p><strong>Empfohlener Ablauf für Scans:</strong> Legen Sie in iCloud Drive einen Ordner „Vertragsscans“ an. Ein Kombigerät/Drucker mit „Scan an Ordner“ oder „Scan an E-Mail“ legt seine Scans dort bzw. in Ihrem Postfach ab; auf iPhone/iPad scannen Sie mit der Dateien-App („…“ → „Dokumente scannen“) direkt in diesen Ordner, am Mac mit „Digitale Bilder“. Anschließend wählen Sie die Datei im Vertrag aus oder ziehen sie hinein. Die App selbst kann nicht auf Drucker oder Scanner im Netzwerk zugreifen.Ein Klick auf ein angehängtes Dokument im Vertrag öffnet es in einem neuen Tab, egal ob Foto oder PDF.</p>' },
 
   { title:"Zahler:in & Bankkonten", body:
     '<p>Jedem Vertrag kann eine Person aus dem Haushalt als Zahler:in zugeordnet werden. Sobald eine Person ausgewählt ist, erscheint darunter das Feld „Zahlungsquelle“ mit den für diese Person hinterlegten Bankkonten – sind noch keine vorhanden, lässt sich direkt aus dem Vertragsformular heraus eines anlegen.</p>'+
@@ -1549,6 +1576,7 @@ const HELP_TOPICS = [
       '<li><strong>Systemschrift (SF Pro)</strong> statt nachgeladener Schriften, auch bei Überschriften und beim Namen „Vertragsordner“.</li>'+
       '<li><strong>Hochformat:</strong> die untere Menüleiste bleibt beim Scrollen (z. B. in der Hilfe) fest am unteren Rand; die Einträge teilen sich die Breite gleichmäßig.</li>'+
       '<li><strong>Korrektur:</strong> „Kündigen bis“ wurde in deutscher Zeitzone einen Tag zu früh angezeigt – behoben.</li>'+
+      '<li><strong>Anhänge komfortabler:</strong> mehrere Dateien auf einmal wählen, Dateien per Drag &amp; Drop in das Dokumentfeld ziehen, kopierte Bilder mit Cmd/Strg+V einfügen.</li>'+
       '<li><strong>Anhänge nur im Vertrag:</strong> Die Vertragsliste zeigt keine Vorschaubilder mehr; Fotos und PDFs sind ausschließlich im geöffneten Vertrag sichtbar. Der Anhänge-Button heißt „Foto / Scan / Datei hinzufügen“.</li>'+
       '<li><strong>CSV-Export:</strong> Vertragsliste als Tabelle für Excel/Numbers – ohne Bankkonten und Anhänge (nur Export, kein Import).</li>'+
       '<li><strong>Robusterer Speicher:</strong> Umstellung auf IndexedDB mit deutlich mehr Platz für Anhänge, automatische Übernahme der bisherigen Daten und eine Warnung, falls das Speichern einmal fehlschlägt.</li>'+
@@ -2605,9 +2633,9 @@ function contractModalHTML(c, isNew){
         '<div class="doc-zone">'+
           '<div class="attachment-list" id="attachment-list"></div>'+
           '<div class="doc-actions">'+
-            '<label class="btn btn-ghost" for="file-input">'+icon("camera")+' Foto / Scan / Datei hinzufügen</label><input type="file" id="file-input" accept="image/*,application/pdf" class="visually-hidden">'+
+            '<label class="btn btn-ghost" for="file-input">'+icon("camera")+' Foto / Scan / Datei hinzufügen</label><input type="file" id="file-input" accept="image/*,application/pdf" multiple class="visually-hidden">'+
           '</div>'+
-          '<span class="hint">Auf iPhone/iPad: „Foto aufnehmen“, „Fotomediathek“ oder „Datei auswählen“. Einen Scan finden Sie meist unter „Datei auswählen“ → Menü (…) oben rechts → „Dokumente scannen“.</span>'+
+          '<span class="hint">Mehrere Dateien lassen sich gleichzeitig auswählen. Am Mac/PC: Dateien einfach in dieses Feld ziehen oder ein kopiertes Bild mit Cmd/Strg+V einfügen.<br>Auf iPhone/iPad: „Foto aufnehmen“, „Fotomediathek“ oder „Datei auswählen“. Einen Scan finden Sie meist unter „Datei auswählen“ → Menü (…) oben rechts → „Dokumente scannen“.</span>'+
           '<div class="ai-status" id="doc-status" style="display:none;"></div>'+
         '</div>'+
       '</div>'+
@@ -2869,10 +2897,22 @@ function wireContractModal(overlay, source, isNew){
   const fileInput = overlay.querySelector("#file-input");
   if (fileInput){
     fileInput.addEventListener("change", function(){
-      const file = fileInput.files[0];
-      if (!file) return;
-      handleFileSelected(overlay, file);
+      handleFilesSelected(overlay, fileInput.files);
       fileInput.value = "";
+    });
+  }
+
+  const docZone = overlay.querySelector(".doc-zone");
+  if (docZone){
+    let dragDepth = 0;
+    const hasFiles = function(e){ return e.dataTransfer && Array.prototype.indexOf.call(e.dataTransfer.types||[], "Files")>=0; };
+    docZone.addEventListener("dragenter", function(e){ if (!hasFiles(e)) return; e.preventDefault(); dragDepth++; docZone.classList.add("drag-over"); });
+    docZone.addEventListener("dragover", function(e){ if (!hasFiles(e)) return; e.preventDefault(); e.dataTransfer.dropEffect = "copy"; });
+    docZone.addEventListener("dragleave", function(){ dragDepth = Math.max(0, dragDepth-1); if (!dragDepth) docZone.classList.remove("drag-over"); });
+    docZone.addEventListener("drop", function(e){
+      if (!hasFiles(e)) return;
+      e.preventDefault(); dragDepth = 0; docZone.classList.remove("drag-over");
+      handleFilesSelected(overlay, e.dataTransfer.files);
     });
   }
 
@@ -2969,21 +3009,38 @@ function downscaleImageToDataUrl(file, maxDim){
   });
 }
 
-function handleFileSelected(overlay, file){
+function addAttachmentFile(file){
   const isImage = file.type && file.type.indexOf("image/")===0;
   const isPdf = file.type==="application/pdf";
-  if (!isImage && !isPdf){ toast("Bitte ein Foto oder eine PDF-Datei wählen.","error"); return; }
-  if (file.size > MAX_ATTACHMENT_MB*1024*1024){ toast("Datei ist größer als "+MAX_ATTACHMENT_MB+" MB.","error"); return; }
-
-  setDocStatus(overlay, '<span class="spinner"></span> Dokument wird verarbeitet …', true);
+  if (!isImage && !isPdf) return Promise.reject("type");
+  if (file.size > MAX_ATTACHMENT_MB*1024*1024) return Promise.reject("size");
   const work = isImage ? downscaleImageToDataUrl(file) : readFileAsDataUrl(file);
-  work.then(function(dataUrl){
+  return work.then(function(dataUrl){
     state.draftAttachments.push({ id:newId(), contentType: isImage ? "image/jpeg" : file.type, name:file.name, dataUrl:dataUrl });
+  });
+}
+
+/* Verarbeitet eine oder mehrere Dateien nacheinander (Auswahl, Drag & Drop, Einfügen) */
+function handleFilesSelected(overlay, files){
+  files = Array.prototype.slice.call(files || []);
+  if (!files.length) return;
+  let added = 0, badType = 0, tooBig = 0, failed = 0;
+  setDocStatus(overlay, '<span class="spinner"></span> Dokument wird verarbeitet …', true);
+  files.reduce(function(chain, file){
+    return chain.then(function(){
+      return addAttachmentFile(file).then(function(){ added++; }, function(reason){
+        if (reason==="type") badType++; else if (reason==="size") tooBig++; else failed++;
+      });
+    });
+  }, Promise.resolve()).then(function(){
     renderAttachmentList(overlay);
     setDocStatus(overlay, "", false);
-  }).catch(function(){
-    setDocStatus(overlay, "", false);
-    toast("Datei konnte nicht gelesen werden.","error");
+    const problems = [];
+    if (badType) problems.push(badType+" Datei(en) übersprungen – nur Fotos und PDF möglich");
+    if (tooBig) problems.push(tooBig+" Datei(en) größer als "+MAX_ATTACHMENT_MB+" MB");
+    if (failed) problems.push(failed+" Datei(en) nicht lesbar");
+    if (problems.length) toast(problems.join("; ")+".", "error");
+    else if (added > 1) toast(added+" Dokumente angehängt.");
   });
 }
 
