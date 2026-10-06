@@ -459,6 +459,11 @@
   }
   .attachment-item img{ width:38px;height:38px;object-fit:cover;border-radius:6px; flex:none; }
   .attachment-item .attachment-name{ flex:1; min-width:0; font-size:0.82rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .att-order{ display:flex; flex-direction:column; gap:2px; flex:none; }
+  .att-move{ border:0; background:var(--surface-sunken); color:var(--text-secondary); border-radius:6px; width:30px; height:22px; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; padding:0; }
+  .att-move:hover:not(:disabled){ color:var(--accent); }
+  .att-move:disabled{ opacity:0.3; cursor:default; }
+  .att-move .icon{ width:14px; height:14px; }
   .attachment-open{
     display:flex; align-items:center; gap:10px; flex:1; min-width:0; background:none; border:none; padding:0;
     text-align:left; cursor:pointer; color:var(--text-primary); font:inherit;
@@ -690,6 +695,7 @@ const ICON_PATHS = {
   search:'<circle cx="9" cy="9" r="5.2"/><path d="M13.2 13.2l4 4"/>',
   x:'<path d="M5 5l10 10M15 5L5 15"/>',
   chevronDown:'<path d="M5 8l5 5 5-5"/>',
+  chevronUp:'<path d="M5 12l5-5 5 5"/>',
   pencil:'<path d="M4 16l.6-3.6L13 4l3 3-8.4 8.4L4 16Z"/>',
   check:'<path d="M4 10.5l3.6 3.6L16 5.5"/>',
   warn:'<path d="M10 3 2.5 17h15Z"/><path d="M10 8.2v3.6M10 13.8h.01"/>',
@@ -1545,6 +1551,7 @@ const HELP_TOPICS = [
       '<li><strong>iPhone / iPad:</strong> Das System bietet „Fotomediathek“, „Foto aufnehmen“ und „Datei auswählen“ an; in der Fotomediathek lassen sich mehrere Fotos auf einmal markieren. Einen Scan legen Sie am einfachsten über „Datei auswählen“ an: Im Dateien-Fenster finden Sie oben rechts im Menü (…) meist den Punkt „Dokumente scannen“. Alternativ scannen Sie vorher in der Notizen- oder Dateien-App und wählen das PDF danach aus. Ob und wo dieser Punkt erscheint, bestimmt iOS – die App kann die Scan-Funktion nicht selbst erzwingen.</li>'+
       '<li><strong>Mac / PC:</strong> Dateien direkt aus dem Finder bzw. Explorer in das geöffnete Vertragsfenster ziehen (Drag &amp; Drop; das Dokumentfeld leuchtet dabei auf). Außerdem lässt sich ein kopiertes Bild, z. B. ein Screenshot, mit Cmd/Strg+V einfügen, solange der Vertrag geöffnet ist.</li>'+
     '</ul>'+
+    '<p><strong>Reihenfolge ändern:</strong> Sind mehrere Dokumente angehängt, stehen links neben jedem zwei kleine Pfeile („nach oben“ / „nach unten“). Damit bringen Sie die Dokumente in die gewünschte Reihenfolge, ohne sie löschen und neu hochladen zu müssen; die Reihenfolge wird mit „Speichern“ übernommen. Bewusst sind es Pfeile statt Ziehen mit dem Finger oder der Maus, weil sie auf iPhone, iPad und Mac gleich zuverlässig funktionieren.</p>'+
     '<p>Nicht passende Dateien (z. B. Textdateien, zu große oder nicht lesbare Dateien) werden übersprungen, die App meldet das kurz; die übrigen Dateien werden trotzdem angehängt.</p>'+
     '<p><strong>Empfohlener Ablauf für Scans:</strong> Legen Sie in iCloud Drive einen Ordner „Vertragsscans“ an. Ein Kombigerät oder Drucker mit „Scan an Ordner“ bzw. „Scan an E-Mail“ legt seine Scans dort oder in Ihrem Postfach ab; auf iPhone/iPad scannen Sie mit der Dateien-App („…“ → „Dokumente scannen“) direkt in diesen Ordner, am Mac mit „Digitale Bilder“. Anschließend wählen Sie die Datei im Vertrag aus oder ziehen sie hinein. Die App selbst kann nicht auf Drucker oder Scanner im Netzwerk zugreifen – sie läuft im Browser und hat dafür keine Berechtigung.</p>'+
     '<p><strong>Speicherbedarf:</strong> Ein gescanntes PDF hat schnell 1 bis 5 MB. Alle Anhänge sind auch in der Sicherungsdatei enthalten; wie viele es sind und wie groß sie zusammen etwa sind, zeigt der Bereich „Sicherung“.</p>' },
@@ -1558,7 +1565,8 @@ const HELP_TOPICS = [
 
   { title:"Kündigungsfristen & automatische Verlängerung", body:
     '<p>Tragen Sie Vertragsende und Kündigungsfrist (in Monaten vor Vertragsende) ein, berechnet die App automatisch das späteste Kündigungsdatum und zeigt es unter „Anstehende Fristen &amp; Termine“ auf der Übersicht an, sobald es innerhalb der nächsten 90 Tage liegt. (Seit Oktober 2026 wird dieses Datum korrekt angezeigt – zuvor war es in manchen Zeitzonen, auch in Deutschland, einen Tag zu früh.)</p>'+
-    '<p>Verlängert sich ein Vertrag automatisch, wenn nicht rechtzeitig gekündigt wird, aktivieren Sie „Verlängert sich automatisch“ und geben an, um wie viele Monate sich die Laufzeit jeweils verlängert. Ist die ursprüngliche Frist bereits verstrichen, rechnet die App selbstständig die nächste tatsächliche Kündigungsfrist hoch, statt die Frist fälschlich als überfällig anzuzeigen – erkennbar am kleinen Aktualisieren-Symbol neben dem Datum.</p>' },
+    '<p>Verlängert sich ein Vertrag automatisch, wenn nicht rechtzeitig gekündigt wird, aktivieren Sie „Verlängert sich automatisch“ und geben an, um wie viele Monate sich die Laufzeit jeweils verlängert. Ist die ursprüngliche Frist bereits verstrichen, rechnet die App selbstständig die nächste tatsächliche Kündigungsfrist hoch, statt die Frist fälschlich als überfällig anzuzeigen – erkennbar am kleinen Aktualisieren-Symbol neben dem Datum.</p>'+
+    '<p><strong>Sonderkündigungsrecht:</strong> Im Vertrag gibt es dazu ein reines Hinweisfeld (z. B. „Nein“, „Ja – bei Beitragserhöhung“ oder „Ja – Details im Vertrag“). Das Feld wird nicht berechnet und löst keine Erinnerung aus; es dient nur dazu, den Hinweis bei Bedarf schnell zu finden. Es erscheint im Einzelausdruck und in der CSV-Tabelle. Maßgeblich sind immer die Vertragsbedingungen und gesetzlichen Regelungen.</p>' },
 
   { title:"Preisänderungen & Preisverlauf", body:
     '<p>Ändert ein Anbieter den Beitrag (Beitragsanpassung, Hoch- oder Rückstufung, Tarifwechsel), tragen Sie einfach den neuen Betrag im Vertrag ein und speichern. Die App erkennt die Änderung und fragt kurz nach, bevor der alte Wert überschrieben wird:</p>'+
@@ -1611,8 +1619,8 @@ const HELP_TOPICS = [
     '<p>Im Feld „Nächster Termin“ halten Sie fest, wann die Leistung wieder fällig ist. Dieses Datum erscheint auf der Vertragskarte und unter „Anstehende Fristen &amp; Termine“ auf der Übersicht, sobald es weniger als 90 Tage entfernt ist. Nach dem Termin tragen Sie einfach das nächste Datum ein. Eine eigene Kategorie gibt es dafür nicht – passend ist meist „Wohnen &amp; Hausrat“ oder „Sonstige“.</p>' },
 
   { title:"Kontakte beim Anbieter & Ansicht „Nach Anbieter“", body:
-    '<p><strong>Im Vertrag</strong> pflegen Sie den Abschnitt „Kontakt beim Anbieter“: Ansprechpartner, zwei Rufnummern („Service / Kündigung“ und „Schaden / Hotline“) sowie E-Mail-Adresse. Zusätzlich lässt sich beim Feld „URL / Login zum Vertragspartner“ die Adresse des Kundenportals hinterlegen. Die kleinen Symbole neben den Feldern öffnen die Adresse im Browser, starten einen Anruf bzw. eine E-Mail. (Ältere Einträge behalten ihre Angaben; die bisherige Rufnummer steht jetzt unter „Service / Kündigung“.)</p>'+
-    '<p><strong>Kontakte nachschlagen:</strong> In der Ansicht „Verträge“ schaltet der Umschalter <em>Liste | Nach Anbieter</em> die Darstellung um. „Nach Anbieter“ zeigt eine Karte pro Anbieter, alphabetisch mit Anfangsbuchstaben – ähnlich einem Adressbuch: oben Name, Anzahl der Verträge und Jahreskosten, darunter Rufnummern, E-Mail und Portal als antippbare Schaltflächen (Anruf, E-Mail, Webseite) und darunter die zugehörigen Verträge. Ein Antippen eines Vertrags öffnet ihn.</p>'+
+    '<p><strong>Im Vertrag</strong> pflegen Sie den Abschnitt „Kontakt beim Anbieter“: Ansprechpartner, zwei Rufnummern („Service / Kündigung“ und „Schaden / Hotline“) E-Mail-Adresse und – für die Schadenmeldung – eine Website („Schadenmeldung online“). Zusätzlich lässt sich beim Feld „URL / Login zum Vertragspartner“ die Adresse des Kundenportals hinterlegen. Die kleinen Symbole neben den Feldern öffnen die Adresse im Browser, starten einen Anruf bzw. eine E-Mail. (Ältere Einträge behalten ihre Angaben; die bisherige Rufnummer steht jetzt unter „Service / Kündigung“.)</p>'+
+    '<p><strong>Kontakte nachschlagen:</strong> In der Ansicht „Verträge“ schaltet der Umschalter <em>Liste | Nach Anbieter</em> die Darstellung um. „Nach Anbieter“ zeigt eine Karte pro Anbieter, alphabetisch mit Anfangsbuchstaben – ähnlich einem Adressbuch: oben Name, Anzahl der Verträge und Jahreskosten, darunter Rufnummern, E-Mail, Schadenmeldung und Portal als antippbare Schaltflächen (Anruf, E-Mail, Webseite) und darunter die zugehörigen Verträge. Ein Antippen eines Vertrags öffnet ihn.</p>'+
     '<p><strong>Gut zu wissen:</strong> Es gibt kein zweites Kontaktverzeichnis, das Sie pflegen müssten – die Kartenansicht fasst die Angaben aus allen Verträgen eines Anbieters automatisch zusammen (gleiche Nummern und Adressen nur einmal; Groß-/Kleinschreibung beim Anbieternamen ist egal). Geändert wird immer im Vertrag. Verträge ohne Anbieter stehen unter „Ohne Anbieter“. Die Suche berücksichtigt in beiden Ansichten auch Ansprechpartner, Rufnummern und E-Mail; Kategorie- und Statusfilter gelten ebenfalls. Die Ansicht wird nicht gespeichert: Nach dem Neuladen steht wieder „Liste“.</p>' },
 
   { title:"Ausgaben im Überblick", body:
@@ -1677,6 +1685,8 @@ const HELP_TOPICS = [
       '<li><strong>Korrektur:</strong> „Kündigen bis“ wurde in deutscher Zeitzone einen Tag zu früh angezeigt – behoben.</li>'+
       '<li><strong>Anhänge komfortabler:</strong> mehrere Dateien auf einmal wählen (iPhone, iPad, Mac), Dateien am Mac/PC per Drag &amp; Drop in das Vertragsfenster ziehen, kopierte Bilder mit Cmd/Strg+V einfügen. Details unter „Dokumente anhängen“.</li>'+
       '<li><strong>Anhänge nur im Vertrag:</strong> Die Vertragsliste zeigt keine Vorschaubilder mehr; Fotos und PDFs sind ausschließlich im geöffneten Vertrag sichtbar. Der Anhänge-Button heißt „Foto / Scan / Datei hinzufügen“.</li>'+
+      '<li><strong>Dokumente sortieren:</strong> Pfeile „nach oben / nach unten“ ändern die Reihenfolge angehängter Dokumente.</li>'+
+      '<li><strong>Neue Info-Felder:</strong> „Sonderkündigungsrecht“ (Freitext, nur Hinweis) und „Schadenmeldung online“ (Website mit Öffnen-Symbol, auch in der Ansicht „Nach Anbieter“).</li>'+
       '<li><strong>Kontakte &amp; Ansicht „Nach Anbieter“:</strong> neuer Umschalter in den Verträgen mit Anbieter-Karten (Anruf, E-Mail, Portal, zugehörige Verträge), zweite Rufnummer „Schaden / Hotline“ und erweiterte Suche.</li>'+
       '<li><strong>Korrektur:</strong> Beim Tippen ins Suchfeld der Verträge bleibt der Cursor jetzt im Feld (zuvor brach die Eingabe nach jedem Buchstaben ab).</li>'+
       '<li><strong>Preisverlauf:</strong> Beitragsänderungen werden pro Vertrag mit Datum, Grund und Veränderung in Euro/Prozent festgehalten; Abzeichen in der Vertragsliste und eine Übersichtskarte „Preisänderungen der letzten 12 Monate“.</li>'+
@@ -2133,8 +2143,8 @@ function providerGroups(list){
 
 /* Kontaktdaten eines Anbieters = Zusammenschau der Felder aus allen seinen Verträgen (ohne Dubletten) */
 function providerContacts(g){
-  const phones = [], mails = [], portals = [], names = [];
-  const seenP = {}, seenM = {}, seenU = {}, seenN = {};
+  const phones = [], mails = [], portals = [], names = [], claims = [];
+  const seenP = {}, seenM = {}, seenU = {}, seenN = {}, seenC = {};
   g.contracts.forEach(function(c){
     [[c.servicePhone, "Schaden / Hotline"], [c.cancelPhone, "Service / Kündigung"]].forEach(function(pr){
       const v = (pr[0]||"").trim(); if (!v) return;
@@ -2143,9 +2153,10 @@ function providerContacts(g){
     });
     const m = (c.cancelEmail||"").trim(); if (m && !seenM[m.toLowerCase()]){ seenM[m.toLowerCase()] = true; mails.push(m); }
     const u = (c.portalUrl||"").trim(); if (u){ const k = portalLabel(u).toLowerCase(); if (!seenU[k]){ seenU[k] = true; portals.push(u); } }
+    const cu = (c.claimUrl||"").trim(); if (cu){ const k = portalLabel(cu).toLowerCase(); if (!seenC[k]){ seenC[k] = true; claims.push(cu); } }
     const n = (c.cancelContactName||"").trim(); if (n && !seenN[n.toLowerCase()]){ seenN[n.toLowerCase()] = true; names.push(n); }
   });
-  return { phones:phones, mails:mails, portals:portals, names:names };
+  return { phones:phones, mails:mails, portals:portals, claims:claims, names:names };
 }
 
 function providerCardHTML(g){
@@ -2156,6 +2167,7 @@ function providerCardHTML(g){
   const chips = []
     .concat(ci.phones.map(function(p){ return '<a class="contact-chip" href="'+escapeHtml(telHref(p.value))+'">'+icon("phone")+'<span>'+escapeHtml(p.value)+' <small>'+escapeHtml(p.label)+'</small></span></a>'; }))
     .concat(ci.mails.map(function(m){ return '<a class="contact-chip" href="mailto:'+escapeHtml(m)+'">'+icon("mail")+'<span>'+escapeHtml(m)+'</span></a>'; }))
+    .concat(ci.claims.map(function(u){ return '<a class="contact-chip" href="'+escapeHtml(portalHref(u))+'" target="_blank" rel="noopener noreferrer">'+icon("link")+'<span>'+escapeHtml(portalLabel(u))+' <small>Schaden melden</small></span></a>'; }))
     .concat(ci.portals.map(function(u){ return '<a class="contact-chip" href="'+escapeHtml(portalHref(u))+'" target="_blank" rel="noopener noreferrer">'+icon("link")+'<span>'+escapeHtml(portalLabel(u))+'</span></a>'; }));
   return '<div class="prov-card">'+
     '<div class="prov-head">'+
@@ -2447,7 +2459,7 @@ function csvDate(iso){
   return m ? m[3]+"."+m[2]+"."+m[1] : "";
 }
 function buildContractsCSV(list){
-  const head = ["Bezeichnung","Haushalt(e)","Kategorie","Anbieter","Vertragsnummer","Status","Zahler:in","Betrag","Rhythmus","Jahreskosten","Monatlich Ø","Vertragsbeginn","Vertragsende","Kündigungsfrist (Monate)","Nächste Kündigungsfrist","Nächster Termin","Automatische Verlängerung","Verlängerung (Monate)","Notizen"];
+  const head = ["Bezeichnung","Haushalt(e)","Kategorie","Anbieter","Vertragsnummer","Status","Zahler:in","Betrag","Rhythmus","Jahreskosten","Monatlich Ø","Vertragsbeginn","Vertragsende","Kündigungsfrist (Monate)","Nächste Kündigungsfrist","Nächster Termin","Automatische Verlängerung","Verlängerung (Monate)","Sonderkündigungsrecht","Notizen"];
   const lines = [head.map(csvText).join(";")];
   list.forEach(function(c){
     const cat = CATEGORY_BY_ID[c.category];
@@ -2474,6 +2486,7 @@ function buildContractsCSV(list){
       csvDate(c.nextDueDate),
       c.autoRenew ? "Ja" : "Nein",
       (c.autoRenew && c.renewalTermMonths!=null && c.renewalTermMonths!=="") ? String(c.renewalTermMonths) : "",
+      csvText(c.specialCancel),
       csvText(c.notes)
     ].join(";"));
   });
@@ -2561,6 +2574,7 @@ function printSingleContract(c){
       row("Vertragsbeginn", c.startDate ? formatDate(c.startDate) : "") +
       row("Vertragsende", c.endDate ? formatDate(c.endDate) : "") +
       row("Kündigungsfrist", (c.noticePeriodMonths!=null && c.noticePeriodMonths!=="") ? c.noticePeriodMonths+" Monate vor Vertragsende" : "") +
+      row("Sonderkündigungsrecht", escapeHtml(c.specialCancel)) +
       row("Automatische Verlängerung", c.autoRenew ? ("Ja"+(c.renewalTermMonths?", jeweils um "+c.renewalTermMonths+" Monate":"")) : "") +
       row("Nächster Termin", c.nextDueDate ? formatDate(c.nextDueDate) : "") +
       row("Nächste Kündigungsfrist", cb ? formatDate(dateToISO(cb)) : "") +
@@ -2568,6 +2582,7 @@ function printSingleContract(c){
       row("Ansprechpartner", escapeHtml(c.cancelContactName)) +
       row("Rufnummer (Service / Kündigung)", escapeHtml(c.cancelPhone)) +
       row("Rufnummer Schaden / Hotline", escapeHtml(c.servicePhone)) +
+      row("Schadenmeldung online", escapeHtml(c.claimUrl)) +
       row("E-Mail", escapeHtml(c.cancelEmail)) +
     '</tbody></table>'+
     (c.notes ? '<h3 class="print-section-h">Notizen</h3><p class="print-notes">'+escapeHtml(c.notes)+'</p>' : '')+
@@ -2920,7 +2935,7 @@ function confirmDialog(title, body, onConfirm, confirmLabel, danger){
 function blankContract(){
   return { name:"", category:"kfz", provider:"", contractNumber:"", payerId:"", bankAccountId:"", amount:"", frequency:"monatlich",
     startDate:"", endDate:"", nextDueDate:"", noticePeriodMonths:"", autoRenew:false, renewalTermMonths:"", status:"aktiv", notes:"", attachments:[],
-    portalUrl:"", cancelContactName:"", cancelPhone:"", cancelEmail:"", servicePhone:"", priceHistory:[] };
+    portalUrl:"", cancelContactName:"", cancelPhone:"", cancelEmail:"", servicePhone:"", claimUrl:"", specialCancel:"", priceHistory:[] };
 }
 
 function openContractModal(id){
@@ -3054,6 +3069,10 @@ function contractModalHTML(c, isNew){
 
       '<div class="field"><label for="f-notice">Kündigungsfrist (Monate vor Vertragsende)</label><input id="f-notice" type="number" min="0" step="1" value="'+escapeHtml(c.noticePeriodMonths)+'"><span class="hint">Wird genutzt, um anstehende Fristen auf der Übersicht anzuzeigen.</span></div>'+
 
+      '<div class="field"><label for="f-special-cancel">Sonderkündigungsrecht (nur Info)</label>'+
+        '<input id="f-special-cancel" type="text" maxlength="200" placeholder="z. B. Ja – bei Beitragserhöhung" value="'+escapeHtml(c.specialCancel)+'">'+
+        '<span class="hint">Reines Hinweisfeld ohne Berechnung. Z. B. „Nein“, „Ja – Details im Vertrag“ oder kurz die Bedingung.</span>'+
+      '</div>'+
       '<div class="field">'+
         '<label class="checkbox-label"><input type="checkbox" id="f-autorenew"'+(c.autoRenew?' checked':'')+'> Verlängert sich automatisch, wenn nicht rechtzeitig gekündigt</label>'+
       '</div>'+
@@ -3087,6 +3106,12 @@ function contractModalHTML(c, isNew){
           '</div>'+
         '</div>'+
       '</div>'+
+      '<div class="field"><label for="f-claim-url">Schadenmeldung online (Website)</label>'+
+        '<div class="field-with-action">'+
+          '<input id="f-claim-url" type="text" inputmode="url" placeholder="z. B. https://www.anbieter.de/schaden-melden" value="'+escapeHtml(c.claimUrl)+'">'+
+          '<button class="field-action-btn" id="open-claim-btn" type="button" title="Link öffnen">'+icon("link")+'</button>'+
+        '</div>'+
+      '</div>'+
 
       '<div class="field"><label for="f-notes">Notizen</label><textarea id="f-notes" placeholder="z. B. Deckungssumme, Selbstbeteiligung, Kontakt …">'+escapeHtml(c.notes)+'</textarea></div>'+
 
@@ -3102,9 +3127,14 @@ function renderAttachmentList(overlay){
   const host = overlay.querySelector("#attachment-list");
   if (!host) return;
   if (state.draftAttachments.length===0){ host.innerHTML = ""; return; }
+  const n = state.draftAttachments.length;
   host.innerHTML = state.draftAttachments.map(function(a, i){
     const isImg = a.contentType && a.contentType.indexOf("image/")===0;
     return '<div class="attachment-item">'+
+      (n>1 ? '<div class="att-order">'+
+        '<button class="att-move" data-move-att="'+i+'" data-dir="-1" type="button" aria-label="Nach oben" title="Nach oben"'+(i===0?' disabled':'')+'>'+icon("chevronUp")+'</button>'+
+        '<button class="att-move" data-move-att="'+i+'" data-dir="1" type="button" aria-label="Nach unten" title="Nach unten"'+(i===n-1?' disabled':'')+'>'+icon("chevronDown")+'</button>'+
+      '</div>' : '')+
       '<button class="attachment-open" data-open-att="'+i+'" type="button" title="Dokument öffnen">'+
         (isImg ? '<img src="'+a.dataUrl+'" alt="">' : '<span style="color:var(--text-muted);flex:none;">'+icon("doc")+'</span>')+
         '<span class="attachment-name">'+escapeHtml(a.name||"Dokument")+'</span>'+
@@ -3116,6 +3146,14 @@ function renderAttachmentList(overlay){
     btn.addEventListener("click", function(){
       const a = state.draftAttachments[Number(btn.getAttribute("data-open-att"))];
       if (a) openAttachment(a);
+    });
+  });
+  host.querySelectorAll("[data-move-att]").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      const i = Number(btn.getAttribute("data-move-att")), j = i + Number(btn.getAttribute("data-dir"));
+      if (j<0 || j>=state.draftAttachments.length) return;
+      const tmp = state.draftAttachments[i]; state.draftAttachments[i] = state.draftAttachments[j]; state.draftAttachments[j] = tmp;
+      renderAttachmentList(overlay);
     });
   });
   host.querySelectorAll("[data-remove-att]").forEach(function(btn){
@@ -3249,6 +3287,14 @@ function wireContractModal(overlay, source, isNew){
       window.open(url, "_blank");
     });
   }
+  const claimBtn = overlay.querySelector("#open-claim-btn");
+  if (claimBtn){
+    claimBtn.addEventListener("click", function(){
+      const raw = overlay.querySelector("#f-claim-url").value.trim();
+      if (!raw){ toast("Bitte zuerst eine URL eintragen.","error"); return; }
+      window.open(/^https?:\/\//i.test(raw) ? raw : "https://"+raw, "_blank");
+    });
+  }
   const callBtn = overlay.querySelector("#call-cancel-btn");
   if (callBtn){
     callBtn.addEventListener("click", function(){
@@ -3340,6 +3386,8 @@ function collectContractFormSnapshot(overlay, source){
     cancelPhone: val("#f-cancel-phone").trim(),
     cancelEmail: val("#f-cancel-email").trim(),
     servicePhone: val("#f-service-phone").trim(),
+    claimUrl: val("#f-claim-url").trim(),
+    specialCancel: val("#f-special-cancel").trim(),
     payerId: val("#f-payer") || "",
     bankAccountId: val("#f-bankaccount") || "",
     amount: val("#f-amount")===""? 0 : Number(val("#f-amount")),
@@ -3513,6 +3561,8 @@ function saveContract(overlay, source, isNew, priceMeta){
     cancelPhone: val("#f-cancel-phone").trim(),
     cancelEmail: val("#f-cancel-email").trim(),
     servicePhone: val("#f-service-phone").trim(),
+    claimUrl: val("#f-claim-url").trim(),
+    specialCancel: val("#f-special-cancel").trim(),
     payerId: payerId,
     bankAccountId: bankAccountId,
     payerHistory: payerHistory,
