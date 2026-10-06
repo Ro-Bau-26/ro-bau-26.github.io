@@ -461,7 +461,7 @@
     border-radius:10px; padding:7px 9px;
   }
   .attachment-item img{ width:38px;height:38px;object-fit:cover;border-radius:6px; flex:none; }
-  .attachment-item .attachment-name{ flex:1; min-width:0; font-size:0.82rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .attachment-item .attachment-name{ flex:1; min-width:0; font-size:0.82rem; line-height:1.3; overflow-wrap:anywhere; }
   .att-order{ display:flex; flex-direction:column; gap:2px; flex:none; }
   .att-move{ border:0; background:var(--surface-sunken); color:var(--text-secondary); border-radius:6px; width:30px; height:22px; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; padding:0; }
   .att-move:hover:not(:disabled){ color:var(--accent); }
@@ -1697,6 +1697,7 @@ const HELP_TOPICS = [
       '<li><strong>Anhänge nur im Vertrag:</strong> Die Vertragsliste zeigt keine Vorschaubilder mehr; Fotos und PDFs sind ausschließlich im geöffneten Vertrag sichtbar. Der Anhänge-Button heißt „Foto / Scan / Datei hinzufügen“.</li>'+
       '<li><strong>Neuer Name und neues Icon:</strong> aus „Vertragsordner“ wird „Vertragsraum“ mit dem Slogan „Verträge einfach im Blick“ (in der Seitenleiste am Mac/iPad quer) und neuem App-Icon (ein offener Raum um ein Dokument mit Haken). Ihre Daten und Sicherungen sind davon nicht betroffen; zu bereits angelegten Home-Bildschirm-Symbolen siehe „Auf dem iPad/iPhone als App nutzen“.</li>'+
       '<li><strong>Dokumente sortieren:</strong> Pfeile „nach oben / nach unten“ ändern die Reihenfolge angehängter Dokumente.</li>'+
+      '<li><strong>Lange Dokumentnamen:</strong> Namen angehängter Dokumente werden jetzt vollständig angezeigt (mehrzeilig umgebrochen) statt abgeschnitten, damit auch beim Sortieren der volle Name lesbar ist. Ein Tipp öffnet weiterhin das Dokument; am Mac zeigt der Mauszeiger den Namen zusätzlich als Tooltip.</li>'+
       '<li><strong>Neue Info-Felder:</strong> „Sonderkündigungsrecht“ (Freitext, nur Hinweis) und „Schadenmeldung online“ (Website mit Öffnen-Symbol, auch in der Ansicht „Nach Anbieter“).</li>'+
       '<li><strong>Kontakte &amp; Ansicht „Nach Anbieter“:</strong> neuer Umschalter in den Verträgen mit Anbieter-Karten (Anruf, E-Mail, Portal, zugehörige Verträge), zweite Rufnummer „Schaden / Hotline“ und erweiterte Suche.</li>'+
       '<li><strong>Korrektur:</strong> Beim Tippen ins Suchfeld der Verträge bleibt der Cursor jetzt im Feld (zuvor brach die Eingabe nach jedem Buchstaben ab).</li>'+
@@ -3146,7 +3147,7 @@ function renderAttachmentList(overlay){
         '<button class="att-move" data-move-att="'+i+'" data-dir="-1" type="button" aria-label="Nach oben" title="Nach oben"'+(i===0?' disabled':'')+'>'+icon("chevronUp")+'</button>'+
         '<button class="att-move" data-move-att="'+i+'" data-dir="1" type="button" aria-label="Nach unten" title="Nach unten"'+(i===n-1?' disabled':'')+'>'+icon("chevronDown")+'</button>'+
       '</div>' : '')+
-      '<button class="attachment-open" data-open-att="'+i+'" type="button" title="Dokument öffnen">'+
+      '<button class="attachment-open" data-open-att="'+i+'" type="button" title="'+escapeHtml((a.name||"Dokument"))+' – öffnen">'+
         (isImg ? '<img src="'+a.dataUrl+'" alt="">' : '<span style="color:var(--text-muted);flex:none;">'+icon("doc")+'</span>')+
         '<span class="attachment-name">'+escapeHtml(a.name||"Dokument")+'</span>'+
       '</button>'+
