@@ -1639,7 +1639,7 @@ const HELP_TOPICS = [
 
   { title:"Haushaltsmitglieder & Fotos", body:
     '<p>Unter „Mitglieder“ legen Sie Personen an, denen Sie Verträge und Bankkonten zuordnen können. Optional lässt sich pro Person ein Foto hinterlegen, das anstelle der farbigen Initialen angezeigt wird – praktisch zur schnelleren Unterscheidung bei mehreren Personen.</p>'+
-    '<p>Ein Klick auf eine Person in der Liste springt direkt zu den ihr zugeordneten Verträgen.</p>' },
+    '<p>Ein Klick auf eine Person in der Liste springt direkt zu den ihr zugeordneten Verträgen. Ebenso zeigt ein Klick auf einen Haushalt in der Liste „Haushalte“ die Verträge dieses Haushalts; oben rechts ist der gewählte Haushalt zu sehen und lässt sich dort wieder auf „Alle Haushalte“ stellen.</p>' },
 
   { title:"Mehrere Haushalte (z. B. Wohnhaus A, Praxis)", body:
     '<p>Unter „Mitglieder“ lassen sich beliebig viele Haushalte anlegen und frei benennen – z. B. „Wohnhaus A“, „Wohnhaus B“ oder „Praxis“. Jede Person kann mehreren Haushalten gleichzeitig angehören, und auch ein Vertrag kann mehreren Haushalten zugeordnet werden (etwa ein gemeinsam genutzter Vertrag).</p>'+
@@ -1697,6 +1697,7 @@ const HELP_TOPICS = [
       '<li><strong>Anhänge nur im Vertrag:</strong> Die Vertragsliste zeigt keine Vorschaubilder mehr; Fotos und PDFs sind ausschließlich im geöffneten Vertrag sichtbar. Der Anhänge-Button heißt „Foto / Scan / Datei hinzufügen“.</li>'+
       '<li><strong>Neuer Name und neues Icon:</strong> aus „Vertragsordner“ wird „Vertragsraum“ mit dem Slogan „Verträge einfach im Blick“ (in der Seitenleiste am Mac/iPad quer) und neuem App-Icon (ein offener Raum um ein Dokument mit Haken). Ihre Daten und Sicherungen sind davon nicht betroffen; zu bereits angelegten Home-Bildschirm-Symbolen siehe „Auf dem iPad/iPhone als App nutzen“.</li>'+
       '<li><strong>Dokumente sortieren:</strong> Pfeile „nach oben / nach unten“ ändern die Reihenfolge angehängter Dokumente.</li>'+
+      '<li><strong>Haushalt anklicken:</strong> Unter „Mitglieder“ zeigt ein Klick auf einen Haushalt jetzt die zugehörigen Verträge, genau wie bei einer Person. Ein Klick auf eine Person zeigt deren Verträge aus allen Haushalten.</li>'+
       '<li><strong>Lange Dokumentnamen:</strong> Namen angehängter Dokumente werden jetzt vollständig angezeigt (mehrzeilig umgebrochen) statt abgeschnitten, damit auch beim Sortieren der volle Name lesbar ist. Ein Tipp öffnet weiterhin das Dokument; am Mac zeigt der Mauszeiger den Namen zusätzlich als Tooltip.</li>'+
       '<li><strong>Neue Info-Felder:</strong> „Sonderkündigungsrecht“ (Freitext, nur Hinweis) und „Schadenmeldung online“ (Website mit Öffnen-Symbol, auch in der Ansicht „Nach Anbieter“).</li>'+
       '<li><strong>Kontakte &amp; Ansicht „Nach Anbieter“:</strong> neuer Umschalter in den Verträgen mit Anbieter-Karten (Anruf, E-Mail, Portal, zugehörige Verträge), zweite Rufnummer „Schaden / Hotline“ und erweiterte Suche.</li>'+
@@ -2623,6 +2624,17 @@ function renderHousehold(){
     '</div></div>';
 
   document.getElementById("add-household-btn").addEventListener("click", function(){ openHouseholdModal(); });
+  el.querySelectorAll("[data-open-household]").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      state.activeHousehold = btn.getAttribute("data-open-household");
+      state.filterPayer = "";
+      state.filterCategory = "";
+      state.filterStatus = "";
+      state.filterProvider = "";
+      state.search = "";
+      setView("contracts");
+    });
+  });
   el.querySelectorAll("[data-edit-household]").forEach(function(btn){
     btn.addEventListener("click", function(e){ e.stopPropagation(); openHouseholdModal(btn.getAttribute("data-edit-household")); });
   });
@@ -2653,6 +2665,7 @@ function renderHousehold(){
   el.querySelectorAll("[data-open-member]").forEach(function(btn){
     btn.addEventListener("click", function(){
       state.filterPayer = btn.getAttribute("data-open-member");
+      state.activeHousehold = "__all";
       state.filterCategory = "";
       state.filterStatus = "";
       state.search = "";
@@ -2700,8 +2713,10 @@ function householdRowHTML(h){
   const memberCount = state.members.filter(function(m){ return (m.householdIds||[]).indexOf(h.id)>=0; }).length;
   const sub = contractCount+' Vertrag/Verträge · '+memberCount+' Person(en)';
   return '<div class="member-row">'+
-    '<span class="dot" style="background:var('+householdColorVar(h)+');flex:none;width:12px;height:12px;"></span>'+
-    '<div style="flex:1;min-width:0;"><div class="member-name">'+escapeHtml(h.name)+'</div><div class="member-sub">'+sub+'</div></div>'+
+    '<button class="member-open" data-open-household="'+h.id+'" type="button" title="Verträge dieses Haushalts anzeigen">'+
+      '<span class="dot" style="background:var('+householdColorVar(h)+');flex:none;width:12px;height:12px;"></span>'+
+      '<div style="flex:1;min-width:0;"><div class="member-name">'+escapeHtml(h.name)+'</div><div class="member-sub">'+sub+'</div></div>'+
+    '</button>'+
     '<button class="icon-btn" data-edit-household="'+h.id+'" aria-label="Bearbeiten" type="button">'+icon("pencil")+'</button>'+
     '<button class="icon-btn" data-del-household="'+h.id+'" aria-label="Entfernen" type="button">'+icon("trash")+'</button>'+
   '</div>';
