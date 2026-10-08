@@ -97,6 +97,24 @@ label.check input{width:22px;height:22px;-webkit-appearance:checkbox;appearance:
 .spark{position:absolute;pointer-events:none;color:var(--amber);font-size:18px;opacity:0;animation:spark 1.6s ease-out forwards;text-shadow:0 0 1px var(--ink)}
 @keyframes spark{0%{opacity:0;transform:translateY(10px) scale(.4)}25%{opacity:1}100%{opacity:0;transform:translateY(-38px) scale(1.15) rotate(40deg)}}
 @media (prefers-reduced-motion:reduce){.spark{display:none}}
+.ins{padding:12px 0 14px;border-bottom:1px solid var(--line)}
+.ins:last-child{border-bottom:0}
+.ins-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.ins-name{font-weight:700}
+.ins-km{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.ins-km b{font-size:17px}
+.ins-km small{display:block;color:var(--muted);font-size:13px}
+.gauge{display:flex;gap:3px;background:var(--meter);border-radius:10px;padding:6px;margin:10px 0 8px}
+.gauge i{flex:1;height:16px;border-radius:3px;background:#ffffff14}
+.gauge i.on{background:var(--amber)}
+.gauge i.fc{background:rgba(243,182,31,.38)}
+.gauge i.over{background:var(--up)}
+.gauge-sc{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;margin:-2px 2px 8px}
+.ins-st{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;font-size:14px}
+.ins-st .pill{font-size:13px}
+.ins-st .ok{color:var(--down)} .ins-st .warn{color:#B07A00} .ins-st .bad{color:var(--up)}
+@media (prefers-color-scheme:dark){.ins-st .warn{color:var(--amber)}}
+.ins-note{color:var(--muted);font-size:13px;margin-top:6px}
 .tag-r{margin-left:auto;text-transform:none;letter-spacing:0;font-variant-numeric:tabular-nums;white-space:nowrap}
 .tag-b.pad{padding:4px 14px 14px}
 .tag-b .card{border:0;border-bottom:1px solid var(--line);border-radius:0;margin:0;background:none}
@@ -196,7 +214,7 @@ details.scan summary{font-weight:600;color:var(--petrol);cursor:pointer}
 
 <script>
 'use strict';
-const VERSION='1.17';
+const VERSION='1.19';
 const FUELS=[
  {id:'e5',label:'Super E5 (95)',unit:'L',g:'Kraftstoff'},
  {id:'e10',label:'Super E10',unit:'L',g:'Kraftstoff'},
@@ -259,7 +277,8 @@ function vText(v){return v?(v.name+(v.plate?' ('+v.plate+')':'')):'–'}
 const DBN='zapfwerk',ST='kv';
 function idb(){return new Promise((res,rej)=>{const r=indexedDB.open(DBN,1);r.onupgradeneeded=()=>r.result.createObjectStore(ST);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})}
 async function load(){try{const db=await idb();return await new Promise((res,rej)=>{const q=db.transaction(ST).objectStore(ST).get('state');q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)})}catch(e){return null}}
-async function save(){try{const db=await idb();await new Promise((res,rej)=>{const tx=db.transaction(ST,'readwrite');tx.objectStore(ST).put(JSON.parse(JSON.stringify(S)),'state');tx.oncomplete=res;tx.onerror=()=>rej(tx.error)})}catch(e){toast('Speichern fehlgeschlagen – bitte Sicherung exportieren.')}}
+let QUIET=false;
+async function save(){if(!QUIET)S.meta.changed=Date.now();try{const db=await idb();await new Promise((res,rej)=>{const tx=db.transaction(ST,'readwrite');tx.objectStore(ST).put(JSON.parse(JSON.stringify(S)),'state');tx.oncomplete=res;tx.onerror=()=>rej(tx.error)})}catch(e){toast('Speichern fehlgeschlagen – bitte Sicherung exportieren.')}}
 async function kvGet(k){try{const db=await idb();return await new Promise(res=>{const q=db.transaction(ST).objectStore(ST).get(k);q.onsuccess=()=>res(q.result);q.onerror=()=>res(null)})}catch(e){return null}}
 async function kvSet(k,v){try{const db=await idb();await new Promise((res,rej)=>{const tx=db.transaction(ST,'readwrite');v==null?tx.objectStore(ST).delete(k):tx.objectStore(ST).put(v,k);tx.oncomplete=res;tx.onerror=()=>rej(tx.error)});return true}catch(e){return false}}
 let BG=null;
@@ -359,10 +378,22 @@ function jubiBlock(){return jubilees().map(j=>`<section class="tag jubi"><div cl
 function jubiDone(id,key){S.meta.jubi=S.meta.jubi||{};S.meta.jubi[id]=key;save();render()}
 function sparkle(){document.querySelectorAll('.jubi').forEach(el=>{if(el.dataset.sp)return;el.dataset.sp=1;
  for(let i=0;i<9;i++){const s=document.createElement('span');s.className='spark';s.textContent='★';s.style.left=(6+Math.random()*88)+'%';s.style.top=(30+Math.random()*55)+'%';s.style.animationDelay=(i*0.12)+'s';el.appendChild(s);setTimeout(()=>s.remove(),3000)}})}
+/* ---------- Erinnerung Sicherung ---------- */
+function backupDue(){
+ if(!S.entries.length)return null;const now=Date.now(),last=S.meta.lastExport?Date.parse(S.meta.lastExport):0;
+ if((S.meta.backupSnooze||0)>now)return null;
+ const changed=S.meta.changed||now;if(last&&changed<=last)return null;
+ const days=last?Math.floor((now-last)/DAY):null;if(last&&days<30)return null;
+ return{days}}
+function backupBlock(){const b=backupDue();if(!b)return'';
+ return`<section class="tag"><div class="tag-h">Zeit für eine Sicherung</div><div class="tag-b"><p class="jt" style="font-size:16px;margin:12px 0 4px">${b.days==null?'Es gibt noch keine Sicherung. Die Daten liegen nur auf diesem Gerät.':`Die letzte Sicherung ist ${b.days} Tage alt – seitdem hat sich etwas geändert.`}</p><p class="hint" style="margin:0 0 10px">Am besten in den gemeinsamen iCloud-Ordner sichern.</p>
+ <div class="actions" style="margin:0 0 12px"><button type="button" class="btn secondary" onclick="backupLater()">Später</button><span class="sp"></span><button type="button" class="btn primary" onclick="exportJSON()">Jetzt sichern</button></div></div></section>`}
+function backupLater(){S.meta.backupSnooze=Date.now()+7*DAY;QUIET=true;save().then(()=>{QUIET=false});render();toast('Erinnerung in 7 Tagen')}
+
 function viewVerlauf(){
  if(!S.vehicles.length)return`<div class="empty"><strong>Noch kein Fahrzeug angelegt</strong>Lege zuerst ein Fahrzeug mit Kennzeichen an, dann kannst du Tankstopps und Kosten erfassen.<br><button class="btn primary wide" onclick="go('fahrzeuge')">Fahrzeug anlegen</button></div>`;
  const list=filtered().slice().sort((a,b)=>-chron(a,b));
- const J=jubiBlock();
+ const J=backupBlock()+jubiBlock();
  if(!list.length)return J+`<div class="empty"><strong>Noch keine Einträge</strong>Tippe auf + und erfasse den ersten Tankstopp oder eine Ausgabe.</div>`;
  const D=deriveAll();REC=new Set(Object.values(bestIds(D)).map(b=>b.e.id));const groups={};
  list.forEach(e=>{(groups[e.date.slice(0,7)]=groups[e.date.slice(0,7)]||[]).push(e)});
@@ -381,6 +412,41 @@ function row(e,D){
  return`<button class="entry" onclick="editEntry('${e.id}')"><span class="ico cost">${ICON.cost}</span><span><div class="e-title">${esc(CAT[e.category]||'Kosten')}${e.receipt?`<span class="clip" title="Beleg angehängt">${CLIP}</span>`:''}</div><div class="e-sub">${e.station?`<span>${esc(e.station)}</span>`:''}${sub}</div>${e.note?`<div class="e-sub">${esc(e.note)}</div>`:''}</span><span class="e-sum">${eur(total(e))}</span></button>`}
 
 function digits(str,cls){return`<div class="${cls}">`+[...str].map(c=>/\d/.test(c)?`<span class="dg">${c}</span>`:`<span class="dg sep">${esc(c)}</span>`).join('')+'</div>'}
+/* ---------- Versicherung: Kilometer ---------- */
+const MONTHS=['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
+const DAY=864e5;
+function insPeriod(v,today){const [m,d]=(v.insStart||'01-01').split('-').map(Number);
+ const mk=y=>{const last=new Date(y,m,0,12).getDate();return new Date(y,m-1,Math.min(d,last),12)};
+ let st=mk(today.getFullYear());if(st>today)st=mk(today.getFullYear()-1);const nx=mk(st.getFullYear()+1);return{start:st,end:new Date(nx-DAY)}}
+function insStatus(v,D){
+ if(!v.insKm)return null;const today=new Date();today.setHours(12,0,0,0);const {start,end}=insPeriod(v,today);
+ const pts=S.entries.filter(e=>e.vehicleId===v.id&&e.type==='fuel').map(e=>({t:new Date(e.date+'T12:00'),o:(D.get(e.id)||{}).odo})).filter(p=>p.o!=null&&p.t<=today).sort((a,b)=>a.t-b.t);
+ const r={v,start,end,limit:v.insKm,driven:0,last:null,proj:null,from:null,approx:false};
+ const before=pts.filter(p=>p.t<start),after=pts.filter(p=>p.t>=start);
+ if(!after.length)return r;
+ let base,ref;
+ if(before.length){const a=before[before.length-1],b=after[0];base=a.o+(b.o-a.o)*((start-a.t)/(b.t-a.t||1));ref=start;r.approx=+a.t!==+start}
+ else{base=after[0].o;ref=after[0].t;r.from=after[0].t}
+ const last=after[after.length-1];r.last=last.t;r.driven=Math.max(0,Math.round(last.o-base));
+ const span=(last.t-ref)/DAY;if(span>=30)r.proj=Math.round(r.driven+r.driven/span*((end-last.t)/DAY));
+ return r}
+function insBlock(r){const N=20,lim=r.limit;
+ const fill=Math.min(N,Math.round(r.driven/lim*N)),fc=r.proj!=null?Math.min(N,Math.round(r.proj/lim*N)):fill;const over=r.proj!=null&&r.proj>lim;
+ const cells=Array.from({length:N},(_,i)=>`<i class="${i<fill?(r.driven>lim?'over':'on'):i<fc?'fc':''}${over&&i===N-1?' over':''}"></i>`).join('');
+ const rest=lim-r.driven,v=r.v;
+ let st;
+ if(r.proj==null)st=`<span class="ins-note">${r.last?'Hochrechnung ab einem Monat Daten im Versicherungsjahr.':'Noch kein Kilometerstand in diesem Versicherungsjahr.'}</span>`;
+ else{const q=r.proj/lim;const cls=q>1?'bad':q>=.9?'warn':'ok';const sym=q>1?'▲':q>=.9?'●':'✓';
+  st=`<span class="pill ${cls}">${sym} Hochrechnung ${f0.format(r.proj)}&nbsp;km</span><span class="${cls}">${q>1?'Versicherung rechtzeitig informieren':q>=.9?'Wird knapp – im Blick behalten':'Passt mit Luft'}</span>`}
+ return`<div class="ins"><div class="ins-top"><div><div class="ins-name">${esc(v.alias||v.name)}</div>${plateLine(v)}</div>
+  <div class="ins-km"><b>${f0.format(r.driven)}</b> von ${f0.format(lim)}&nbsp;km<small>${rest>=0?`noch ${f0.format(rest)} km bis ${fDate(isoD(r.end))}`:`${f0.format(-rest)} km über dem Tarif`}</small></div></div>
+  <div class="gauge" role="img" aria-label="${f0.format(r.driven)} von ${f0.format(lim)} Kilometern gefahren">${cells}</div>
+  <div class="gauge-sc"><span>${fDate(isoD(r.start))}</span><span>${fDate(isoD(r.end))}</span></div>
+  <div class="ins-st">${st}</div>
+  ${r.last?`<div class="ins-note">Stand vom ${fDate(isoD(r.last))}${r.from?`, gezählt ab dem ersten Eintrag am ${fDate(isoD(r.from))}`:''}.</div>`:''}</div>`}
+function insTag(D){const vs=S.vehicles.filter(v=>!v.archived&&v.insKm&&(ui.vf==='all'||ui.vf===v.id));if(!vs.length)return'';
+ return tag('Versicherung – Kilometer',vs.map(v=>insBlock(insStatus(v,D))).join(''))}
+
 function viewAuswertung(){
  if(!S.entries.length)return`<div class="empty"><strong>Noch nichts auszuwerten</strong>Sobald Tankstopps erfasst sind, siehst du hier Kosten, Kilometer und Verbrauch.</div>`;
  const D=deriveAll();const list=filtered().filter(e=>inPeriod(e.date));const s=stats(list,D);
@@ -389,6 +455,7 @@ function viewAuswertung(){
  h+=`<div class="meter"><div class="lbl">Kosten gesamt in €</div>${digits(f2.format(s.total),'big')}
   <div class="cols"><div><div class="lbl">Gefahren km</div>${digits(f0.format(s.km),'small')}</div><div><div class="lbl">Kosten je km in €</div>${digits(s.km?f2.format(s.total/s.km):'–','small')}</div></div></div>`;
  const cons=Object.entries(s.cons);
+ h+=insTag(D);
  h+=tag('Tanken und Laden',`<div class="row"><span class="k">Kraftstoff & Strom</span><span class="v">${eur(s.fuel)}</span></div><div class="row"><span class="k">Sonstige Kosten</span><span class="v">${eur(s.other)}</span></div>`+cons.map(([u,c])=>`<div class="row"><span class="k">Ø Verbrauch<small>Volltank-Methode, ${f0.format(c.k)} km gewertet</small></span><span class="v">${f1.format(c.a/c.k*100)} ${u}/100 km</span></div>`).join(''));
  const B=Object.values(bestIds(D,new Set(list.map(e=>e.id))));
  if(B.length)h+=tag('★ Bestwerte',B.map(b=>{const v=veh(b.e.vehicleId);const unitL=b.d.unit;const avg=s.cons[unitL];
@@ -456,7 +523,7 @@ function viewMehr(){
 const HELP=`
 <details class="faq"><summary>Zapfwerk als App auf den Home-Bildschirm legen</summary><p>In Safari die Seite öffnen, auf „Teilen“ tippen und „Zum Home-Bildschirm“ wählen. Zapfwerk startet dann wie eine App ohne Browserleiste. Auf dem Mac: Safari › Ablage › Zum Dock hinzufügen.</p></details>
 <details class="faq"><summary>Wo liegen meine Daten?</summary><p>Nur lokal auf dem jeweiligen Gerät (im Speicher des Browsers bzw. der Home-Bildschirm-App). Es gibt keinen Server und kein Konto. Zwischen iPhone, iPad und Mac wird nicht automatisch abgeglichen – dafür gibt es die Sicherung.</p></details>
-<details class="faq"><summary>Daten auf ein anderes Gerät bringen</summary><p>„Sicherung exportieren“ erzeugt eine Datei <em>zapfwerk-backup-Datum.json</em>. Auf iPhone und iPad öffnet sich das Teilen-Menü – dort „In Dateien sichern“ und den iCloud-Ordner wählen. Auf dem anderen Gerät „Sicherung importieren“ und die Datei auswählen. Achtung: Der Import ersetzt alle Daten auf diesem Gerät. Angehängte Belege sind in der Sicherung enthalten.</p></details>
+<details class="faq"><summary>Daten auf ein anderes Gerät bringen</summary><p>„Sicherung exportieren“ erzeugt eine Datei <em>zapfwerk-backup-Datum.json</em>. Auf iPhone und iPad öffnet sich das Teilen-Menü – dort „In Dateien sichern“ und den iCloud-Ordner wählen. Auf dem anderen Gerät „Sicherung importieren“ und die Datei auswählen. Achtung: Der Import ersetzt alle Daten auf diesem Gerät. Angehängte Belege sind in der Sicherung enthalten.</p><p><strong>Erinnerung:</strong> Gibt es Änderungen und ist die letzte Sicherung älter als 30 Tage (oder gab es noch keine), erscheint oben im Verlauf das Schild „Zeit für eine Sicherung“ mit „Jetzt sichern“. „Später“ blendet es für 7 Tage aus. Ohne Änderungen seit der letzten Sicherung bleibt es weg. Die Erinnerung gilt je Gerät – sie hilft also auch auf dem iPhone, auf dem nicht so oft ans Sichern gedacht wird.</p></details>
 <details class="faq"><summary>Ältere Aufzeichnungen per CSV übernehmen</summary><p>Unter „Mehr“ › „CSV-Import“ die Vorlage herunterladen und in Numbers oder Excel öffnen. Eine Zeile pro Tankstopp oder Ausgabe. Die Beispielzeilen löschen oder einfach stehen lassen – Zeilen mit „Beispielzeile“ in der Notiz werden beim Import ignoriert. Danach als CSV exportieren (Numbers: Ablage › Exportieren › CSV) und mit „CSV importieren“ einlesen. Schreibt Numbers den Tabellennamen als erste Zeile mit hinein, ist das kein Problem – Zapfwerk sucht die Überschriften selbst. Vor dem Hinzufügen zeigt Zapfwerk, was erkannt wurde.</p>
 <ul><li><strong>Typ:</strong> Tanken oder Kosten</li><li><strong>Datum:</strong> TT.MM.JJJJ</li><li><strong>Fahrzeug:</strong> Kennzeichen, Spitzname oder Bezeichnung – das Fahrzeug muss in Zapfwerk angelegt sein</li><li><strong>Energie oder Art:</strong> beim Tanken z. B. Super E5, E10, Super Plus, Diesel, HVO, LPG, CNG, Strom AC, Strom DC; bei Kosten z. B. Waschstraße, Öl, AdBlue, Vignette, Parken, Werkstatt, Reifen</li><li><strong>Menge, Preis je Einheit, Betrag:</strong> mit Komma, zwei der drei genügen</li><li><strong>Vollgetankt:</strong> ja oder nein (leer = ja)</li><li><strong>Kilometerstand oder Tageskilometer:</strong> einer genügt</li><li><strong>Land:</strong> DE, AT, CH … oder ausgeschrieben</li></ul>
 <p>Die Einträge werden zu den vorhandenen hinzugefügt. Zeilen mit gleichem Fahrzeug, Datum, Typ und Betrag gelten als doppelt und werden übersprungen – ein versehentlich zweimal importierter Stapel richtet also keinen Schaden an. Tipp: Vor dem ersten Import trotzdem eine Sicherung exportieren.</p></details>
@@ -470,11 +537,12 @@ const HELP=`
 <details class="faq"><summary>Wie wird der Verbrauch berechnet?</summary><p>Nach der Volltank-Methode: Verbrauch = getankte Menge seit dem letzten Volltanken ÷ gefahrene km × 100. Teilbetankungen (Haken „Vollgetankt“ entfernen) werden zur nächsten Volltankung dazugezählt. Beim E-Auto gilt „bis zum gewohnten Ladestand“ (z. B. immer 80 %) als voll. Die Prozentangabe vergleicht mit dem vorherigen Verbrauchswert bzw. Preis desselben Kraftstoffs: ▲ rot = höher, ▼ grün = niedriger. Beim Verbrauch steht der Vergleich als gerahmtes Abzeichen.</p><p><strong>★ Bestwert:</strong> Der niedrigste Verbrauch eines Fahrzeugs bekommt im Verlauf ein gelbes Abzeichen „★ Bestwert“ (getrennt nach Liter und kWh). Die Auswertung zeigt im Schild „Bestwerte“ den besten Wert je Fahrzeug im gewählten Zeitraum, mit Datum und Tankstelle. Wird ein besserer Wert gefahren, wandert das Abzeichen mit. Ein Bestwert gibt es erst ab zwei Verbrauchswerten – vorher gibt es nichts zu schlagen.</p><p>Bei Plug-in-Hybriden werden Liter und kWh getrennt gerechnet; die Werte sind dort nur grobe Richtwerte.</p></details>
 <details class="faq"><summary>Währung</summary><p>Alle Beträge werden in Euro geführt. Bei Belegen in Franken oder Kronen bitte den Euro-Betrag laut Kartenabrechnung eintragen.</p></details>
 <details class="faq"><summary>Spitzname fürs Fahrzeug</summary><p>Im Fahrzeug kann zusätzlich zur Bezeichnung ein Spitzname eingetragen werden. In der Fahrzeugliste steht dann der Spitzname (erkennbar am ⇄). Ein Tipp auf das Fahrzeug wechselt zur Bezeichnung, ein weiterer Tipp zurück; das Kennzeichen bleibt immer gleich. Bearbeiten geht über den Stift rechts. Beim Neustart der App wird wieder der Spitzname gezeigt.</p></details>
-<details class="faq"><summary>Fahrzeugdaten (HSN, TSN, FIN …)</summary><p>Im Fahrzeug unter „Fahrzeugdaten“ lassen sich Herstellerschlüssel (HSN, Feld 2.1 im Fahrzeugschein), Typschlüssel (TSN, Feld 2.2), Leistung in kW (Feld P.2), Erstzulassung (Feld B), Datum der Zulassung auf euch (Feld I) und die Fahrzeug-Identifizierungsnummer (FIN, Feld E) hinterlegen – praktisch beim Teilekauf, in der Werkstatt oder für Versicherungsangebote. Die PS werden aus den kW umgerechnet. Bei der FIN prüft Zapfwerk die Länge (17 Zeichen) und warnt bei I, O oder Q, die in einer FIN nie vorkommen. Alle Angaben sind freiwillig. Tipp: Mit „Text scannen“ lassen sich die Nummern direkt vom Fahrzeugschein übernehmen.</p></details>
+<details class="faq"><summary>Fahrzeugdaten (HSN, TSN, FIN …)</summary><p>Im Fahrzeug unter „Fahrzeugdaten und Versicherung“ lassen sich Herstellerschlüssel (HSN, Feld 2.1 im Fahrzeugschein), Typschlüssel (TSN, Feld 2.2), Leistung in kW (Feld P.2), Erstzulassung (Feld B), Datum der Zulassung auf euch (Feld I) und die Fahrzeug-Identifizierungsnummer (FIN, Feld E) hinterlegen – praktisch beim Teilekauf, in der Werkstatt oder für Versicherungsangebote. Die PS werden aus den kW umgerechnet. Bei der FIN prüft Zapfwerk die Länge (17 Zeichen) und warnt bei I, O oder Q, die in einer FIN nie vorkommen. Alle Angaben sind freiwillig. Tipp: Mit „Text scannen“ lassen sich die Nummern direkt vom Fahrzeugschein übernehmen.</p></details>
 <details class="faq"><summary>Hintergrundbild</summary><p>Unter „Mehr“ › „Hintergrundbild“ ein Foto auswählen. Es erscheint nur im Hellmodus hinter den Schildern; im Dunkelmodus bleibt der dunkle Hintergrund. Das Bild wird verkleinert und nur auf diesem Gerät gespeichert – es ist nicht Teil der JSON-Sicherung, damit die Datei klein bleibt. Auf jedem Gerät kann also ein anderes Bild stehen. Ruhige, helle Motive wirken am besten.</p></details>
 <details class="faq"><summary>Jahrestag der Zulassung</summary><p>Am Jahrestag der Zulassung erscheint oben im Verlauf ein Jubiläums-Schild mit kurzem Funkeln. Grundlage ist das Datum „Zugelassen auf uns seit“ (Feld I im Fahrzeugschein) – bei einem Gebrauchten ist das der Tag, an dem das Auto zu euch kam. Ist es nicht eingetragen, nimmt Zapfwerk die Erstzulassung (Feld B).</p><p>Die Zahlen (km, getankte Menge, Ø Verbrauch) stammen aus den zwölf Monaten vor dem Jahrestag, soweit sie in Zapfwerk erfasst sind. Im 1., 3., 5. und 10. Jahr sowie danach alle fünf Jahre gibt es einen eigenen Text. Das Schild bleibt eine Woche stehen, falls die App am Tag selbst nicht geöffnet wird, und verschwindet mit „Danke!“. Eine Mitteilung bei geschlossener App ist bei einer Web-App nicht möglich.</p></details>
+<details class="faq"><summary>Kilometer laut Versicherung</summary><p>Viele Kfz-Versicherungen rechnen nach der jährlichen Fahrleistung. Trag sie im Fahrzeug unter „Fahrzeugdaten und Versicherung“ ein, zusammen mit dem Beginn des Versicherungsjahres (steht im Versicherungsschein, oft der 1. Januar). In der Auswertung erscheint dann das Schild „Versicherung – Kilometer“: gefahrene Kilometer im laufenden Versicherungsjahr, wie viele noch möglich sind und eine Hochrechnung bis zum Ende des Versicherungsjahres.</p><p>Die Tankanzeige füllt sich gelb mit den gefahrenen Kilometern; hell gelb ist die Hochrechnung. Grün ✓ = passt mit Luft, gelb ● = ab 90 % wird es knapp, rot ▲ = die Hochrechnung liegt über dem Tarif – dann die Versicherung rechtzeitig informieren. Die Hochrechnung erscheint erst nach einem Monat Daten. Grundlage sind die Kilometerstände der Tankstopps; liegt keiner genau am Stichtag, schätzt Zapfwerk den Stand aus den Tankstopps davor und danach. Das Schild richtet sich immer nach dem laufenden Versicherungsjahr, nicht nach dem oben gewählten Zeitraum.</p></details>
 <details class="faq"><summary>Fahrzeug verkauft</summary><p>Im Fahrzeug „Stillgelegt“ anhaken. Es verschwindet aus der Auswahl beim Erfassen, die Einträge bleiben in der Auswertung erhalten. Löschen geht nur, solange keine Einträge vorhanden sind.</p></details>
-<details class="faq"><summary>Änderungen</summary><ul><li><strong>1.17</strong> – CSV-Import: Titelzeilen vor den Spaltenüberschriften (z. B. der Tabellenname aus Numbers) werden übersprungen.</li><li><strong>1.16</strong> – Preise vergleichen: Preisportale je Land beim gelben + (vorbelegt: ADAC, Mehr-Tanken Ladesäulen, E-Control-Spritpreisrechner, Osservaprezzi Italien), unter „Mehr“ frei änderbar.</li><li><strong>1.15</strong> – Beleg anhängen: Foto oder PDF der Quittung am Tankstopp oder an sonstigen Kosten, Büroklammer im Verlauf, Ansicht in voller Größe, Belege in der Sicherung enthalten.</li><li><strong>1.14</strong> – CSV-Import für ältere Aufzeichnungen mit herunterladbarer Vorlage, Vorschau vor dem Hinzufügen und Schutz vor doppelten Einträgen.</li><li><strong>1.13</strong> – Jahrestag der Zulassung: neues Feld „Zugelassen auf uns seit (Feld I)“, Jubiläums-Schild mit Funkeln und den Zahlen des letzten Jahres im Verlauf.</li><li><strong>1.12</strong> – Personen wie Fahrzeuge: eigene Liste mit zugeordneten Fahrzeugen und Stift zum Bearbeiten, darunter der Knopf „Person hinzufügen“.</li><li><strong>1.11</strong> – Kennzeichen steht in der Fahrzeugliste und der Auswertung jetzt in einer eigenen, leicht eingerückten Zeile unter dem Namen.</li><li><strong>1.10</strong> – Kachel „Kosten gesamt“: Gesamtkosten und Kosten je km rechtsbündig wie an der Zapfsäule, gefahrene km bleiben links.</li><li><strong>1.9</strong> – Eigenes Hintergrundbild im Hellmodus (unter „Mehr“), wird nur auf dem Gerät gespeichert.</li><li><strong>1.8</strong> – Slogan „Jeder Tropfen auf der Liste.“ unter dem Namen; das Zählwerk der Gesamtkosten in sanfterem Espressobraun statt Schwarz.</li><li><strong>1.7</strong> – Verbrauchstrend als Abzeichen (▲ höher / ▼ niedriger als beim letzten Volltanken); ★ Bestwert für den niedrigsten Verbrauch je Fahrzeug im Verlauf und neues Schild „Bestwerte“ in der Auswertung.</li><li><strong>1.6</strong> – Preisschild-Look in allen Ansichten: Verlauf (je Monat ein Schild mit Monatssumme), Fahrzeuge, Personen, Sicherung und Hilfe.</li><li><strong>1.5</strong> – Auswertung im Preisschild-Look: Jeder Bereich (Tanken und Laden, nach Fahrzeug, Person und Art) steht in einem eigenen gerahmten Schild.</li><li><strong>1.4</strong> – Fahrzeugdaten: HSN, TSN, Leistung (kW mit PS-Umrechnung), Erstzulassung und FIN mit Plausibilitätsprüfung.</li><li><strong>1.3</strong> – Spitzname fürs Fahrzeug; in der Fahrzeugliste per Tipp zwischen Spitzname und Bezeichnung wechseln. Fahrzeug bearbeiten jetzt über den Stift rechts.</li><li><strong>1.2</strong> – Adresse in einer Zeile (Ort, Straße, PLZ mit Komma getrennt, wird getrennt gespeichert); Favoriten für Tankstellen und Anbieter mit Schnellwahl; Belegscan übernimmt auch Straße und PLZ. Im Formular stehen Land und Tankstelle jetzt nebeneinander, die Adresse hat die volle Breite.</li><li><strong>1.1</strong> – Neues App-Icon im 70er-Stil, auch oben neben dem Namen. Damit das Icon auf dem Home-Bildschirm erscheint, Zapfwerk dort einmal entfernen und neu hinzufügen – die Daten bleiben nur erhalten, wenn vorher eine Sicherung exportiert wurde.</li><li><strong>1.0</strong> – Erste Version: Tankstopps (Kraftstoff, Gas, Strom), sonstige Kosten, mehrere Fahrzeuge mit Kennzeichen und Person, Länderwahl, Kilometer-Automatik, Verbrauch mit Veränderung in %, Auswertung nach Fahrzeug, Person und Art, Belegübernahme per Texterkennung, JSON-Sicherung.</li></ul></details>`;
+<details class="faq"><summary>Änderungen</summary><ul><li><strong>1.19</strong> – Erinnerung an die Sicherung: Schild im Verlauf, wenn es Änderungen gibt und die letzte Sicherung älter als 30 Tage ist; „Später“ für 7 Tage. Eine abgebrochene Sicherung zählt nicht mehr als erledigt.</li><li><strong>1.18</strong> – Versicherung – Kilometer: vereinbarte Jahresfahrleistung und Beginn des Versicherungsjahres beim Fahrzeug; Tankanzeige mit gefahrenen und noch möglichen Kilometern und Hochrechnung in der Auswertung.</li><li><strong>1.17</strong> – CSV-Import: Titelzeilen vor den Spaltenüberschriften (z. B. der Tabellenname aus Numbers) werden übersprungen.</li><li><strong>1.16</strong> – Preise vergleichen: Preisportale je Land beim gelben + (vorbelegt: ADAC, Mehr-Tanken Ladesäulen, E-Control-Spritpreisrechner, Osservaprezzi Italien), unter „Mehr“ frei änderbar.</li><li><strong>1.15</strong> – Beleg anhängen: Foto oder PDF der Quittung am Tankstopp oder an sonstigen Kosten, Büroklammer im Verlauf, Ansicht in voller Größe, Belege in der Sicherung enthalten.</li><li><strong>1.14</strong> – CSV-Import für ältere Aufzeichnungen mit herunterladbarer Vorlage, Vorschau vor dem Hinzufügen und Schutz vor doppelten Einträgen.</li><li><strong>1.13</strong> – Jahrestag der Zulassung: neues Feld „Zugelassen auf uns seit (Feld I)“, Jubiläums-Schild mit Funkeln und den Zahlen des letzten Jahres im Verlauf.</li><li><strong>1.12</strong> – Personen wie Fahrzeuge: eigene Liste mit zugeordneten Fahrzeugen und Stift zum Bearbeiten, darunter der Knopf „Person hinzufügen“.</li><li><strong>1.11</strong> – Kennzeichen steht in der Fahrzeugliste und der Auswertung jetzt in einer eigenen, leicht eingerückten Zeile unter dem Namen.</li><li><strong>1.10</strong> – Kachel „Kosten gesamt“: Gesamtkosten und Kosten je km rechtsbündig wie an der Zapfsäule, gefahrene km bleiben links.</li><li><strong>1.9</strong> – Eigenes Hintergrundbild im Hellmodus (unter „Mehr“), wird nur auf dem Gerät gespeichert.</li><li><strong>1.8</strong> – Slogan „Jeder Tropfen auf der Liste.“ unter dem Namen; das Zählwerk der Gesamtkosten in sanfterem Espressobraun statt Schwarz.</li><li><strong>1.7</strong> – Verbrauchstrend als Abzeichen (▲ höher / ▼ niedriger als beim letzten Volltanken); ★ Bestwert für den niedrigsten Verbrauch je Fahrzeug im Verlauf und neues Schild „Bestwerte“ in der Auswertung.</li><li><strong>1.6</strong> – Preisschild-Look in allen Ansichten: Verlauf (je Monat ein Schild mit Monatssumme), Fahrzeuge, Personen, Sicherung und Hilfe.</li><li><strong>1.5</strong> – Auswertung im Preisschild-Look: Jeder Bereich (Tanken und Laden, nach Fahrzeug, Person und Art) steht in einem eigenen gerahmten Schild.</li><li><strong>1.4</strong> – Fahrzeugdaten: HSN, TSN, Leistung (kW mit PS-Umrechnung), Erstzulassung und FIN mit Plausibilitätsprüfung.</li><li><strong>1.3</strong> – Spitzname fürs Fahrzeug; in der Fahrzeugliste per Tipp zwischen Spitzname und Bezeichnung wechseln. Fahrzeug bearbeiten jetzt über den Stift rechts.</li><li><strong>1.2</strong> – Adresse in einer Zeile (Ort, Straße, PLZ mit Komma getrennt, wird getrennt gespeichert); Favoriten für Tankstellen und Anbieter mit Schnellwahl; Belegscan übernimmt auch Straße und PLZ. Im Formular stehen Land und Tankstelle jetzt nebeneinander, die Adresse hat die volle Breite.</li><li><strong>1.1</strong> – Neues App-Icon im 70er-Stil, auch oben neben dem Namen. Damit das Icon auf dem Home-Bildschirm erscheint, Zapfwerk dort einmal entfernen und neu hinzufügen – die Daten bleiben nur erhalten, wenn vorher eine Sicherung exportiert wurde.</li><li><strong>1.0</strong> – Erste Version: Tankstopps (Kraftstoff, Gas, Strom), sonstige Kosten, mehrere Fahrzeuge mit Kennzeichen und Person, Länderwahl, Kilometer-Automatik, Verbrauch mit Veränderung in %, Auswertung nach Fahrzeug, Person und Art, Belegübernahme per Texterkennung, JSON-Sicherung.</li></ul></details>`;
 
 /* ---------- Sheet ---------- */
 function openSheet(html){$('#panel').innerHTML=html;$('#sheet').hidden=false;document.body.style.overflow='hidden';$('#panel').querySelectorAll('[data-close]').forEach(b=>b.onclick=closeSheet)}
@@ -657,10 +725,13 @@ function vehicleForm(id){
  <div class="grid2"><label>Kennzeichen<input name="plate" value="${esc(v.plate)}" placeholder="RO-AB 123" autocapitalize="characters"></label>
  <label>Person<select name="personId"><option value="">– keine –</option>${S.persons.map(p=>`<option value="${p.id}"${p.id===v.personId?' selected':''}>${esc(p.name)}</option>`).join('')}</select></label></div>
  <label>Übliche Energie<select name="fuel">${fuelOptions(v.fuel)}</select></label>
- <details class="scan" style="margin-top:14px"${v.hsn||v.tsn||v.kw||v.vin||v.firstReg||v.regDate?' open':''}><summary>Fahrzeugdaten (aus dem Fahrzeugschein)</summary>
+ <details class="scan" style="margin-top:14px"${v.hsn||v.tsn||v.kw||v.vin||v.firstReg||v.regDate||v.insKm?' open':''}><summary>Fahrzeugdaten und Versicherung</summary>
  <div class="grid2"><label>HSN (Hersteller)<input name="hsn" value="${esc(v.hsn)}" inputmode="numeric" maxlength="4" placeholder="Feld 2.1"></label><label>TSN (Typ)<input name="tsn" value="${esc(v.tsn)}" maxlength="10" autocapitalize="characters" placeholder="Feld 2.2"></label></div>
  <div class="grid2"><label>Leistung kW<input name="kw" value="${fin(v.kw)}" inputmode="numeric" placeholder="Feld P.2"></label><label>Erstzulassung<input type="date" name="firstReg" value="${esc(v.firstReg)}"></label></div>
  <label>Zugelassen auf uns seit (Feld I)<input type="date" name="regDate" value="${esc(v.regDate)}"></label>
+ <label>Jährliche Fahrleistung laut Versicherung (km)<input name="insKm" value="${v.insKm?f0.format(v.insKm):''}" inputmode="numeric" placeholder="z. B. 12.000"></label>
+ <div class="grid2"><label>Versicherungsjahr ab Tag<select name="insDay">${Array.from({length:31},(_,i)=>i+1).map(d=>`<option${(+(v.insStart||'01-01').slice(3))===d?' selected':''}>${d}</option>`).join('')}</select></label>
+ <label>Monat<select name="insMon">${MONTHS.map((m,i)=>`<option value="${i+1}"${(+(v.insStart||'01-01').slice(0,2))===i+1?' selected':''}>${m}</option>`).join('')}</select></label></div>
  <label>Fahrzeug-Identifizierungsnummer (FIN)<input name="vin" value="${esc(v.vin)}" maxlength="17" autocapitalize="characters" spellcheck="false" placeholder="Feld E, 17 Zeichen"></label>
  <p class="hint" id="vehHint"></p></details>
  ${id?`<label class="check"><input type="checkbox" name="archived"${v.archived?' checked':''}> Stillgelegt (nicht mehr in der Auswahl)</label>`:''}
@@ -671,7 +742,7 @@ function vehicleForm(id){
   if(vin&&vin.length!==17)t.push(`FIN hat ${vin.length} statt 17 Zeichen`);else if(/[IOQ]/i.test(vin))t.push('Die FIN enthält nie I, O oder Q – bitte prüfen (1 bzw. 0?)');$('#vehHint').textContent=t.join(' – ')};
  f.kw.addEventListener('input',vh);f.vin.addEventListener('input',vh);vh();
  if(id&&!n)$('#del').onclick=()=>{if(!confirm('Fahrzeug löschen?'))return;S.vehicles=S.vehicles.filter(x=>x.id!==id);save();closeSheet();render()};
- f.onsubmit=ev=>{ev.preventDefault();const o={...v,id:v.id||uid(),name:f.name.value.trim(),alias:f.alias.value.trim(),plate:f.plate.value.trim().toUpperCase(),personId:f.personId.value||null,fuel:f.fuel.value,archived:!!(f.archived&&f.archived.checked),hsn:f.hsn.value.trim(),tsn:f.tsn.value.trim().toUpperCase(),kw:pn(f.kw.value),firstReg:f.firstReg.value,regDate:f.regDate.value,vin:f.vin.value.trim().toUpperCase()};
+ f.onsubmit=ev=>{ev.preventDefault();const o={...v,id:v.id||uid(),name:f.name.value.trim(),alias:f.alias.value.trim(),plate:f.plate.value.trim().toUpperCase(),personId:f.personId.value||null,fuel:f.fuel.value,archived:!!(f.archived&&f.archived.checked),hsn:f.hsn.value.trim(),tsn:f.tsn.value.trim().toUpperCase(),kw:pn(f.kw.value),firstReg:f.firstReg.value,regDate:f.regDate.value,insKm:csvNum(f.insKm.value,true)||null,insStart:String(f.insMon.value).padStart(2,'0')+'-'+String(f.insDay.value).padStart(2,'0'),vin:f.vin.value.trim().toUpperCase()};
   if(!o.name)return toast('Bitte eine Bezeichnung eintragen.');
   const i=S.vehicles.findIndex(x=>x.id===o.id);i<0?S.vehicles.push(o):S.vehicles[i]=o;save();closeSheet();render();toast('Fahrzeug gespeichert')}}
 function personForm(id){
@@ -729,13 +800,13 @@ function parseReceipt(raw,costOnly){
 
 /* ---------- Sicherung ---------- */
 async function exportJSON(){
- S.meta.lastExport=new Date().toISOString();
+ const stamp=new Date().toISOString();
  const receipts={};for(const e of S.entries){if(!e.receipt)continue;const d=await kvGet('rc:'+e.id);if(d)receipts[e.id]=d}
- const name=`zapfwerk-backup-${todayISO()}.json`;const data=JSON.stringify({...S,receipts,exported:S.meta.lastExport},null,1);
+ const name=`zapfwerk-backup-${todayISO()}.json`;const data=JSON.stringify({...S,meta:{...S.meta,lastExport:stamp,changed:Date.parse(stamp)},receipts,exported:stamp},null,1);
  const file=new File([data],name,{type:'application/json'});
  try{if(navigator.maxTouchPoints>0&&navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:name})}
   else{const a=document.createElement('a');a.href=URL.createObjectURL(file);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1500)}
-  await save();render();toast('Sicherung exportiert')}catch(e){if(e&&e.name!=='AbortError')toast('Export nicht möglich: '+e.message)}}
+  S.meta.lastExport=stamp;S.meta.changed=Date.parse(stamp);delete S.meta.backupSnooze;QUIET=true;await save();QUIET=false;render();toast('Sicherung exportiert')}catch(e){QUIET=false;if(e&&e.name!=='AbortError')toast('Export nicht möglich: '+e.message)}}
 $('#bgFile').addEventListener('change',async ev=>{const file=ev.target.files[0];ev.target.value='';if(!file)return;
  try{await setBg(await shrinkImage(file))}catch(e){toast(e.message)}});
 
@@ -828,7 +899,7 @@ $('#importFile').addEventListener('change',async ev=>{const file=ev.target.files
   for(const k of await kvKeys('rc:'))await kvSet(k,null);
   for(const [id,data] of Object.entries(rcs))if(typeof data==='string'&&data.startsWith('data:'))await kvSet('rc:'+id,data);
   S.entries.forEach(e=>{if(e.receipt&&!rcs[e.id])delete e.receipt});
-  await save();ui.vf='all';render();toast('Sicherung importiert')}catch(e){toast('Import fehlgeschlagen: '+e.message)}});
+  S.meta.changed=S.meta.lastExport?Date.parse(S.meta.lastExport):Date.now();QUIET=true;await save();QUIET=false;ui.vf='all';render();toast('Sicherung importiert')}catch(e){toast('Import fehlgeschlagen: '+e.message)}});
 
 /* ---------- Start ---------- */
 function go(tab){closeSheet();ui.tab=tab;render()}
