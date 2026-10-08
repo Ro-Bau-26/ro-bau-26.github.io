@@ -89,6 +89,14 @@ label.check input{width:22px;height:22px;-webkit-appearance:checkbox;appearance:
 .tag-h::before{content:"";width:10px;height:10px;border-radius:50%;background:var(--bg);border:2px solid var(--ink);flex:none}
 .tag-b{padding:2px 14px 4px}
 .tag-b .row:last-child,.tag-b .entry:last-child,.tag-b details.faq:last-child{border-bottom:0}
+.jubi{position:relative;overflow:hidden}
+.jubi .tag-h{background:var(--amber)}
+.jubi .jt{font-size:17px;line-height:1.4;margin:12px 0 4px}
+.jubi .js{color:var(--muted);font-size:14px;margin:0 0 12px}
+.jubi .btn{margin-bottom:12px}
+.spark{position:absolute;pointer-events:none;color:var(--amber);font-size:18px;opacity:0;animation:spark 1.6s ease-out forwards;text-shadow:0 0 1px var(--ink)}
+@keyframes spark{0%{opacity:0;transform:translateY(10px) scale(.4)}25%{opacity:1}100%{opacity:0;transform:translateY(-38px) scale(1.15) rotate(40deg)}}
+@media (prefers-reduced-motion:reduce){.spark{display:none}}
 .tag-r{margin-left:auto;text-transform:none;letter-spacing:0;font-variant-numeric:tabular-nums;white-space:nowrap}
 .tag-b.pad{padding:4px 14px 14px}
 .tag-b .card{border:0;border-bottom:1px solid var(--line);border-radius:0;margin:0;background:none}
@@ -171,7 +179,7 @@ details.scan summary{font-weight:600;color:var(--petrol);cursor:pointer}
 
 <script>
 'use strict';
-const VERSION='1.12';
+const VERSION='1.13';
 const FUELS=[
  {id:'e5',label:'Super E5 (95)',unit:'L',g:'Kraftstoff'},
  {id:'e10',label:'Super E10',unit:'L',g:'Kraftstoff'},
@@ -291,17 +299,52 @@ function render(){
  $('#fab').hidden=!(ui.tab==='verlauf'||ui.tab==='auswertung');
  const v=$('#view');
  v.innerHTML=({verlauf:viewVerlauf,auswertung:viewAuswertung,fahrzeuge:viewFahrzeuge,mehr:viewMehr})[ui.tab]();
- window.scrollTo(0,0)}
+ window.scrollTo(0,0);if(ui.tab==='verlauf')requestAnimationFrame(sparkle)}
 function filtered(){return S.entries.filter(e=>ui.vf==='all'||e.vehicleId===ui.vf)}
 
 const tag=(t,inner,right,pad)=>`<section class="tag"><div class="tag-h">${t}${right?`<span class="tag-r">${right}</span>`:''}</div><div class="tag-b${pad?' pad':''}">${inner}</div></section>`;
+/* ---------- Jahrestag ---------- */
+const isoD=d=>d.toLocaleDateString('sv-SE');
+function annivOn(base,year){const [y,m,d]=base.split('-').map(Number);let dd=d;if(m===2&&d===29&&!(year%4===0&&(year%100!==0||year%400===0)))dd=28;return new Date(year,m-1,dd,12)}
+const NUMW=['','Ein','Zwei','Drei','Vier','Fünf','Sechs','Sieben','Acht','Neun','Zehn'];
+function jubiIntro(n,name){
+ if(n===1)return'Das erste Jahr voller Kurven – willkommen in der Familie!';
+ if(n===3)return'Drei Jahre voller Kurven – längst eingefahren.';
+ if(n===5)return'Fünf Jahre Kurven, Kreisel und Grenzübergänge.';
+ if(n===10)return`Zehn Jahre voller Kurven – ein Jahrzehnt ${name}!`;
+ if(n>10&&n%5===0)return`${n} Jahre voller Kurven – ein echter Klassiker!`;
+ return null}
+function jubiStats(v,from,to){
+ const D=deriveAll();let km=0;const amt={},ck={},ca={};
+ for(const e of S.entries){if(e.vehicleId!==v.id||e.type!=='fuel'||e.date<from||e.date>=to)continue;const d=D.get(e.id)||{};const u=d.unit||'L';
+  if(d.trip)km+=d.trip;amt[u]=(amt[u]||0)+(e.amount||0);if(d.consKm){ck[u]=(ck[u]||0)+d.consKm;ca[u]=(ca[u]||0)+d.consAmt}}
+ const pref=(FUEL[v.fuel]||{}).unit;const units=Object.keys(amt);if(!units.length&&!km)return null;
+ const u=amt[pref]?pref:units.sort((a,b)=>amt[b]-amt[a])[0];
+ const N='\u00a0',parts=[];if(km)parts.push(f0.format(km)+N+'km');if(u&&amt[u])parts.push(f0.format(amt[u])+N+(u==='L'?'Liter':u));if(u&&ck[u])parts.push('Ø'+N+f1.format(ca[u]/ck[u]*100)+N+u+'/100'+N+'km');
+ return parts.length?parts.join(', '):null}
+function jubilees(){
+ const today=new Date();today.setHours(12,0,0,0);const out=[];
+ for(const v of S.vehicles){if(v.archived)continue;const base=v.regDate||v.firstReg;if(!base)continue;
+  let a=annivOn(base,today.getFullYear());if(a>today)a=annivOn(base,today.getFullYear()-1);
+  const n=a.getFullYear()-Number(base.slice(0,4));const age=Math.round((today-a)/864e5);
+  const key=isoD(a);if(n<1||age>6||(S.meta.jubi||{})[v.id]===key)continue;
+  const name=v.alias||v.name;const stats=jubiStats(v,isoD(annivOn(base,a.getFullYear()-1)),key);const intro=jubiIntro(n,name);
+  let text;if(intro)text=intro+' '+(stats?stats.charAt(0).toUpperCase()+stats.slice(1)+'.':'Die Zahlen schreiben wir ab jetzt mit.');
+  else text='Ein Jahr voller Kurven – '+(stats?stats+'.':'die Zahlen schreiben wir ab jetzt mit.');
+  out.push({v,key,n,name,text,day:age===0?'Heute ist Zulassungstag!':'Zulassungstag war am '+fDate(key)+'.'})}
+ return out}
+function jubiBlock(){return jubilees().map(j=>`<section class="tag jubi"><div class="tag-h">★ ${j.n} ${j.n===1?'Jahr':'Jahre'} ${esc(j.name)}</div><div class="tag-b"><p class="jt">${esc(j.text)}</p><p class="js">${j.day}</p><button class="btn primary wide" onclick="jubiDone('${j.v.id}','${j.key}')">Danke!</button></div></section>`).join('')}
+function jubiDone(id,key){S.meta.jubi=S.meta.jubi||{};S.meta.jubi[id]=key;save();render()}
+function sparkle(){document.querySelectorAll('.jubi').forEach(el=>{if(el.dataset.sp)return;el.dataset.sp=1;
+ for(let i=0;i<9;i++){const s=document.createElement('span');s.className='spark';s.textContent='★';s.style.left=(6+Math.random()*88)+'%';s.style.top=(30+Math.random()*55)+'%';s.style.animationDelay=(i*0.12)+'s';el.appendChild(s);setTimeout(()=>s.remove(),3000)}})}
 function viewVerlauf(){
  if(!S.vehicles.length)return`<div class="empty"><strong>Noch kein Fahrzeug angelegt</strong>Lege zuerst ein Fahrzeug mit Kennzeichen an, dann kannst du Tankstopps und Kosten erfassen.<br><button class="btn primary wide" onclick="go('fahrzeuge')">Fahrzeug anlegen</button></div>`;
  const list=filtered().slice().sort((a,b)=>-chron(a,b));
- if(!list.length)return`<div class="empty"><strong>Noch keine Einträge</strong>Tippe auf + und erfasse den ersten Tankstopp oder eine Ausgabe.</div>`;
+ const J=jubiBlock();
+ if(!list.length)return J+`<div class="empty"><strong>Noch keine Einträge</strong>Tippe auf + und erfasse den ersten Tankstopp oder eine Ausgabe.</div>`;
  const D=deriveAll();REC=new Set(Object.values(bestIds(D)).map(b=>b.e.id));const groups={};
  list.forEach(e=>{(groups[e.date.slice(0,7)]=groups[e.date.slice(0,7)]||[]).push(e)});
- return Object.keys(groups).map(k=>{const g=groups[k];
+ return J+Object.keys(groups).map(k=>{const g=groups[k];
   return tag(esc(fMonth(k)),g.map(e=>row(e,D)).join(''),eur(g.reduce((a,e)=>a+total(e),0)))}).join('')}
 function row(e,D){
  const v=veh(e.vehicleId);const multi=S.vehicles.length>1;
@@ -372,10 +415,11 @@ const HELP=`
 <details class="faq"><summary>Wie wird der Verbrauch berechnet?</summary><p>Nach der Volltank-Methode: Verbrauch = getankte Menge seit dem letzten Volltanken ÷ gefahrene km × 100. Teilbetankungen (Haken „Vollgetankt“ entfernen) werden zur nächsten Volltankung dazugezählt. Beim E-Auto gilt „bis zum gewohnten Ladestand“ (z. B. immer 80 %) als voll. Die Prozentangabe vergleicht mit dem vorherigen Verbrauchswert bzw. Preis desselben Kraftstoffs: ▲ rot = höher, ▼ grün = niedriger. Beim Verbrauch steht der Vergleich als gerahmtes Abzeichen.</p><p><strong>★ Bestwert:</strong> Der niedrigste Verbrauch eines Fahrzeugs bekommt im Verlauf ein gelbes Abzeichen „★ Bestwert“ (getrennt nach Liter und kWh). Die Auswertung zeigt im Schild „Bestwerte“ den besten Wert je Fahrzeug im gewählten Zeitraum, mit Datum und Tankstelle. Wird ein besserer Wert gefahren, wandert das Abzeichen mit. Ein Bestwert gibt es erst ab zwei Verbrauchswerten – vorher gibt es nichts zu schlagen.</p><p>Bei Plug-in-Hybriden werden Liter und kWh getrennt gerechnet; die Werte sind dort nur grobe Richtwerte.</p></details>
 <details class="faq"><summary>Währung</summary><p>Alle Beträge werden in Euro geführt. Bei Belegen in Franken oder Kronen bitte den Euro-Betrag laut Kartenabrechnung eintragen.</p></details>
 <details class="faq"><summary>Spitzname fürs Fahrzeug</summary><p>Im Fahrzeug kann zusätzlich zur Bezeichnung ein Spitzname eingetragen werden. In der Fahrzeugliste steht dann der Spitzname (erkennbar am ⇄). Ein Tipp auf das Fahrzeug wechselt zur Bezeichnung, ein weiterer Tipp zurück; das Kennzeichen bleibt immer gleich. Bearbeiten geht über den Stift rechts. Beim Neustart der App wird wieder der Spitzname gezeigt.</p></details>
-<details class="faq"><summary>Fahrzeugdaten (HSN, TSN, FIN …)</summary><p>Im Fahrzeug unter „Fahrzeugdaten“ lassen sich Herstellerschlüssel (HSN, Feld 2.1 im Fahrzeugschein), Typschlüssel (TSN, Feld 2.2), Leistung in kW (Feld P.2), Erstzulassung (Feld B) und die Fahrzeug-Identifizierungsnummer (FIN, Feld E) hinterlegen – praktisch beim Teilekauf, in der Werkstatt oder für Versicherungsangebote. Die PS werden aus den kW umgerechnet. Bei der FIN prüft Zapfwerk die Länge (17 Zeichen) und warnt bei I, O oder Q, die in einer FIN nie vorkommen. Alle Angaben sind freiwillig. Tipp: Mit „Text scannen“ lassen sich die Nummern direkt vom Fahrzeugschein übernehmen.</p></details>
+<details class="faq"><summary>Fahrzeugdaten (HSN, TSN, FIN …)</summary><p>Im Fahrzeug unter „Fahrzeugdaten“ lassen sich Herstellerschlüssel (HSN, Feld 2.1 im Fahrzeugschein), Typschlüssel (TSN, Feld 2.2), Leistung in kW (Feld P.2), Erstzulassung (Feld B), Datum der Zulassung auf euch (Feld I) und die Fahrzeug-Identifizierungsnummer (FIN, Feld E) hinterlegen – praktisch beim Teilekauf, in der Werkstatt oder für Versicherungsangebote. Die PS werden aus den kW umgerechnet. Bei der FIN prüft Zapfwerk die Länge (17 Zeichen) und warnt bei I, O oder Q, die in einer FIN nie vorkommen. Alle Angaben sind freiwillig. Tipp: Mit „Text scannen“ lassen sich die Nummern direkt vom Fahrzeugschein übernehmen.</p></details>
 <details class="faq"><summary>Hintergrundbild</summary><p>Unter „Mehr“ › „Hintergrundbild“ ein Foto auswählen. Es erscheint nur im Hellmodus hinter den Schildern; im Dunkelmodus bleibt der dunkle Hintergrund. Das Bild wird verkleinert und nur auf diesem Gerät gespeichert – es ist nicht Teil der JSON-Sicherung, damit die Datei klein bleibt. Auf jedem Gerät kann also ein anderes Bild stehen. Ruhige, helle Motive wirken am besten.</p></details>
+<details class="faq"><summary>Jahrestag der Zulassung</summary><p>Am Jahrestag der Zulassung erscheint oben im Verlauf ein Jubiläums-Schild mit kurzem Funkeln. Grundlage ist das Datum „Zugelassen auf uns seit“ (Feld I im Fahrzeugschein) – bei einem Gebrauchten ist das der Tag, an dem das Auto zu euch kam. Ist es nicht eingetragen, nimmt Zapfwerk die Erstzulassung (Feld B).</p><p>Die Zahlen (km, getankte Menge, Ø Verbrauch) stammen aus den zwölf Monaten vor dem Jahrestag, soweit sie in Zapfwerk erfasst sind. Im 1., 3., 5. und 10. Jahr sowie danach alle fünf Jahre gibt es einen eigenen Text. Das Schild bleibt eine Woche stehen, falls die App am Tag selbst nicht geöffnet wird, und verschwindet mit „Danke!“. Eine Mitteilung bei geschlossener App ist bei einer Web-App nicht möglich.</p></details>
 <details class="faq"><summary>Fahrzeug verkauft</summary><p>Im Fahrzeug „Stillgelegt“ anhaken. Es verschwindet aus der Auswahl beim Erfassen, die Einträge bleiben in der Auswertung erhalten. Löschen geht nur, solange keine Einträge vorhanden sind.</p></details>
-<details class="faq"><summary>Änderungen</summary><ul><li><strong>1.12</strong> – Personen wie Fahrzeuge: eigene Liste mit zugeordneten Fahrzeugen und Stift zum Bearbeiten, darunter der Knopf „Person hinzufügen“.</li><li><strong>1.11</strong> – Kennzeichen steht in der Fahrzeugliste und der Auswertung jetzt in einer eigenen, leicht eingerückten Zeile unter dem Namen.</li><li><strong>1.10</strong> – Kachel „Kosten gesamt“: Gesamtkosten und Kosten je km rechtsbündig wie an der Zapfsäule, gefahrene km bleiben links.</li><li><strong>1.9</strong> – Eigenes Hintergrundbild im Hellmodus (unter „Mehr“), wird nur auf dem Gerät gespeichert.</li><li><strong>1.8</strong> – Slogan „Jeder Tropfen auf der Liste.“ unter dem Namen; das Zählwerk der Gesamtkosten in sanfterem Espressobraun statt Schwarz.</li><li><strong>1.7</strong> – Verbrauchstrend als Abzeichen (▲ höher / ▼ niedriger als beim letzten Volltanken); ★ Bestwert für den niedrigsten Verbrauch je Fahrzeug im Verlauf und neues Schild „Bestwerte“ in der Auswertung.</li><li><strong>1.6</strong> – Preisschild-Look in allen Ansichten: Verlauf (je Monat ein Schild mit Monatssumme), Fahrzeuge, Personen, Sicherung und Hilfe.</li><li><strong>1.5</strong> – Auswertung im Preisschild-Look: Jeder Bereich (Tanken und Laden, nach Fahrzeug, Person und Art) steht in einem eigenen gerahmten Schild.</li><li><strong>1.4</strong> – Fahrzeugdaten: HSN, TSN, Leistung (kW mit PS-Umrechnung), Erstzulassung und FIN mit Plausibilitätsprüfung.</li><li><strong>1.3</strong> – Spitzname fürs Fahrzeug; in der Fahrzeugliste per Tipp zwischen Spitzname und Bezeichnung wechseln. Fahrzeug bearbeiten jetzt über den Stift rechts.</li><li><strong>1.2</strong> – Adresse in einer Zeile (Ort, Straße, PLZ mit Komma getrennt, wird getrennt gespeichert); Favoriten für Tankstellen und Anbieter mit Schnellwahl; Belegscan übernimmt auch Straße und PLZ. Im Formular stehen Land und Tankstelle jetzt nebeneinander, die Adresse hat die volle Breite.</li><li><strong>1.1</strong> – Neues App-Icon im 70er-Stil, auch oben neben dem Namen. Damit das Icon auf dem Home-Bildschirm erscheint, Zapfwerk dort einmal entfernen und neu hinzufügen – die Daten bleiben nur erhalten, wenn vorher eine Sicherung exportiert wurde.</li><li><strong>1.0</strong> – Erste Version: Tankstopps (Kraftstoff, Gas, Strom), sonstige Kosten, mehrere Fahrzeuge mit Kennzeichen und Person, Länderwahl, Kilometer-Automatik, Verbrauch mit Veränderung in %, Auswertung nach Fahrzeug, Person und Art, Belegübernahme per Texterkennung, JSON-Sicherung.</li></ul></details>`;
+<details class="faq"><summary>Änderungen</summary><ul><li><strong>1.13</strong> – Jahrestag der Zulassung: neues Feld „Zugelassen auf uns seit (Feld I)“, Jubiläums-Schild mit Funkeln und den Zahlen des letzten Jahres im Verlauf.</li><li><strong>1.12</strong> – Personen wie Fahrzeuge: eigene Liste mit zugeordneten Fahrzeugen und Stift zum Bearbeiten, darunter der Knopf „Person hinzufügen“.</li><li><strong>1.11</strong> – Kennzeichen steht in der Fahrzeugliste und der Auswertung jetzt in einer eigenen, leicht eingerückten Zeile unter dem Namen.</li><li><strong>1.10</strong> – Kachel „Kosten gesamt“: Gesamtkosten und Kosten je km rechtsbündig wie an der Zapfsäule, gefahrene km bleiben links.</li><li><strong>1.9</strong> – Eigenes Hintergrundbild im Hellmodus (unter „Mehr“), wird nur auf dem Gerät gespeichert.</li><li><strong>1.8</strong> – Slogan „Jeder Tropfen auf der Liste.“ unter dem Namen; das Zählwerk der Gesamtkosten in sanfterem Espressobraun statt Schwarz.</li><li><strong>1.7</strong> – Verbrauchstrend als Abzeichen (▲ höher / ▼ niedriger als beim letzten Volltanken); ★ Bestwert für den niedrigsten Verbrauch je Fahrzeug im Verlauf und neues Schild „Bestwerte“ in der Auswertung.</li><li><strong>1.6</strong> – Preisschild-Look in allen Ansichten: Verlauf (je Monat ein Schild mit Monatssumme), Fahrzeuge, Personen, Sicherung und Hilfe.</li><li><strong>1.5</strong> – Auswertung im Preisschild-Look: Jeder Bereich (Tanken und Laden, nach Fahrzeug, Person und Art) steht in einem eigenen gerahmten Schild.</li><li><strong>1.4</strong> – Fahrzeugdaten: HSN, TSN, Leistung (kW mit PS-Umrechnung), Erstzulassung und FIN mit Plausibilitätsprüfung.</li><li><strong>1.3</strong> – Spitzname fürs Fahrzeug; in der Fahrzeugliste per Tipp zwischen Spitzname und Bezeichnung wechseln. Fahrzeug bearbeiten jetzt über den Stift rechts.</li><li><strong>1.2</strong> – Adresse in einer Zeile (Ort, Straße, PLZ mit Komma getrennt, wird getrennt gespeichert); Favoriten für Tankstellen und Anbieter mit Schnellwahl; Belegscan übernimmt auch Straße und PLZ. Im Formular stehen Land und Tankstelle jetzt nebeneinander, die Adresse hat die volle Breite.</li><li><strong>1.1</strong> – Neues App-Icon im 70er-Stil, auch oben neben dem Namen. Damit das Icon auf dem Home-Bildschirm erscheint, Zapfwerk dort einmal entfernen und neu hinzufügen – die Daten bleiben nur erhalten, wenn vorher eine Sicherung exportiert wurde.</li><li><strong>1.0</strong> – Erste Version: Tankstopps (Kraftstoff, Gas, Strom), sonstige Kosten, mehrere Fahrzeuge mit Kennzeichen und Person, Länderwahl, Kilometer-Automatik, Verbrauch mit Veränderung in %, Auswertung nach Fahrzeug, Person und Art, Belegübernahme per Texterkennung, JSON-Sicherung.</li></ul></details>`;
 
 /* ---------- Sheet ---------- */
 function openSheet(html){$('#panel').innerHTML=html;$('#sheet').hidden=false;document.body.style.overflow='hidden';$('#panel').querySelectorAll('[data-close]').forEach(b=>b.onclick=closeSheet)}
@@ -516,9 +560,10 @@ function vehicleForm(id){
  <div class="grid2"><label>Kennzeichen<input name="plate" value="${esc(v.plate)}" placeholder="RO-AB 123" autocapitalize="characters"></label>
  <label>Person<select name="personId"><option value="">– keine –</option>${S.persons.map(p=>`<option value="${p.id}"${p.id===v.personId?' selected':''}>${esc(p.name)}</option>`).join('')}</select></label></div>
  <label>Übliche Energie<select name="fuel">${fuelOptions(v.fuel)}</select></label>
- <details class="scan" style="margin-top:14px"${v.hsn||v.tsn||v.kw||v.vin||v.firstReg?' open':''}><summary>Fahrzeugdaten (aus dem Fahrzeugschein)</summary>
+ <details class="scan" style="margin-top:14px"${v.hsn||v.tsn||v.kw||v.vin||v.firstReg||v.regDate?' open':''}><summary>Fahrzeugdaten (aus dem Fahrzeugschein)</summary>
  <div class="grid2"><label>HSN (Hersteller)<input name="hsn" value="${esc(v.hsn)}" inputmode="numeric" maxlength="4" placeholder="Feld 2.1"></label><label>TSN (Typ)<input name="tsn" value="${esc(v.tsn)}" maxlength="10" autocapitalize="characters" placeholder="Feld 2.2"></label></div>
  <div class="grid2"><label>Leistung kW<input name="kw" value="${fin(v.kw)}" inputmode="numeric" placeholder="Feld P.2"></label><label>Erstzulassung<input type="date" name="firstReg" value="${esc(v.firstReg)}"></label></div>
+ <label>Zugelassen auf uns seit (Feld I)<input type="date" name="regDate" value="${esc(v.regDate)}"></label>
  <label>Fahrzeug-Identifizierungsnummer (FIN)<input name="vin" value="${esc(v.vin)}" maxlength="17" autocapitalize="characters" spellcheck="false" placeholder="Feld E, 17 Zeichen"></label>
  <p class="hint" id="vehHint"></p></details>
  ${id?`<label class="check"><input type="checkbox" name="archived"${v.archived?' checked':''}> Stillgelegt (nicht mehr in der Auswahl)</label>`:''}
@@ -529,7 +574,7 @@ function vehicleForm(id){
   if(vin&&vin.length!==17)t.push(`FIN hat ${vin.length} statt 17 Zeichen`);else if(/[IOQ]/i.test(vin))t.push('Die FIN enthält nie I, O oder Q – bitte prüfen (1 bzw. 0?)');$('#vehHint').textContent=t.join(' – ')};
  f.kw.addEventListener('input',vh);f.vin.addEventListener('input',vh);vh();
  if(id&&!n)$('#del').onclick=()=>{if(!confirm('Fahrzeug löschen?'))return;S.vehicles=S.vehicles.filter(x=>x.id!==id);save();closeSheet();render()};
- f.onsubmit=ev=>{ev.preventDefault();const o={...v,id:v.id||uid(),name:f.name.value.trim(),alias:f.alias.value.trim(),plate:f.plate.value.trim().toUpperCase(),personId:f.personId.value||null,fuel:f.fuel.value,archived:!!(f.archived&&f.archived.checked),hsn:f.hsn.value.trim(),tsn:f.tsn.value.trim().toUpperCase(),kw:pn(f.kw.value),firstReg:f.firstReg.value,vin:f.vin.value.trim().toUpperCase()};
+ f.onsubmit=ev=>{ev.preventDefault();const o={...v,id:v.id||uid(),name:f.name.value.trim(),alias:f.alias.value.trim(),plate:f.plate.value.trim().toUpperCase(),personId:f.personId.value||null,fuel:f.fuel.value,archived:!!(f.archived&&f.archived.checked),hsn:f.hsn.value.trim(),tsn:f.tsn.value.trim().toUpperCase(),kw:pn(f.kw.value),firstReg:f.firstReg.value,regDate:f.regDate.value,vin:f.vin.value.trim().toUpperCase()};
   if(!o.name)return toast('Bitte eine Bezeichnung eintragen.');
   const i=S.vehicles.findIndex(x=>x.id===o.id);i<0?S.vehicles.push(o):S.vehicles[i]=o;save();closeSheet();render();toast('Fahrzeug gespeichert')}}
 function personForm(id){
