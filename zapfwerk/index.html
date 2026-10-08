@@ -176,10 +176,11 @@ details.scan summary{font-weight:600;color:var(--petrol);cursor:pointer}
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 <input type="file" id="importFile" accept=".json,application/json" hidden>
 <input type="file" id="bgFile" accept="image/*" hidden>
+<input type="file" id="csvFile" accept=".csv,text/csv,text/plain" hidden>
 
 <script>
 'use strict';
-const VERSION='1.13';
+const VERSION='1.14';
 const FUELS=[
  {id:'e5',label:'Super E5 (95)',unit:'L',g:'Kraftstoff'},
  {id:'e10',label:'Super E10',unit:'L',g:'Kraftstoff'},
@@ -399,6 +400,9 @@ function viewMehr(){
  return tag('Sicherung',`<p class="hint">Deine Daten liegen nur auf diesem Gerät. Die Sicherung ist eine JSON-Datei – am besten im gemeinsamen iCloud-Ordner ablegen. Letzte Sicherung: <strong>${le}</strong>.</p>
  <button class="btn primary wide" onclick="exportJSON()">Sicherung exportieren</button>
  <button class="btn secondary wide" onclick="$('#importFile').click()">Sicherung importieren</button>`,0,1)
+ +tag('CSV-Import',`<p class="hint">Ältere Aufzeichnungen aus einer Tabelle übernehmen. Die Einträge werden <strong>hinzugefügt</strong> – vorhandene Daten bleiben erhalten, doppelte Zeilen werden übersprungen. Die Fahrzeuge müssen vorher angelegt sein.</p>
+ <button class="btn secondary wide" onclick="downloadTemplate()">Vorlage herunterladen</button>
+ <button class="btn primary wide" onclick="$('#csvFile').click()">CSV importieren</button>`,0,1)
  +tag('Hintergrundbild',`<p class="hint">Ein eigenes Foto als Hintergrund – nur im Hellmodus sichtbar. Das Bild bleibt auf diesem Gerät und ist nicht Teil der Sicherung.</p>${BG?`<div class="bgprev" style="background-image:url('${BG}')"></div>`:''}
  <button class="btn ${BG?'secondary':'primary'} wide" onclick="$('#bgFile').click()">${BG?'Anderes Bild wählen':'Bild wählen'}</button>${BG?'<button class="btn danger wide" onclick="if(confirm(\'Hintergrundbild entfernen?\'))setBg(null)">Bild entfernen</button>':''}`,0,1)
  +tag('Hilfe & FAQs',HELP)+`<p class="hint" style="margin-top:20px;text-align:center">Zapfwerk – Jeder Tropfen auf der Liste.<br>Version ${VERSION}</p>`}
@@ -407,6 +411,9 @@ const HELP=`
 <details class="faq"><summary>Zapfwerk als App auf den Home-Bildschirm legen</summary><p>In Safari die Seite öffnen, auf „Teilen“ tippen und „Zum Home-Bildschirm“ wählen. Zapfwerk startet dann wie eine App ohne Browserleiste. Auf dem Mac: Safari › Ablage › Zum Dock hinzufügen.</p></details>
 <details class="faq"><summary>Wo liegen meine Daten?</summary><p>Nur lokal auf dem jeweiligen Gerät (im Speicher des Browsers bzw. der Home-Bildschirm-App). Es gibt keinen Server und kein Konto. Zwischen iPhone, iPad und Mac wird nicht automatisch abgeglichen – dafür gibt es die Sicherung.</p></details>
 <details class="faq"><summary>Daten auf ein anderes Gerät bringen</summary><p>„Sicherung exportieren“ erzeugt eine Datei <em>zapfwerk-backup-Datum.json</em>. Auf iPhone und iPad öffnet sich das Teilen-Menü – dort „In Dateien sichern“ und den iCloud-Ordner wählen. Auf dem anderen Gerät „Sicherung importieren“ und die Datei auswählen. Achtung: Der Import ersetzt alle Daten auf diesem Gerät.</p></details>
+<details class="faq"><summary>Ältere Aufzeichnungen per CSV übernehmen</summary><p>Unter „Mehr“ › „CSV-Import“ die Vorlage herunterladen und in Numbers oder Excel öffnen. Eine Zeile pro Tankstopp oder Ausgabe. Die Beispielzeilen löschen oder einfach stehen lassen – Zeilen mit „Beispielzeile“ in der Notiz werden beim Import ignoriert. Danach als CSV exportieren (Numbers: Ablage › Exportieren › CSV) und mit „CSV importieren“ einlesen. Vor dem Hinzufügen zeigt Zapfwerk, was erkannt wurde.</p>
+<ul><li><strong>Typ:</strong> Tanken oder Kosten</li><li><strong>Datum:</strong> TT.MM.JJJJ</li><li><strong>Fahrzeug:</strong> Kennzeichen, Spitzname oder Bezeichnung – das Fahrzeug muss in Zapfwerk angelegt sein</li><li><strong>Energie oder Art:</strong> beim Tanken z. B. Super E5, E10, Super Plus, Diesel, HVO, LPG, CNG, Strom AC, Strom DC; bei Kosten z. B. Waschstraße, Öl, AdBlue, Vignette, Parken, Werkstatt, Reifen</li><li><strong>Menge, Preis je Einheit, Betrag:</strong> mit Komma, zwei der drei genügen</li><li><strong>Vollgetankt:</strong> ja oder nein (leer = ja)</li><li><strong>Kilometerstand oder Tageskilometer:</strong> einer genügt</li><li><strong>Land:</strong> DE, AT, CH … oder ausgeschrieben</li></ul>
+<p>Die Einträge werden zu den vorhandenen hinzugefügt. Zeilen mit gleichem Fahrzeug, Datum, Typ und Betrag gelten als doppelt und werden übersprungen – ein versehentlich zweimal importierter Stapel richtet also keinen Schaden an. Tipp: Vor dem ersten Import trotzdem eine Sicherung exportieren.</p></details>
 <details class="faq"><summary>Kassenbeleg scannen</summary><p>Im Formular „Kassenbeleg übernehmen“ aufklappen und ins Textfeld tippen. Auf dem iPhone erscheint „Text scannen“ (Symbol mit Rahmen über der Tastatur oder nach erneutem Tippen ins Feld). Kamera auf den Beleg halten und „Einsetzen“ tippen. Alternativ ein Foto des Belegs in der Fotos-App öffnen, Text gedrückt halten, „Alle auswählen“, kopieren und einfügen.</p><p>„Felder übernehmen“ sucht dann Datum, Menge, Preis je Einheit, Betrag, Kraftstoff, Tankstelle, Adresse (Ort, Straße, PLZ) und Land (z. B. an der UID-Nummer „ATU…“). Die Texterkennung passiert auf dem Gerät, nichts wird hochgeladen. Belege sind sehr unterschiedlich aufgebaut – bitte die übernommenen Werte kurz prüfen.</p></details>
 <details class="faq"><summary>Adresse eingeben</summary><p>Alles in eine Zeile, durch Kommas getrennt, z. B. „Kufstein, Hauptstraße 5, 6330“. Zapfwerk speichert Ort, Straße und PLZ getrennt; unter dem Feld steht, wie es aufgeteilt wurde. Die Reihenfolge ist egal: Die PLZ erkennt die App an den Ziffern, die Straße an der Hausnummer. Der Belegscan füllt die Adresse mit aus.</p></details>
 <details class="faq"><summary>Favoriten</summary><p>Tankstelle bzw. Anbieter und Adresse eintragen und auf den Stern ☆ daneben tippen. Der Favorit erscheint dann oben im Formular als Schnellwahl; ein Tipp füllt Anbieter, Adresse und Land aus. Die häufigsten stehen vorne. Zum Entfernen den Favoriten auswählen und auf den gefüllten Stern ★ tippen. Favoriten gibt es bei Tankstopps und sonstigen Kosten gemeinsam und sie sind Teil der Sicherung.</p></details>
@@ -419,7 +426,7 @@ const HELP=`
 <details class="faq"><summary>Hintergrundbild</summary><p>Unter „Mehr“ › „Hintergrundbild“ ein Foto auswählen. Es erscheint nur im Hellmodus hinter den Schildern; im Dunkelmodus bleibt der dunkle Hintergrund. Das Bild wird verkleinert und nur auf diesem Gerät gespeichert – es ist nicht Teil der JSON-Sicherung, damit die Datei klein bleibt. Auf jedem Gerät kann also ein anderes Bild stehen. Ruhige, helle Motive wirken am besten.</p></details>
 <details class="faq"><summary>Jahrestag der Zulassung</summary><p>Am Jahrestag der Zulassung erscheint oben im Verlauf ein Jubiläums-Schild mit kurzem Funkeln. Grundlage ist das Datum „Zugelassen auf uns seit“ (Feld I im Fahrzeugschein) – bei einem Gebrauchten ist das der Tag, an dem das Auto zu euch kam. Ist es nicht eingetragen, nimmt Zapfwerk die Erstzulassung (Feld B).</p><p>Die Zahlen (km, getankte Menge, Ø Verbrauch) stammen aus den zwölf Monaten vor dem Jahrestag, soweit sie in Zapfwerk erfasst sind. Im 1., 3., 5. und 10. Jahr sowie danach alle fünf Jahre gibt es einen eigenen Text. Das Schild bleibt eine Woche stehen, falls die App am Tag selbst nicht geöffnet wird, und verschwindet mit „Danke!“. Eine Mitteilung bei geschlossener App ist bei einer Web-App nicht möglich.</p></details>
 <details class="faq"><summary>Fahrzeug verkauft</summary><p>Im Fahrzeug „Stillgelegt“ anhaken. Es verschwindet aus der Auswahl beim Erfassen, die Einträge bleiben in der Auswertung erhalten. Löschen geht nur, solange keine Einträge vorhanden sind.</p></details>
-<details class="faq"><summary>Änderungen</summary><ul><li><strong>1.13</strong> – Jahrestag der Zulassung: neues Feld „Zugelassen auf uns seit (Feld I)“, Jubiläums-Schild mit Funkeln und den Zahlen des letzten Jahres im Verlauf.</li><li><strong>1.12</strong> – Personen wie Fahrzeuge: eigene Liste mit zugeordneten Fahrzeugen und Stift zum Bearbeiten, darunter der Knopf „Person hinzufügen“.</li><li><strong>1.11</strong> – Kennzeichen steht in der Fahrzeugliste und der Auswertung jetzt in einer eigenen, leicht eingerückten Zeile unter dem Namen.</li><li><strong>1.10</strong> – Kachel „Kosten gesamt“: Gesamtkosten und Kosten je km rechtsbündig wie an der Zapfsäule, gefahrene km bleiben links.</li><li><strong>1.9</strong> – Eigenes Hintergrundbild im Hellmodus (unter „Mehr“), wird nur auf dem Gerät gespeichert.</li><li><strong>1.8</strong> – Slogan „Jeder Tropfen auf der Liste.“ unter dem Namen; das Zählwerk der Gesamtkosten in sanfterem Espressobraun statt Schwarz.</li><li><strong>1.7</strong> – Verbrauchstrend als Abzeichen (▲ höher / ▼ niedriger als beim letzten Volltanken); ★ Bestwert für den niedrigsten Verbrauch je Fahrzeug im Verlauf und neues Schild „Bestwerte“ in der Auswertung.</li><li><strong>1.6</strong> – Preisschild-Look in allen Ansichten: Verlauf (je Monat ein Schild mit Monatssumme), Fahrzeuge, Personen, Sicherung und Hilfe.</li><li><strong>1.5</strong> – Auswertung im Preisschild-Look: Jeder Bereich (Tanken und Laden, nach Fahrzeug, Person und Art) steht in einem eigenen gerahmten Schild.</li><li><strong>1.4</strong> – Fahrzeugdaten: HSN, TSN, Leistung (kW mit PS-Umrechnung), Erstzulassung und FIN mit Plausibilitätsprüfung.</li><li><strong>1.3</strong> – Spitzname fürs Fahrzeug; in der Fahrzeugliste per Tipp zwischen Spitzname und Bezeichnung wechseln. Fahrzeug bearbeiten jetzt über den Stift rechts.</li><li><strong>1.2</strong> – Adresse in einer Zeile (Ort, Straße, PLZ mit Komma getrennt, wird getrennt gespeichert); Favoriten für Tankstellen und Anbieter mit Schnellwahl; Belegscan übernimmt auch Straße und PLZ. Im Formular stehen Land und Tankstelle jetzt nebeneinander, die Adresse hat die volle Breite.</li><li><strong>1.1</strong> – Neues App-Icon im 70er-Stil, auch oben neben dem Namen. Damit das Icon auf dem Home-Bildschirm erscheint, Zapfwerk dort einmal entfernen und neu hinzufügen – die Daten bleiben nur erhalten, wenn vorher eine Sicherung exportiert wurde.</li><li><strong>1.0</strong> – Erste Version: Tankstopps (Kraftstoff, Gas, Strom), sonstige Kosten, mehrere Fahrzeuge mit Kennzeichen und Person, Länderwahl, Kilometer-Automatik, Verbrauch mit Veränderung in %, Auswertung nach Fahrzeug, Person und Art, Belegübernahme per Texterkennung, JSON-Sicherung.</li></ul></details>`;
+<details class="faq"><summary>Änderungen</summary><ul><li><strong>1.14</strong> – CSV-Import für ältere Aufzeichnungen mit herunterladbarer Vorlage, Vorschau vor dem Hinzufügen und Schutz vor doppelten Einträgen.</li><li><strong>1.13</strong> – Jahrestag der Zulassung: neues Feld „Zugelassen auf uns seit (Feld I)“, Jubiläums-Schild mit Funkeln und den Zahlen des letzten Jahres im Verlauf.</li><li><strong>1.12</strong> – Personen wie Fahrzeuge: eigene Liste mit zugeordneten Fahrzeugen und Stift zum Bearbeiten, darunter der Knopf „Person hinzufügen“.</li><li><strong>1.11</strong> – Kennzeichen steht in der Fahrzeugliste und der Auswertung jetzt in einer eigenen, leicht eingerückten Zeile unter dem Namen.</li><li><strong>1.10</strong> – Kachel „Kosten gesamt“: Gesamtkosten und Kosten je km rechtsbündig wie an der Zapfsäule, gefahrene km bleiben links.</li><li><strong>1.9</strong> – Eigenes Hintergrundbild im Hellmodus (unter „Mehr“), wird nur auf dem Gerät gespeichert.</li><li><strong>1.8</strong> – Slogan „Jeder Tropfen auf der Liste.“ unter dem Namen; das Zählwerk der Gesamtkosten in sanfterem Espressobraun statt Schwarz.</li><li><strong>1.7</strong> – Verbrauchstrend als Abzeichen (▲ höher / ▼ niedriger als beim letzten Volltanken); ★ Bestwert für den niedrigsten Verbrauch je Fahrzeug im Verlauf und neues Schild „Bestwerte“ in der Auswertung.</li><li><strong>1.6</strong> – Preisschild-Look in allen Ansichten: Verlauf (je Monat ein Schild mit Monatssumme), Fahrzeuge, Personen, Sicherung und Hilfe.</li><li><strong>1.5</strong> – Auswertung im Preisschild-Look: Jeder Bereich (Tanken und Laden, nach Fahrzeug, Person und Art) steht in einem eigenen gerahmten Schild.</li><li><strong>1.4</strong> – Fahrzeugdaten: HSN, TSN, Leistung (kW mit PS-Umrechnung), Erstzulassung und FIN mit Plausibilitätsprüfung.</li><li><strong>1.3</strong> – Spitzname fürs Fahrzeug; in der Fahrzeugliste per Tipp zwischen Spitzname und Bezeichnung wechseln. Fahrzeug bearbeiten jetzt über den Stift rechts.</li><li><strong>1.2</strong> – Adresse in einer Zeile (Ort, Straße, PLZ mit Komma getrennt, wird getrennt gespeichert); Favoriten für Tankstellen und Anbieter mit Schnellwahl; Belegscan übernimmt auch Straße und PLZ. Im Formular stehen Land und Tankstelle jetzt nebeneinander, die Adresse hat die volle Breite.</li><li><strong>1.1</strong> – Neues App-Icon im 70er-Stil, auch oben neben dem Namen. Damit das Icon auf dem Home-Bildschirm erscheint, Zapfwerk dort einmal entfernen und neu hinzufügen – die Daten bleiben nur erhalten, wenn vorher eine Sicherung exportiert wurde.</li><li><strong>1.0</strong> – Erste Version: Tankstopps (Kraftstoff, Gas, Strom), sonstige Kosten, mehrere Fahrzeuge mit Kennzeichen und Person, Länderwahl, Kilometer-Automatik, Verbrauch mit Veränderung in %, Auswertung nach Fahrzeug, Person und Art, Belegübernahme per Texterkennung, JSON-Sicherung.</li></ul></details>`;
 
 /* ---------- Sheet ---------- */
 function openSheet(html){$('#panel').innerHTML=html;$('#sheet').hidden=false;document.body.style.overflow='hidden';$('#panel').querySelectorAll('[data-close]').forEach(b=>b.onclick=closeSheet)}
@@ -640,6 +647,88 @@ async function exportJSON(){
   await save();render();toast('Sicherung exportiert')}catch(e){if(e&&e.name!=='AbortError')toast('Export nicht möglich: '+e.message)}}
 $('#bgFile').addEventListener('change',async ev=>{const file=ev.target.files[0];ev.target.value='';if(!file)return;
  try{await setBg(await shrinkImage(file))}catch(e){toast(e.message)}});
+
+/* ---------- CSV-Import ---------- */
+const CSV_HEAD=['Typ','Datum','Fahrzeug','Energie oder Art','Menge','Preis je Einheit','Betrag','Vollgetankt','Kilometerstand','Tageskilometer','Land','Tankstelle oder Anbieter','Ort','Straße','PLZ','Notiz'];
+const CSV_KEYS=['typ','date','vehicle','kind','amount','unitPrice','total','full','odometer','tripKm','country','station','place','street','zip','note'];
+const normH=t=>String(t||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/ß/g,'ss').replace(/[^a-z0-9]/g,'');
+const HMAP={typ:'typ',eintrag:'typ',art:'kind',datum:'date',date:'date',fahrzeug:'vehicle',kennzeichen:'vehicle',auto:'vehicle',energieoderart:'kind',energie:'kind',kraftstoff:'kind',sorte:'kind',kategorie:'kind',menge:'amount',liter:'amount',kwh:'amount',preisjeeinheit:'unitPrice',preis:'unitPrice',literpreis:'unitPrice',betrag:'total',summe:'total',kosten:'total',gesamt:'total',vollgetankt:'full',voll:'full',kilometerstand:'odometer',kmstand:'odometer',tachostand:'odometer',tageskilometer:'tripKm',gefahrenekm:'tripKm',strecke:'tripKm',land:'country',tankstelleoderanbieter:'station',tankstelle:'station',anbieter:'station',ort:'place',strasse:'street',plz:'zip',notiz:'note',bemerkung:'note'};
+function csvRows(text){text=text.replace(/^﻿/,'');const first=text.split(/\r?\n/)[0]||'';
+ const sep=[';','\t',','].map(c=>[c,first.split(c).length]).sort((a,b)=>b[1]-a[1])[0][0];
+ const rows=[];let row=[],f='',q=false;
+ for(let i=0;i<text.length;i++){const c=text[i];
+  if(q){if(c==='"'){if(text[i+1]==='"'){f+='"';i++}else q=false}else f+=c}
+  else if(c==='"')q=true;else if(c===sep){row.push(f);f=''}
+  else if(c==='\n'||c==='\r'){if(c==='\r'&&text[i+1]==='\n')i++;row.push(f);rows.push(row);row=[];f=''}
+  else f+=c}
+ if(f!==''||row.length){row.push(f);rows.push(row)}
+ return rows.filter(r=>r.some(x=>x.trim()!==''))}
+function csvNum(v,int){if(v==null)return null;let s=String(v).trim().replace(/\s|€|eur|km|l$|kwh$/gi,'');if(!s)return null;
+ if(int&&/^\d{1,3}([.,]\d{3})+$/.test(s))s=s.replace(/[.,]/g,'');return pn(s)}
+function csvDate(v){const s=String(v||'').trim();let m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);if(m)return`${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;
+ m=s.match(/^(\d{1,2})[.\/](\d{1,2})[.\/](\d{2,4})$/);if(m){let y=+m[3];if(y<100)y+=2000;const mo=+m[2],d=+m[1];if(mo<1||mo>12||d<1||d>31)return null;return`${y}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`}return null}
+function csvFuel(t){const L=normH(t);if(!L)return null;
+ if(/stromdc|dc|schnell|hpc|ccs/.test(L))return'dc';if(/strom|ac|wallbox|laden|kwh/.test(L))return'ac';
+ if(/hvo/.test(L))return'hvo';if(/diesel/.test(L))return'diesel';if(/lpg|autogas/.test(L))return'lpg';if(/cng|erdgas/.test(L))return'cng';if(/wasserstoff|h2/.test(L))return'h2';
+ if(/plus|premium|98|100|vpower|ultimate|excellium/.test(L))return'sp';if(/e10/.test(L))return'e10';if(/super|e5|95|benzin|bleifrei/.test(L))return'e5';return null}
+function csvCat(t){const L=normH(t);if(!L)return null;
+ for(const [k,l] of CATS)if(L===normH(k)||L===normH(l))return k;
+ const R=[[/wasch(strasse|anlage|park)|autowasche|wasche/,'waschstrasse'],[/scheiben|waschwasser|frostschutz/,'waschwasser'],[/polier|pflege|wachs|reinig|saug/,'pflege'],[/^ol|motorol|olwechsel|adblue|kuhlmittel|betriebsmittel|bremsflussig/,'betriebsmittel'],[/duft|zubehor/,'zubehoer'],[/park/,'parken'],[/maut|vignette|tunnel|brenner/,'maut'],[/werkstatt|service|inspektion|reparatur|tuv|^hu$|^au$|hauptuntersuchung|pickerl/,'werkstatt'],[/reifen|rader/,'reifen']];
+ for(const [re,k] of R)if(re.test(L))return k;return null}
+function csvCountry(t){const s=String(t||'').trim();if(!s)return null;const u=s.toUpperCase();if(CNAME[u])return u;
+ const n=normH(s);for(const [c,name] of COUNTRIES)if(normH(name)===n)return c;
+ const alt={a:'AT',d:'DE',ch:'CH',austria:'AT',germany:'DE',osterreich:'AT',oesterreich:'AT',schweiz:'CH',italia:'IT'};return alt[n]||'XX'}
+function csvVehicle(t){const n=normH(t);if(!n)return null;
+ return S.vehicles.find(v=>normH(v.plate)===n)||S.vehicles.find(v=>normH(v.alias)===n)||S.vehicles.find(v=>normH(v.name)===n)||null}
+function parseCSV(text){
+ const rows=csvRows(text);if(rows.length<2)throw new Error('Die Datei enthält keine Datenzeilen.');
+ const idx={};rows[0].forEach((h,i)=>{const k=HMAP[normH(h)];if(k&&idx[k]==null)idx[k]=i});
+ if(idx.date==null||idx.vehicle==null)throw new Error('Spalten „Datum“ und „Fahrzeug“ fehlen – bitte die Vorlage verwenden.');
+ const ok=[],errs=[],dup=[];const seen=new Set(S.entries.map(e=>[e.vehicleId,e.date,e.type,rnd(total(e),2)].join('|')));
+ let ex=0;rows.slice(1).forEach((r,i)=>{const line=i+2;const g=k=>idx[k]==null?'':String(r[idx[k]]??'').trim();
+  if(/beispielzeile/i.test(g('note'))){ex++;return}
+  const date=csvDate(g('date'));if(!date)return errs.push(`Zeile ${line}: Datum „${g('date')}“ nicht lesbar`);
+  const v=csvVehicle(g('vehicle'));if(!v)return errs.push(`Zeile ${line}: Fahrzeug „${g('vehicle')}“ nicht gefunden`);
+  const kind=g('kind'),tt=normH(g('typ'));const fuel=csvFuel(kind),cat=csvCat(kind);
+  const amount=csvNum(g('amount')),unitPrice=csvNum(g('unitPrice')),tot=csvNum(g('total'));
+  let type=/kost|ausgab|sonst/.test(tt)?'cost':/tank|lad|fuel/.test(tt)?'fuel':fuel?'fuel':cat?'cost':amount!=null?'fuel':null;
+  if(!type)return errs.push(`Zeile ${line}: Typ unklar (Tanken oder Kosten?)`);
+  const country=csvCountry(g('country'))||'DE';const base={id:uid(),created:Date.now()+i,vehicleId:v.id,date,country,station:g('station'),place:g('place'),street:g('street'),zip:g('zip'),note:g('note'),src:'csv'};
+  let e;
+  if(type==='fuel'){const fu=fuel||v.fuel||'e5';let a=amount,p=unitPrice,t=tot;
+   if(a!=null&&p!=null&&t==null)t=rnd(a*p,2);else if(a&&t!=null&&p==null)p=rnd(t/a,3);else if(p&&t!=null&&a==null)a=rnd(t/p,2);
+   if(a==null&&t==null)return errs.push(`Zeile ${line}: Menge oder Betrag fehlt`);
+   const fv=normH(g('full'));e={...base,type:'fuel',fuel:fu,amount:a,unitPrice:p,total:t,full:!/^(nein|n|no|0|false|teil|teilbetankung)$/.test(fv),odometer:csvNum(g('odometer'),true),tripKm:csvNum(g('tripKm'),true)}}
+  else{if(tot==null)return errs.push(`Zeile ${line}: Betrag fehlt`);e={...base,type:'cost',category:cat||'sonstiges',total:tot};if(!cat&&kind)e.note=[kind,e.note].filter(Boolean).join(' – ')}
+  const key=[e.vehicleId,e.date,e.type,rnd(total(e),2)].join('|');if(seen.has(key))return dup.push(line);seen.add(key);ok.push(e)});
+ return{ok,errs,dup,ex}}
+function csvReport(res){const fuel=res.ok.filter(e=>e.type==='fuel').length,cost=res.ok.length-fuel;
+ const by={};res.ok.forEach(e=>{by[e.vehicleId]=(by[e.vehicleId]||0)+1});
+ const sorted=res.ok.map(e=>e.date).sort();
+ let h=`<h2>CSV-Import prüfen</h2>`;
+ h+=res.ok.length?`<p>Bereit zum Hinzufügen: <strong>${fuel} Tankstopp${fuel===1?'':'s'}</strong> und <strong>${cost} sonstige Kosten</strong>${sorted.length?` vom ${fDate(sorted[0])} bis ${fDate(sorted[sorted.length-1])}`:''}.</p><ul class="hint">${Object.entries(by).map(([id,n])=>`<li>${esc(vText(veh(id)))}: ${n}</li>`).join('')}</ul>`:'<p>Es wurden keine importierbaren Zeilen gefunden.</p>';
+ if(res.ex)h+=`<p class="hint">${res.ex} Beispielzeile${res.ex===1?'':'n'} aus der Vorlage ignoriert.</p>`;
+ if(res.dup.length)h+=`<p class="hint">${res.dup.length} Zeile${res.dup.length===1?'':'n'} übersprungen, weil sie schon vorhanden ${res.dup.length===1?'ist':'sind'} (Zeile ${res.dup.slice(0,10).join(', ')}${res.dup.length>10?' …':''}).</p>`;
+ if(res.errs.length)h+=`<p class="hint" style="color:var(--up)"><strong>${res.errs.length} Zeile${res.errs.length===1?'':'n'} nicht lesbar:</strong></p><ul class="hint">${res.errs.slice(0,12).map(x=>`<li>${esc(x)}</li>`).join('')}${res.errs.length>12?`<li>… und ${res.errs.length-12} weitere</li>`:''}</ul>`;
+ h+=`<div class="actions"><span class="sp"></span><button type="button" class="btn secondary" data-close>Abbrechen</button>${res.ok.length?'<button type="button" class="btn primary" id="csvGo">Hinzufügen</button>':''}</div>`;
+ openSheet(h);
+ if(res.ok.length)$('#csvGo').onclick=async()=>{S.entries.push(...res.ok);await save();closeSheet();ui.vf='all';go('verlauf');toast(`${res.ok.length} Einträge hinzugefügt`)}}
+$('#csvFile').addEventListener('change',async ev=>{const file=ev.target.files[0];ev.target.value='';if(!file)return;
+ if(!S.vehicles.length)return toast('Bitte zuerst die Fahrzeuge anlegen.');
+ try{const buf=await file.arrayBuffer();let text=new TextDecoder('utf-8').decode(buf);if(text.includes('�'))text=new TextDecoder('windows-1252').decode(buf);csvReport(parseCSV(text))}
+ catch(e){toast('Import nicht möglich: '+e.message)}});
+async function downloadTemplate(){
+ const v=S.vehicles.find(x=>!x.archived)||{plate:'RO-AB 123'};const pl=v.plate||v.name;
+ const ex=[['Tanken','02.08.2026',pl,'Super E5','41,20','1,749','72,06','ja','84210','','DE','Aral','Rosenheim','Münchener Str. 40','83022','Beispielzeile – bitte löschen'],
+  ['Tanken','24.08.2026',pl,'Super E5','44,80','1,689','75,67','ja','','640','AT','OMV','Kufstein','','6330','Beispielzeile – bitte löschen'],
+  ['Kosten','25.08.2026',pl,'Waschstraße','','','14,00','','','','DE','Mr. Wash','Rosenheim','','','Beispielzeile – bitte löschen']];
+ const q=x=>/[;"\n]/.test(x)?'"'+x.replace(/"/g,'""')+'"':x;
+ const csv='﻿'+[CSV_HEAD,...ex].map(r=>r.map(q).join(';')).join('\r\n')+'\r\n';
+ const file=new File([csv],'zapfwerk-vorlage.csv',{type:'text/csv'});
+ try{if(navigator.maxTouchPoints>0&&navigator.canShare&&navigator.canShare({files:[file]}))await navigator.share({files:[file],title:file.name});
+  else{const a=document.createElement('a');a.href=URL.createObjectURL(file);a.download=file.name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1500)}}
+ catch(e){if(e&&e.name!=='AbortError')toast('Download nicht möglich: '+e.message)}}
+
 $('#importFile').addEventListener('change',async ev=>{const file=ev.target.files[0];ev.target.value='';if(!file)return;
  try{const d=JSON.parse(await file.text());if(!d||!Array.isArray(d.entries)||!Array.isArray(d.vehicles))throw new Error('Keine Zapfwerk-Sicherung');
   if(!confirm(`Sicherung mit ${d.vehicles.length} Fahrzeug(en) und ${d.entries.length} Einträgen importieren? Alle Daten auf diesem Gerät werden ersetzt.`))return;
