@@ -122,6 +122,12 @@ label.check input{width:22px;height:22px;-webkit-appearance:checkbox;appearance:
 .chk:last-of-type{border-bottom:0}
 .chk-h{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px}
 .chk-t{margin:8px 0 4px;font-size:15px;line-height:1.45}
+.amp{display:flex;gap:10px;align-items:flex-start;border-radius:10px;padding:10px 12px;margin:14px 0 4px;font-size:15px;line-height:1.4}
+.amp b{flex:none}
+.amp.ok{background:#2E7D4F18;color:var(--down)}
+.amp.warn{background:#F3B61F2E;color:#7A5600}
+@media (prefers-color-scheme:dark){.amp.warn{color:var(--amber)}}
+.linkbtn{background:none;border:0;padding:0;color:var(--petrol);font-weight:600;text-decoration:underline;text-underline-offset:3px;cursor:pointer;font-size:inherit}
 .tag-r{margin-left:auto;text-transform:none;letter-spacing:0;font-variant-numeric:tabular-nums;white-space:nowrap}
 .tag-b.pad{padding:4px 14px 14px}
 .tag-b .card{border:0;border-bottom:1px solid var(--line);border-radius:0;margin:0;background:none}
@@ -223,13 +229,13 @@ details.paste textarea{margin-top:8px}
 </div></nav>
 <div id="sheet" class="sheet" hidden><div class="panel" id="panel" role="dialog" aria-modal="true"></div></div>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
-<input type="file" id="importFile" accept=".json,application/json" hidden>
+<input type="file" id="syncFile" accept=".json,application/json" multiple hidden>
 <input type="file" id="bgFile" accept="image/*" hidden>
 <input type="file" id="csvFile" accept=".csv,text/csv,text/plain" hidden>
 
 <script>
 'use strict';
-const VERSION='1.23';
+const VERSION='1.24';
 const FUELS=[
  {id:'e5',label:'Super E5 (95)',unit:'L',g:'Kraftstoff'},
  {id:'e10',label:'Super E10',unit:'L',g:'Kraftstoff'},
@@ -258,7 +264,7 @@ function defaultPortals(){return[
  {id:'pt-de-laden',country:'DE',name:'Mehr-Tanken Ladesäulen',url:'https://www.mehr-tanken.de/ladesaeulen/'},
  {id:'pt-at-econtrol',country:'AT',name:'Spritpreisrechner',url:'https://www.spritpreisrechner.at/'},
  {id:'pt-it-mimit',country:'IT',name:'Osservaprezzi Carburanti',url:'https://carburanti.mise.gov.it/ospzSearch/zona'}]}
-function blank(){return{app:'Zapfwerk',version:1,persons:[],vehicles:[],entries:[],favorites:[],portals:defaultPortals(),meta:{last:{},lastVehicle:null,lastExport:null}}}
+function blank(){return{app:'Zapfwerk',version:1,persons:[],vehicles:[],entries:[],favorites:[],portals:defaultPortals(),deleted:{},meta:{last:{},lastVehicle:null,lastExport:null}}}
 
 /* ---------- Helfer ---------- */
 const $=s=>document.querySelector(s);
@@ -300,7 +306,15 @@ const DBN='zapfwerk',ST='kv';
 function idb(){return new Promise((res,rej)=>{const r=indexedDB.open(DBN,1);r.onupgradeneeded=()=>r.result.createObjectStore(ST);r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})}
 async function load(){try{const db=await idb();return await new Promise((res,rej)=>{const q=db.transaction(ST).objectStore(ST).get('state');q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)})}catch(e){return null}}
 let QUIET=false;
-async function save(){if(!QUIET)S.meta.changed=Date.now();try{const db=await idb();await new Promise((res,rej)=>{const tx=db.transaction(ST,'readwrite');tx.objectStore(ST).put(JSON.parse(JSON.stringify(S)),'state');tx.oncomplete=res;tx.onerror=()=>rej(tx.error)})}catch(e){toast('Speichern fehlgeschlagen – bitte Sicherung exportieren.')}}
+/* Änderungsvermerke: jeder Datensatz trägt „mod“ (Zeitpunkt der letzten Änderung), Löschungen landen in S.deleted */
+const COLS=['entries','vehicles','persons','favorites','portals'];let BASE=new Map();
+const itemHash=x=>{const {mod,...r}=x;return JSON.stringify(r)};
+function resetBaseline(){BASE=new Map();for(const c of COLS)for(const x of (S[c]||[]))BASE.set(c+':'+x.id,itemHash(x))}
+function stampChanges(){const now=Date.now(),seen=new Set();let n=0;
+ for(const c of COLS)for(const x of (S[c]||[])){const k=c+':'+x.id;seen.add(k);const h=itemHash(x);if(BASE.get(k)!==h){x.mod=now;BASE.set(k,h);n++}}
+ for(const k of [...BASE.keys()])if(!seen.has(k)){S.deleted=S.deleted||{};S.deleted[k.slice(k.indexOf(':')+1)]=now;BASE.delete(k);n++}
+ return n}
+async function save(){if(!QUIET&&stampChanges())S.meta.changed=Date.now();try{const db=await idb();await new Promise((res,rej)=>{const tx=db.transaction(ST,'readwrite');tx.objectStore(ST).put(JSON.parse(JSON.stringify(S)),'state');tx.oncomplete=res;tx.onerror=()=>rej(tx.error)})}catch(e){toast('Speichern fehlgeschlagen – bitte Sicherung exportieren.')}}
 async function kvGet(k){try{const db=await idb();return await new Promise(res=>{const q=db.transaction(ST).objectStore(ST).get(k);q.onsuccess=()=>res(q.result);q.onerror=()=>res(null)})}catch(e){return null}}
 async function kvSet(k,v){try{const db=await idb();await new Promise((res,rej)=>{const tx=db.transaction(ST,'readwrite');v==null?tx.objectStore(ST).delete(k):tx.objectStore(ST).put(v,k);tx.oncomplete=res;tx.onerror=()=>rej(tx.error)});return true}catch(e){return false}}
 let BG=null;
@@ -310,7 +324,7 @@ function shrinkImage(file,max=1600,qual=.82){return new Promise((res,rej)=>{cons
   c.getContext('2d').drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(url);res(c.toDataURL('image/jpeg',qual))};
  img.onerror=()=>{URL.revokeObjectURL(url);rej(new Error('Bild konnte nicht gelesen werden'))};img.src=url})}
 async function setBg(dataUrl){if(!(await kvSet('bg',dataUrl)))return toast('Bild konnte nicht gespeichert werden.');BG=dataUrl;applyBg();render();toast(dataUrl?'Hintergrundbild gesetzt':'Hintergrundbild entfernt')}
-function normalize(d){const b=blank();if(!d||typeof d!=='object')return b;return{...b,...d,persons:Array.isArray(d.persons)?d.persons:[],vehicles:Array.isArray(d.vehicles)?d.vehicles:[],entries:Array.isArray(d.entries)?d.entries:[],favorites:Array.isArray(d.favorites)?d.favorites:[],portals:Array.isArray(d.portals)?d.portals:defaultPortals(),meta:{...b.meta,...(d.meta||{}),last:(d.meta&&d.meta.last)||{}}}}
+function normalize(d){const b=blank();if(!d||typeof d!=='object')return b;return{...b,...d,persons:Array.isArray(d.persons)?d.persons:[],vehicles:Array.isArray(d.vehicles)?d.vehicles:[],entries:Array.isArray(d.entries)?d.entries:[],favorites:Array.isArray(d.favorites)?d.favorites:[],portals:Array.isArray(d.portals)?d.portals:defaultPortals(),deleted:d.deleted&&typeof d.deleted==='object'&&!Array.isArray(d.deleted)?d.deleted:{},meta:{...b.meta,...(d.meta||{}),last:(d.meta&&d.meta.last)||{}}}}
 
 /* ---------- Berechnungen ---------- */
 function deriveAll(){
@@ -562,9 +576,12 @@ function portalTag(){const PEN='<svg viewBox="0 0 24 24" fill="none" stroke="cur
 
 function viewMehr(){
  const le=S.meta.lastExport?new Date(S.meta.lastExport).toLocaleDateString('de-DE'):'noch nie';
- return portalTag()+tag('Sicherung',`<p class="hint">Deine Daten liegen nur auf diesem Gerät. Die Sicherung ist eine JSON-Datei – am besten im gemeinsamen iCloud-Ordner ablegen. Letzte Sicherung: <strong>${le}</strong>.</p>
+ const ls=S.meta.syncAt?new Date(S.meta.syncAt).toLocaleDateString('de-DE'):'noch nie';
+ return portalTag()+tag('Sicherung und Abgleich',`<div class="row"><span class="k">Dieses Gerät<small>${DEV.name?'Name steht in jeder Sicherung':'Noch ohne Namen'}</small></span><span class="v"><button type="button" class="linkbtn" onclick="deviceForm()">${DEV.name?esc(DEV.name):'Namen vergeben'}</button></span></div>
+ <p class="hint">Letzte Sicherung: <strong>${le}</strong>. Letzter Abgleich: <strong>${ls}</strong>. ${!S.meta.syncAt&&!S.meta.lastExport?(S.entries.length?'Die Daten liegen bisher nur auf diesem Gerät.':''):isDirty()?'Seitdem gibt es Änderungen auf diesem Gerät.':'Seitdem unverändert.'}</p>
  <button class="btn primary wide" onclick="exportJSON()">Sicherung exportieren</button>
- <button class="btn secondary wide" onclick="$('#importFile').click()">Sicherung importieren</button>`,0,1)
+ <button class="btn secondary wide" onclick="$('#syncFile').click()">Sicherungen abgleichen</button>
+ <p class="hint">Beim Abgleichen im iCloud-Ordner alle Sicherungen markieren – Zapfwerk nimmt je Gerät die neueste und führt sie zusammen.</p>`,0,1)
  +tag('CSV-Import',`<p class="hint">Ältere Aufzeichnungen aus einer Tabelle übernehmen. Die Einträge werden <strong>hinzugefügt</strong> – vorhandene Daten bleiben erhalten, doppelte Zeilen werden übersprungen. Die Fahrzeuge müssen vorher angelegt sein.</p>
  <button class="btn secondary wide" onclick="downloadTemplate()">Vorlage herunterladen</button>
  <button class="btn primary wide" onclick="$('#csvFile').click()">CSV importieren</button>`,0,1)
@@ -575,7 +592,13 @@ function viewMehr(){
 const HELP=`
 <details class="faq"><summary>Zapfwerk als App auf den Home-Bildschirm legen</summary><p>In Safari die Seite öffnen, auf „Teilen“ tippen und „Zum Home-Bildschirm“ wählen. Zapfwerk startet dann wie eine App ohne Browserleiste. Auf dem Mac: Safari › Ablage › Zum Dock hinzufügen.</p></details>
 <details class="faq"><summary>Wo liegen meine Daten?</summary><p>Nur lokal auf dem jeweiligen Gerät (im Speicher des Browsers bzw. der Home-Bildschirm-App). Es gibt keinen Server und kein Konto. Zwischen iPhone, iPad und Mac wird nicht automatisch abgeglichen – dafür gibt es die Sicherung.</p></details>
-<details class="faq"><summary>Daten auf ein anderes Gerät bringen</summary><p>„Sicherung exportieren“ erzeugt eine Datei <em>zapfwerk-backup-Datum.json</em>. Auf iPhone und iPad öffnet sich das Teilen-Menü – dort „In Dateien sichern“ und den iCloud-Ordner wählen. Auf dem anderen Gerät „Sicherung importieren“ und die Datei auswählen. Achtung: Der Import ersetzt alle Daten auf diesem Gerät. Angehängte Belege sind in der Sicherung enthalten.</p><p><strong>Erinnerung:</strong> Gibt es Änderungen und ist die letzte Sicherung älter als 30 Tage (oder gab es noch keine), erscheint oben im Verlauf das Schild „Zeit für eine Sicherung“ mit „Jetzt sichern“. „Später“ blendet es für 7 Tage aus. Ohne Änderungen seit der letzten Sicherung bleibt es weg. Die Erinnerung gilt je Gerät – sie hilft also auch auf dem iPhone, auf dem nicht so oft ans Sichern gedacht wird.</p></details>
+<details class="faq"><summary>Sichern und zwischen Geräten abgleichen</summary><p><strong>Gerätename:</strong> Unter „Mehr“ › „Sicherung und Abgleich“ bekommt jedes Gerät einen Namen, z. B. „iPhone Rob“. Er steht in jeder Sicherung und im Dateinamen (<em>zapfwerk-iPhone-Rob-Datum.json</em>). Beim ersten Sichern fragt Zapfwerk danach.</p>
+<p><strong>Sichern:</strong> „Sicherung exportieren“ öffnet auf iPhone und iPad das Teilen-Menü – dort „In Dateien sichern“ und den gemeinsamen iCloud-Ordner wählen. Angehängte Belege sind enthalten.</p>
+<p><strong>Abgleichen:</strong> „Sicherungen abgleichen“ tippen und im iCloud-Ordner alle Sicherungen markieren („Auswählen“). Zapfwerk nimmt je Gerät die neueste, zeigt eine Übersicht mit ★ für die aktuellste und eine Ampel:</p>
+<ul><li><strong>✓ Unkritisch</strong> – auf diesem Gerät wurde seit dem letzten Abgleich nichts geändert.</li><li><strong>● Änderungen vorhanden</strong> – auf diesem Gerät wurde seitdem etwas erfasst; beim Zusammenführen bleibt es erhalten.</li></ul>
+<p>„Zusammenführen“ legt die Einträge aller Geräte zusammen: Neues kommt dazu, bei einem auf zwei Geräten bearbeiteten Eintrag gilt die neuere Änderung, Löschungen werden übernommen. Danach am besten selbst eine Sicherung exportieren, damit die anderen Geräte den gemeinsamen Stand bekommen.</p>
+<p>„Stattdessen alles durch die aktuellste Sicherung ersetzen“ ist für den Notfall, etwa auf einem neuen Gerät oder um einen alten Stand wiederherzustellen. Änderungen, die nur auf diesem Gerät sind, gehen dabei verloren.</p>
+<p><strong>Empfohlener Ablauf:</strong> Vor dem Erfassen kurz abgleichen, nach dem Erfassen sichern. Dank Zusammenführen ist die Reihenfolge aber nicht mehr entscheidend.</p><p><strong>Erinnerung:</strong> Gibt es Änderungen und ist die letzte Sicherung älter als 30 Tage (oder gab es noch keine), erscheint oben im Verlauf das Schild „Zeit für eine Sicherung“ mit „Jetzt sichern“. „Später“ blendet es für 7 Tage aus. Ohne Änderungen seit der letzten Sicherung bleibt es weg. Die Erinnerung gilt je Gerät – sie hilft also auch auf dem iPhone, auf dem nicht so oft ans Sichern gedacht wird.</p></details>
 <details class="faq"><summary>Ältere Aufzeichnungen per CSV übernehmen</summary><p>Unter „Mehr“ › „CSV-Import“ die Vorlage herunterladen und in Numbers oder Excel öffnen. Eine Zeile pro Tankstopp oder Ausgabe. Die Beispielzeilen löschen oder einfach stehen lassen – Zeilen mit „Beispielzeile“ in der Notiz werden beim Import ignoriert. Danach als CSV exportieren (Numbers: Ablage › Exportieren › CSV) und mit „CSV importieren“ einlesen. Schreibt Numbers den Tabellennamen als erste Zeile mit hinein, ist das kein Problem – Zapfwerk sucht die Überschriften selbst. Vor dem Hinzufügen zeigt Zapfwerk, was erkannt wurde.</p>
 <ul><li><strong>Typ:</strong> Tanken oder Kosten</li><li><strong>Datum:</strong> TT.MM.JJJJ</li><li><strong>Fahrzeug:</strong> Kennzeichen, Spitzname oder Bezeichnung – das Fahrzeug muss in Zapfwerk angelegt sein</li><li><strong>Energie oder Art:</strong> beim Tanken z. B. Super E5, E10, Super Plus, Diesel, HVO, LPG, CNG, Strom AC, Strom DC; bei Kosten z. B. Waschstraße, Öl, AdBlue, Vignette, Parken, Werkstatt, Reifen</li><li><strong>Menge, Preis je Einheit, Betrag:</strong> mit Komma, zwei der drei genügen</li><li><strong>Vollgetankt:</strong> ja oder nein (leer = ja)</li><li><strong>Kilometerstand oder Tageskilometer:</strong> einer genügt</li><li><strong>Land:</strong> DE, AT, CH … oder ausgeschrieben</li></ul>
 <p>Die Einträge werden zu den vorhandenen hinzugefügt. Zeilen mit gleichem Fahrzeug, Datum, Typ und Betrag gelten als doppelt und werden übersprungen – ein versehentlich zweimal importierter Stapel richtet also keinen Schaden an. Tipp: Vor dem ersten Import trotzdem eine Sicherung exportieren.</p></details>
@@ -595,7 +618,7 @@ const HELP=`
 <details class="faq"><summary>Jahrestag der Zulassung</summary><p>Am Jahrestag der Zulassung erscheint oben im Verlauf ein Jubiläums-Schild mit kurzem Funkeln. Grundlage ist das Datum „Zugelassen auf uns seit“ (Feld I im Fahrzeugschein) – bei einem Gebrauchten ist das der Tag, an dem das Auto zu euch kam. Ist es nicht eingetragen, nimmt Zapfwerk die Erstzulassung (Feld B).</p><p>Die Zahlen (km, getankte Menge, Ø Verbrauch) stammen aus den zwölf Monaten vor dem Jahrestag, soweit sie in Zapfwerk erfasst sind. Im 1., 3., 5. und 10. Jahr sowie danach alle fünf Jahre gibt es einen eigenen Text. Das Schild bleibt eine Woche stehen, falls die App am Tag selbst nicht geöffnet wird, und verschwindet mit „Danke!“. Eine Mitteilung bei geschlossener App ist bei einer Web-App nicht möglich.</p></details>
 <details class="faq"><summary>Kilometer laut Versicherung</summary><p>Viele Kfz-Versicherungen rechnen nach der jährlichen Fahrleistung. Trag sie im Fahrzeug unter „Fahrzeugdaten und Versicherung“ ein, zusammen mit dem Beginn des Versicherungsjahres (steht im Versicherungsschein, oft der 1. Januar). In der Auswertung erscheint dann das Schild „Versicherung“: gefahrene Kilometer im laufenden Versicherungsjahr, wie viele noch möglich sind und eine Hochrechnung bis zum Ende des Versicherungsjahres.</p><p>Die Tankanzeige füllt sich gelb mit den gefahrenen Kilometern; hell gelb ist die Hochrechnung. Grün ✓ = passt mit Luft, gelb ● = ab 90 % wird es knapp, rot ▲ = die Hochrechnung liegt über dem Tarif – dann die Versicherung rechtzeitig informieren. Die Hochrechnung erscheint erst nach einem Monat Daten. Grundlage sind die Kilometerstände der Tankstopps; liegt keiner genau am Stichtag, schätzt Zapfwerk den Stand aus den Tankstopps davor und danach. Bei „Gesamt“, „Dieses Jahr“ und „Letzte 12 Monate“ zeigt das Schild das laufende Versicherungsjahr. Bei „Vorjahr“ zeigt es das vorherige, abgeschlossene Versicherungsjahr mit dem Ergebnis: im Tarif geblieben oder darüber. Sind für ein Versicherungsjahr keine Kilometerstände erfasst, steht das dort statt einer Zahl; ist es nur teilweise erfasst, wird darauf hingewiesen.</p></details>
 <details class="faq"><summary>Fahrzeug verkauft</summary><p>Im Fahrzeug „Stillgelegt“ anhaken. Es verschwindet aus der Auswahl beim Erfassen, die Einträge bleiben in der Auswertung erhalten. Löschen geht nur, solange keine Einträge vorhanden sind.</p></details>
-<details class="faq"><summary>Änderungen</summary><ul><li><strong>1.23</strong> – Kassenbeleg scannen neu: „Beleg fotografieren“ liest den Beleg mit eigener Texterkennung auf dem Gerät aus, füllt die Felder und hängt das Foto als Beleg an. Unabhängig von der iOS-Funktion „Text scannen“.</li><li><strong>1.22</strong> – Plausibilitätsprüfung: auffällig niedrige oder hohe Verbrauchswerte werden mit Erklärung gemeldet („Bitte prüfen“), lassen sich bearbeiten oder als geklärt abschließen und zählen bis dahin nicht als Bestwert.</li><li><strong>1.21</strong> – PDF-Belege werden auf dem iPhone vollständig und auf Bildschirmbreite eingepasst angezeigt; Tippen vergrößert die angetippte Stelle (auch bei Fotos).</li><li><strong>1.20</strong> – Schild „Versicherung“ (vorher „Versicherung – Kilometer“) folgt dem gewählten Zeitraum: bei „Vorjahr“ das abgeschlossene Versicherungsjahr mit Ergebnis, ohne Daten ein klarer Hinweis statt Zahlen aus dem laufenden Jahr.</li><li><strong>1.19</strong> – Erinnerung an die Sicherung: Schild im Verlauf, wenn es Änderungen gibt und die letzte Sicherung älter als 30 Tage ist; „Später“ für 7 Tage. Eine abgebrochene Sicherung zählt nicht mehr als erledigt.</li><li><strong>1.18</strong> – Versicherung – Kilometer: vereinbarte Jahresfahrleistung und Beginn des Versicherungsjahres beim Fahrzeug; Tankanzeige mit gefahrenen und noch möglichen Kilometern und Hochrechnung in der Auswertung.</li><li><strong>1.17</strong> – CSV-Import: Titelzeilen vor den Spaltenüberschriften (z. B. der Tabellenname aus Numbers) werden übersprungen.</li><li><strong>1.16</strong> – Preise vergleichen: Preisportale je Land beim gelben + (vorbelegt: ADAC, Mehr-Tanken Ladesäulen, E-Control-Spritpreisrechner, Osservaprezzi Italien), unter „Mehr“ frei änderbar.</li><li><strong>1.15</strong> – Beleg anhängen: Foto oder PDF der Quittung am Tankstopp oder an sonstigen Kosten, Büroklammer im Verlauf, Ansicht in voller Größe, Belege in der Sicherung enthalten.</li><li><strong>1.14</strong> – CSV-Import für ältere Aufzeichnungen mit herunterladbarer Vorlage, Vorschau vor dem Hinzufügen und Schutz vor doppelten Einträgen.</li><li><strong>1.13</strong> – Jahrestag der Zulassung: neues Feld „Zugelassen auf uns seit (Feld I)“, Jubiläums-Schild mit Funkeln und den Zahlen des letzten Jahres im Verlauf.</li><li><strong>1.12</strong> – Personen wie Fahrzeuge: eigene Liste mit zugeordneten Fahrzeugen und Stift zum Bearbeiten, darunter der Knopf „Person hinzufügen“.</li><li><strong>1.11</strong> – Kennzeichen steht in der Fahrzeugliste und der Auswertung jetzt in einer eigenen, leicht eingerückten Zeile unter dem Namen.</li><li><strong>1.10</strong> – Kachel „Kosten gesamt“: Gesamtkosten und Kosten je km rechtsbündig wie an der Zapfsäule, gefahrene km bleiben links.</li><li><strong>1.9</strong> – Eigenes Hintergrundbild im Hellmodus (unter „Mehr“), wird nur auf dem Gerät gespeichert.</li><li><strong>1.8</strong> – Slogan „Jeder Tropfen auf der Liste.“ unter dem Namen; das Zählwerk der Gesamtkosten in sanfterem Espressobraun statt Schwarz.</li><li><strong>1.7</strong> – Verbrauchstrend als Abzeichen (▲ höher / ▼ niedriger als beim letzten Volltanken); ★ Bestwert für den niedrigsten Verbrauch je Fahrzeug im Verlauf und neues Schild „Bestwerte“ in der Auswertung.</li><li><strong>1.6</strong> – Preisschild-Look in allen Ansichten: Verlauf (je Monat ein Schild mit Monatssumme), Fahrzeuge, Personen, Sicherung und Hilfe.</li><li><strong>1.5</strong> – Auswertung im Preisschild-Look: Jeder Bereich (Tanken und Laden, nach Fahrzeug, Person und Art) steht in einem eigenen gerahmten Schild.</li><li><strong>1.4</strong> – Fahrzeugdaten: HSN, TSN, Leistung (kW mit PS-Umrechnung), Erstzulassung und FIN mit Plausibilitätsprüfung.</li><li><strong>1.3</strong> – Spitzname fürs Fahrzeug; in der Fahrzeugliste per Tipp zwischen Spitzname und Bezeichnung wechseln. Fahrzeug bearbeiten jetzt über den Stift rechts.</li><li><strong>1.2</strong> – Adresse in einer Zeile (Ort, Straße, PLZ mit Komma getrennt, wird getrennt gespeichert); Favoriten für Tankstellen und Anbieter mit Schnellwahl; Belegscan übernimmt auch Straße und PLZ. Im Formular stehen Land und Tankstelle jetzt nebeneinander, die Adresse hat die volle Breite.</li><li><strong>1.1</strong> – Neues App-Icon im 70er-Stil, auch oben neben dem Namen. Damit das Icon auf dem Home-Bildschirm erscheint, Zapfwerk dort einmal entfernen und neu hinzufügen – die Daten bleiben nur erhalten, wenn vorher eine Sicherung exportiert wurde.</li><li><strong>1.0</strong> – Erste Version: Tankstopps (Kraftstoff, Gas, Strom), sonstige Kosten, mehrere Fahrzeuge mit Kennzeichen und Person, Länderwahl, Kilometer-Automatik, Verbrauch mit Veränderung in %, Auswertung nach Fahrzeug, Person und Art, Belegübernahme per Texterkennung, JSON-Sicherung.</li></ul></details>`;
+<details class="faq"><summary>Änderungen</summary><ul><li><strong>1.24</strong> – Sicherung und Abgleich: Gerätename, Sicherungen mehrerer Geräte auf einmal abgleichen mit Übersicht (★ aktuellste) und Ampel, Zusammenführen statt Ersetzen – neue, geänderte und gelöschte Einträge sowie Belege aller Geräte bleiben erhalten.</li><li><strong>1.23</strong> – Kassenbeleg scannen neu: „Beleg fotografieren“ liest den Beleg mit eigener Texterkennung auf dem Gerät aus, füllt die Felder und hängt das Foto als Beleg an. Unabhängig von der iOS-Funktion „Text scannen“.</li><li><strong>1.22</strong> – Plausibilitätsprüfung: auffällig niedrige oder hohe Verbrauchswerte werden mit Erklärung gemeldet („Bitte prüfen“), lassen sich bearbeiten oder als geklärt abschließen und zählen bis dahin nicht als Bestwert.</li><li><strong>1.21</strong> – PDF-Belege werden auf dem iPhone vollständig und auf Bildschirmbreite eingepasst angezeigt; Tippen vergrößert die angetippte Stelle (auch bei Fotos).</li><li><strong>1.20</strong> – Schild „Versicherung“ (vorher „Versicherung – Kilometer“) folgt dem gewählten Zeitraum: bei „Vorjahr“ das abgeschlossene Versicherungsjahr mit Ergebnis, ohne Daten ein klarer Hinweis statt Zahlen aus dem laufenden Jahr.</li><li><strong>1.19</strong> – Erinnerung an die Sicherung: Schild im Verlauf, wenn es Änderungen gibt und die letzte Sicherung älter als 30 Tage ist; „Später“ für 7 Tage. Eine abgebrochene Sicherung zählt nicht mehr als erledigt.</li><li><strong>1.18</strong> – Versicherung – Kilometer: vereinbarte Jahresfahrleistung und Beginn des Versicherungsjahres beim Fahrzeug; Tankanzeige mit gefahrenen und noch möglichen Kilometern und Hochrechnung in der Auswertung.</li><li><strong>1.17</strong> – CSV-Import: Titelzeilen vor den Spaltenüberschriften (z. B. der Tabellenname aus Numbers) werden übersprungen.</li><li><strong>1.16</strong> – Preise vergleichen: Preisportale je Land beim gelben + (vorbelegt: ADAC, Mehr-Tanken Ladesäulen, E-Control-Spritpreisrechner, Osservaprezzi Italien), unter „Mehr“ frei änderbar.</li><li><strong>1.15</strong> – Beleg anhängen: Foto oder PDF der Quittung am Tankstopp oder an sonstigen Kosten, Büroklammer im Verlauf, Ansicht in voller Größe, Belege in der Sicherung enthalten.</li><li><strong>1.14</strong> – CSV-Import für ältere Aufzeichnungen mit herunterladbarer Vorlage, Vorschau vor dem Hinzufügen und Schutz vor doppelten Einträgen.</li><li><strong>1.13</strong> – Jahrestag der Zulassung: neues Feld „Zugelassen auf uns seit (Feld I)“, Jubiläums-Schild mit Funkeln und den Zahlen des letzten Jahres im Verlauf.</li><li><strong>1.12</strong> – Personen wie Fahrzeuge: eigene Liste mit zugeordneten Fahrzeugen und Stift zum Bearbeiten, darunter der Knopf „Person hinzufügen“.</li><li><strong>1.11</strong> – Kennzeichen steht in der Fahrzeugliste und der Auswertung jetzt in einer eigenen, leicht eingerückten Zeile unter dem Namen.</li><li><strong>1.10</strong> – Kachel „Kosten gesamt“: Gesamtkosten und Kosten je km rechtsbündig wie an der Zapfsäule, gefahrene km bleiben links.</li><li><strong>1.9</strong> – Eigenes Hintergrundbild im Hellmodus (unter „Mehr“), wird nur auf dem Gerät gespeichert.</li><li><strong>1.8</strong> – Slogan „Jeder Tropfen auf der Liste.“ unter dem Namen; das Zählwerk der Gesamtkosten in sanfterem Espressobraun statt Schwarz.</li><li><strong>1.7</strong> – Verbrauchstrend als Abzeichen (▲ höher / ▼ niedriger als beim letzten Volltanken); ★ Bestwert für den niedrigsten Verbrauch je Fahrzeug im Verlauf und neues Schild „Bestwerte“ in der Auswertung.</li><li><strong>1.6</strong> – Preisschild-Look in allen Ansichten: Verlauf (je Monat ein Schild mit Monatssumme), Fahrzeuge, Personen, Sicherung und Hilfe.</li><li><strong>1.5</strong> – Auswertung im Preisschild-Look: Jeder Bereich (Tanken und Laden, nach Fahrzeug, Person und Art) steht in einem eigenen gerahmten Schild.</li><li><strong>1.4</strong> – Fahrzeugdaten: HSN, TSN, Leistung (kW mit PS-Umrechnung), Erstzulassung und FIN mit Plausibilitätsprüfung.</li><li><strong>1.3</strong> – Spitzname fürs Fahrzeug; in der Fahrzeugliste per Tipp zwischen Spitzname und Bezeichnung wechseln. Fahrzeug bearbeiten jetzt über den Stift rechts.</li><li><strong>1.2</strong> – Adresse in einer Zeile (Ort, Straße, PLZ mit Komma getrennt, wird getrennt gespeichert); Favoriten für Tankstellen und Anbieter mit Schnellwahl; Belegscan übernimmt auch Straße und PLZ. Im Formular stehen Land und Tankstelle jetzt nebeneinander, die Adresse hat die volle Breite.</li><li><strong>1.1</strong> – Neues App-Icon im 70er-Stil, auch oben neben dem Namen. Damit das Icon auf dem Home-Bildschirm erscheint, Zapfwerk dort einmal entfernen und neu hinzufügen – die Daten bleiben nur erhalten, wenn vorher eine Sicherung exportiert wurde.</li><li><strong>1.0</strong> – Erste Version: Tankstopps (Kraftstoff, Gas, Strom), sonstige Kosten, mehrere Fahrzeuge mit Kennzeichen und Person, Länderwahl, Kilometer-Automatik, Verbrauch mit Veränderung in %, Auswertung nach Fahrzeug, Person und Art, Belegübernahme per Texterkennung, JSON-Sicherung.</li></ul></details>`;
 
 /* ---------- Sheet ---------- */
 function openSheet(html){$('#panel').innerHTML=html;$('#sheet').hidden=false;document.body.style.overflow='hidden';$('#panel').querySelectorAll('[data-close]').forEach(b=>b.onclick=closeSheet)}
@@ -899,14 +922,23 @@ function parseReceipt(raw,costOnly){
  return r}
 
 /* ---------- Sicherung ---------- */
+/* ---------- Gerät ---------- */
+let DEV={id:'',name:''};
+const slug=t=>String(t||'').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/ß/g,'ss').replace(/[^A-Za-z0-9]+/g,'-').replace(/^-|-$/g,'')||'geraet';
+function deviceForm(after){
+ openSheet(`<form id="f" autocomplete="off"><h2>Name dieses Geräts</h2><p class="hint">Der Name steht in jeder Sicherung und im Dateinamen – so siehst du beim Abgleich, von welchem Gerät eine Sicherung stammt.</p>
+ <label>Gerätename<input name="name" value="${esc(DEV.name)}" placeholder="z. B. iPhone Rob" required></label>${actions(false)}</form>`);
+ const f=$('#f');f.name.focus();
+ f.onsubmit=async ev=>{ev.preventDefault();const n=f.name.value.trim();if(!n)return toast('Bitte einen Namen eintragen.');DEV.name=n;await kvSet('device',{...DEV});closeSheet();render();if(after)after()}}
 async function exportJSON(){
+ if(!DEV.name)return deviceForm(()=>exportJSON());
  const stamp=new Date().toISOString();
  const receipts={};for(const e of S.entries){if(!e.receipt)continue;const d=await kvGet('rc:'+e.id);if(d)receipts[e.id]=d}
- const name=`zapfwerk-backup-${todayISO()}.json`;const data=JSON.stringify({...S,meta:{...S.meta,lastExport:stamp,changed:Date.parse(stamp)},receipts,exported:stamp},null,1);
+ const name=`zapfwerk-${slug(DEV.name)}-${todayISO()}.json`;const data=JSON.stringify({...S,meta:{...S.meta,lastExport:stamp,syncAt:Date.parse(stamp),changed:Date.parse(stamp)},device:{id:DEV.id,name:DEV.name},receipts,exported:stamp},null,1);
  const file=new File([data],name,{type:'application/json'});
  try{if(navigator.maxTouchPoints>0&&navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:name})}
   else{const a=document.createElement('a');a.href=URL.createObjectURL(file);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1500)}
-  S.meta.lastExport=stamp;S.meta.changed=Date.parse(stamp);delete S.meta.backupSnooze;QUIET=true;await save();QUIET=false;render();toast('Sicherung exportiert')}catch(e){QUIET=false;if(e&&e.name!=='AbortError')toast('Export nicht möglich: '+e.message)}}
+  S.meta.lastExport=stamp;S.meta.syncAt=Date.parse(stamp);S.meta.changed=Date.parse(stamp);delete S.meta.backupSnooze;QUIET=true;await save();QUIET=false;render();toast('Sicherung exportiert')}catch(e){QUIET=false;if(e&&e.name!=='AbortError')toast('Export nicht möglich: '+e.message)}}
 $('#bgFile').addEventListener('change',async ev=>{const file=ev.target.files[0];ev.target.value='';if(!file)return;
  try{await setBg(await shrinkImage(file))}catch(e){toast(e.message)}});
 
@@ -992,21 +1024,74 @@ async function downloadTemplate(){
   else{const a=document.createElement('a');a.href=URL.createObjectURL(file);a.download=file.name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1500)}}
  catch(e){if(e&&e.name!=='AbortError')toast('Download nicht möglich: '+e.message)}}
 
-$('#importFile').addEventListener('change',async ev=>{const file=ev.target.files[0];ev.target.value='';if(!file)return;
- try{const d=JSON.parse(await file.text());if(!d||!Array.isArray(d.entries)||!Array.isArray(d.vehicles))throw new Error('Keine Zapfwerk-Sicherung');
-  if(!confirm(`Sicherung mit ${d.vehicles.length} Fahrzeug(en) und ${d.entries.length} Einträgen importieren? Alle Daten auf diesem Gerät werden ersetzt.`))return;
-  const rcs=d.receipts&&typeof d.receipts==='object'?d.receipts:{};S=normalize(d);delete S.exported;delete S.receipts;
-  for(const k of await kvKeys('rc:'))await kvSet(k,null);
-  for(const [id,data] of Object.entries(rcs))if(typeof data==='string'&&data.startsWith('data:'))await kvSet('rc:'+id,data);
-  S.entries.forEach(e=>{if(e.receipt&&!rcs[e.id])delete e.receipt});
-  S.meta.changed=S.meta.lastExport?Date.parse(S.meta.lastExport):Date.now();QUIET=true;await save();QUIET=false;ui.vf='all';render();toast('Sicherung importiert')}catch(e){toast('Import fehlgeschlagen: '+e.message)}});
+/* ---------- Abgleich ---------- */
+const clone=o=>JSON.parse(JSON.stringify(o));
+const isDirty=()=>(S.meta.changed||0)>(S.meta.syncAt||(S.meta.lastExport?Date.parse(S.meta.lastExport):0));
+function mergeInto(base,inc,src,tag){
+ const del={...(base.deleted||{})};for(const [k,t] of Object.entries(inc.deleted||{}))del[k]=Math.max(del[k]||0,t);
+ const gone=(id,mod)=>del[id]!=null&&del[id]>=(mod||0);
+ for(const c of COLS){const m=new Map((base[c]||[]).map(x=>[x.id,x]));
+  for(const x of (inc[c]||[])){const y=m.get(x.id);
+   if(!y){if(!gone(x.id,x.mod)){m.set(x.id,x);if(c==='entries')src.set(x.id,tag)}}
+   else if((x.mod||0)>(y.mod||0)){m.set(x.id,x);if(c==='entries')src.set(x.id,tag)}}
+  base[c]=[...m.values()].filter(x=>!gone(x.id,x.mod))}
+ base.deleted=del;
+ if(inc.meta&&inc.meta.jubi)base.meta.jubi={...(inc.meta.jubi||{}),...(base.meta.jubi||{})};
+ return base}
+function planSync(files){
+ const groups=new Map();
+ for(const f of files){const k=f.d.device&&f.d.device.id?'d:'+f.d.device.id:'f:'+f.name;const g=groups.get(k);if(!g||f.t>g.t)groups.set(k,{...f,older:(g?g.older+1:0)});else g.older++}
+ const latest=[...groups.values()].sort((a,b)=>a.t-b.t);
+ const res=clone(S),src=new Map();latest.forEach((f,i)=>mergeInto(res,normalize(clone(f.d)),src,i));
+ const L=new Map(S.entries.map(e=>[e.id,e])),R=new Map(res.entries.map(e=>[e.id,e]));
+ let added=0,changed=0,removed=0;for(const [id,e] of R){const l=L.get(id);if(!l)added++;else if(itemHash(l)!==itemHash(e))changed++}for(const id of L.keys())if(!R.has(id))removed++;
+ let other=0;for(const c of COLS.slice(1)){const a=new Map((S[c]||[]).map(x=>[x.id,itemHash(x)])),b=new Map((res[c]||[]).map(x=>[x.id,itemHash(x)]));for(const [id,h] of b)if(a.get(id)!==h)other++;for(const id of a.keys())if(!b.has(id))other++}
+ const incIds=new Set();latest.forEach(f=>{(f.d.entries||[]).forEach(e=>incIds.add(e.id));Object.keys(f.d.deleted||{}).forEach(id=>incIds.add(id))});
+ const localOnly=S.entries.filter(e=>!incIds.has(e.id)).length;
+ return{latest,res,src,added,changed,removed,other,localOnly}}
+async function applySync(plan){
+ const rcFor=i=>plan.latest[i].d.receipts||{};
+ for(const e of plan.res.entries){if(!plan.src.has(e.id))continue;const data=rcFor(plan.src.get(e.id))[e.id];
+  if(e.receipt&&typeof data==='string'&&data.startsWith('data:'))await kvSet('rc:'+e.id,data);else{if(e.receipt&&!(await kvGet('rc:'+e.id)))delete e.receipt;if(!e.receipt)await kvSet('rc:'+e.id,null)}}
+ const keep=new Set(plan.res.entries.map(e=>e.id));for(const e of S.entries)if(!keep.has(e.id))await kvSet('rc:'+e.id,null);
+ const dirty=isDirty()||plan.localOnly>0;const now=Date.now();
+ S=normalize(plan.res);delete S.device;delete S.receipts;delete S.exported;S.meta.syncAt=now;S.meta.changed=dirty?now+1:now;
+ resetBaseline();QUIET=true;await save();QUIET=false;closeSheet();ui.vf='all';go('verlauf');
+ toast(dirty?'Zusammengeführt – jetzt sichern, damit die anderen Geräte den Stand bekommen':'Abgleich abgeschlossen')}
+async function replaceWith(f){
+ if(!confirm(`Alle Daten auf diesem Gerät durch die Sicherung von „${f.d.device&&f.d.device.name||'unbekanntem Gerät'}“ vom ${new Date(f.t).toLocaleString('de-DE',{dateStyle:'short',timeStyle:'short'})} ersetzen? Änderungen nur auf diesem Gerät gehen dabei verloren.`))return;
+ const d=f.d,rcs=d.receipts&&typeof d.receipts==='object'?d.receipts:{};S=normalize(clone(d));delete S.exported;delete S.receipts;delete S.device;
+ for(const k of await kvKeys('rc:'))await kvSet(k,null);
+ for(const [id,data] of Object.entries(rcs))if(typeof data==='string'&&data.startsWith('data:'))await kvSet('rc:'+id,data);
+ S.entries.forEach(e=>{if(e.receipt&&!rcs[e.id])delete e.receipt});
+ const now=Date.now();S.meta.syncAt=now;S.meta.changed=now;resetBaseline();QUIET=true;await save();QUIET=false;closeSheet();ui.vf='all';go('verlauf');toast('Daten ersetzt')}
+function syncSheet(files){
+ const plan=planSync(files),newest=plan.latest[plan.latest.length-1];const dirty=isDirty();
+ const when=t=>new Date(t).toLocaleString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+ const rows=plan.latest.slice().reverse().map(f=>{const own=f.d.device&&f.d.device.id===DEV.id;
+  return`<div class="row"><span class="k"><b>${esc(f.d.device&&f.d.device.name||'Älteres Format, ohne Gerätename')}</b>${own?' <span class="hint" style="margin:0">(dieses Gerät)</span>':''}<small>${when(f.t)} – ${(f.d.entries||[]).length} ${(f.d.entries||[]).length===1?'Eintrag':'Einträge'}${f.older?`, ${f.older} ältere Sicherung${f.older===1?'':'en'} übersprungen`:''}</small></span><span class="v">${f===newest?'<span class="rec">★ aktuellste</span>':''}</span></div>`}).join('');
+ const amp=dirty?`<div class="amp warn"><b>●</b><span>Auf diesem Gerät gibt es Änderungen seit dem letzten Abgleich${plan.localOnly?` – ${plan.localOnly} Eintr${plan.localOnly===1?'ag ist':'äge sind'} nur hier gespeichert`:''}. Beim Zusammenführen bleibt alles erhalten.</span></div>`
+  :`<div class="amp ok"><b>✓</b><span>Unkritisch: Auf diesem Gerät wurde seit dem letzten Abgleich nichts geändert.</span></div>`;
+ const n=plan.added+plan.changed+plan.removed;
+ const pl=(k,a,b)=>`<strong>${k} ${k===1?a:b}</strong>`;
+ const parts=[plan.added?pl(plan.added,'neuer Eintrag','neue Einträge'):'',plan.changed?pl(plan.changed,'geänderter Eintrag','geänderte Einträge'):'',plan.removed?pl(plan.removed,'Löschung','Löschungen'):'',plan.other?`${plan.other} Änderung${plan.other===1?'':'en'} bei Fahrzeugen, Personen, Favoriten oder Portalen`:''].filter(Boolean);
+ const what=parts.length?`<p>Aus den Sicherungen kommt: ${parts.join(', ')}.</p>`:`<p>Nichts Neues – dieses Gerät ist auf dem aktuellen Stand.</p>`;
+ openSheet(`<h2>Sicherungen abgleichen</h2>${tag('Gefundene Sicherungen',rows,plan.latest.length===1?'1 Gerät':plan.latest.length+' Geräte')}${amp}${what}
+ <div class="actions"><button type="button" class="btn secondary" data-close>Abbrechen</button><span class="sp"></span><button type="button" class="btn primary" id="syncGo">${n||plan.other?'Zusammenführen':'Abgleich abschließen'}</button></div>
+ <p class="hint" style="text-align:center;margin-top:14px"><button type="button" class="linkbtn" id="syncReplace">Stattdessen alles durch die aktuellste Sicherung ersetzen</button></p>`);
+ $('#syncGo').onclick=()=>applySync(plan);$('#syncReplace').onclick=()=>replaceWith(newest)}
+$('#syncFile').addEventListener('change',async ev=>{const list=[...ev.target.files];ev.target.value='';if(!list.length)return;
+ const files=[],bad=[];
+ for(const file of list){try{const d=JSON.parse(await file.text());if(!d||!Array.isArray(d.entries)||!Array.isArray(d.vehicles))throw 0;files.push({name:file.name,d,t:d.exported?Date.parse(d.exported):file.lastModified})}catch(e){bad.push(file.name)}}
+ if(bad.length)toast(`${bad.length} Datei${bad.length===1?' ist':'en sind'} keine Zapfwerk-Sicherung und ${bad.length===1?'wurde':'wurden'} übersprungen.`);
+ if(files.length)syncSheet(files)});
 
 /* ---------- Start ---------- */
 function go(tab){closeSheet();ui.tab=tab;render()}
 document.querySelectorAll('nav.tabs button').forEach(b=>b.onclick=()=>go(b.dataset.tab));
 $('#vf').onchange=e=>{ui.vf=e.target.value;render()};
 $('#fab').onclick=chooseNew;
-(async()=>{const d=await load();if(d)S=normalize(d);BG=await kvGet('bg');applyBg();try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}render()})();
+(async()=>{const d=await load();if(d)S=normalize(d);resetBaseline();DEV=await kvGet('device')||{id:uid(),name:''};if(!DEV.id)DEV.id=uid();BG=await kvGet('bg');applyBg();try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}render()})();
 </script>
 </body>
 </html>
