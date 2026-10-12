@@ -654,7 +654,7 @@
 /* ======================= Constants ======================= */
 
 /* Versionsnummer: wird bei jeder Lieferung hochgezählt und als dezente Fußzeile angezeigt (nicht Teil der Sicherung) */
-const APP_VERSION = "3.1";
+const APP_VERSION = "3.2";
 const APP_VERSION_DATE = "2026-10-12";
 
 const CATEGORIES = [
@@ -905,7 +905,12 @@ function renderPersistAlert(){
 
 /* Beim Verlassen/Ausblenden der Seite sofort schreiben, damit nichts im 60-ms-Puffer hängen bleibt */
 window.addEventListener("pagehide", function(){ flushPersist(); });
-document.addEventListener("visibilitychange", function(){ if (document.visibilityState === "hidden") flushPersist(); });
+document.addEventListener("visibilitychange", function(){
+  if (document.visibilityState === "hidden"){ flushPersist(); return; }
+  /* Beim Zurückkehren in die App: Tage neu berechnen, wenn inzwischen ein neuer Tag begonnen hat (nur wenn kein Formular offen ist) */
+  const today = todayISO();
+  if (state.lastRenderDay && state.lastRenderDay!==today && !document.querySelector(".overlay.open, .overlay.show") && state.contractsLoaded) render();
+});
 
 /* Lädt den gespeicherten Stand; übernimmt einmalig Daten aus der früheren localStorage-Version. */
 async function initStorage(){
@@ -1232,6 +1237,57 @@ function nextPaymentISO(c, fromISO){
   }
   return null;
 }
+/* Countdown in Tagen (Gerätezeit, keine Internetverbindung nötig) */
+function daysFromToday(iso){
+  return daysBetween(new Date(todayISO()+"T00:00:00"), new Date(iso+"T00:00:00"));
+}
+function daysPhrase(d){
+  return d===0 ? "heute" : (d===1 ? "in 1 Tag" : "in "+d+" Tagen");
+}
+function cardCountdownBadges(c){
+  if (c.status!=="aktiv") return "";
+  let out = "";
+  const cb = cancelByDate(c);
+  if (cb){
+    const d = daysFromToday(dateToISO(cb));
+    if (d<=90){
+      if (d<0) out += '<span class="badge badge-critical" title="Die Kündigungsfrist ist verstrichen">'+icon("warn")+' Kündigungsfrist überfällig</span>';
+      else out += '<span class="badge '+(d<=14?'badge-critical':(d<=60?'badge-warning':'badge-neutral'))+'" title="Kündigen bis '+formatDate(dateToISO(cb))+'">'+(d<=14?icon("warn")+' ':'')+'Kündigen '+daysPhrase(d)+'</span>';
+    }
+  }
+  if (c.frequency!=="monatlich"){
+    const np = nextPaymentISO(c);
+    if (np){
+      const d = daysFromToday(np);
+      if (d<=30) out += '<span class="badge '+(d<=0?'badge-critical':(d<=7?'badge-warning':'badge-neutral'))+'" title="Zahlung fällig am '+formatDate(np)+'">'+icon("card")+' Zahlung '+daysPhrase(d)+'</span>';
+    }
+  }
+  return out;
+}
+/* Resttage-Hinweise im offenen Vertragsformular (live aus den Eingabefeldern) */
+function updateCountdownHints(overlay){
+  function v(sel){ const el = overlay.querySelector(sel); return el ? el.value : ""; }
+  const tmp = {
+    paymentDate: v("#f-paymentdate"), frequency: v("#f-frequency"), endDate: v("#f-end"),
+    noticePeriodMonths: v("#f-notice")==="" ? null : Number(v("#f-notice")),
+    autoRenew: !!(overlay.querySelector("#f-autorenew") && overlay.querySelector("#f-autorenew").checked),
+    renewalTermMonths: v("#f-renewal-term")==="" ? "" : Number(v("#f-renewal-term"))
+  };
+  const pEl = overlay.querySelector("#payment-countdown");
+  if (pEl){
+    const np = nextPaymentISO(tmp);
+    pEl.textContent = np ? "Nächste Zahlung: "+formatDate(np)+" ("+daysPhrase(daysFromToday(np))+")" : "";
+  }
+  const cEl = overlay.querySelector("#cancel-countdown");
+  if (cEl){
+    const cb = cancelByDate(tmp);
+    if (!cb) cEl.textContent = "";
+    else {
+      const d = daysFromToday(dateToISO(cb));
+      cEl.textContent = "Nächste Kündigungsfrist: "+formatDate(dateToISO(cb))+(d<0 ? " (verstrichen)" : " ("+daysPhrase(d)+")");
+    }
+  }
+}
 function upcomingPayments(days){
   const today = todayISO();
   const t0 = new Date(today+"T00:00:00");
@@ -1404,6 +1460,7 @@ function setView(v){
 /* ======================= Master render ======================= */
 
 function render(){
+  state.lastRenderDay = todayISO();
   document.querySelectorAll(".nav-item, .bottom-nav button").forEach(function(el){
     el.classList.toggle("active", el.getAttribute("data-view")===state.view);
   });
@@ -1754,6 +1811,7 @@ const HELP_TOPICS = [
       '<li><strong>Anhänge nur im Vertrag:</strong> Die Vertragsliste zeigt keine Vorschaubilder mehr; Fotos und PDFs sind ausschließlich im geöffneten Vertrag sichtbar. Der Anhänge-Button heißt „Foto / Scan / Datei hinzufügen“.</li>'+
       '<li><strong>Neuer Name und neues Icon:</strong> aus „Vertragsordner“ wird „Vertragsraum“ mit dem Slogan „Verträge einfach im Blick“ (in der Seitenleiste am Mac/iPad quer) und neuem App-Icon (ein offener Raum um ein Dokument mit Haken). Ihre Daten und Sicherungen sind davon nicht betroffen; zu bereits angelegten Home-Bildschirm-Symbolen siehe „Auf dem iPad/iPhone als App nutzen“.</li>'+
       '<li><strong>Dokumente sortieren:</strong> Pfeile „nach oben / nach unten“ ändern die Reihenfolge angehängter Dokumente.</li>'+
+      '<li><strong>Countdown in Tagen:</strong> Auf der Vertragskarte erscheint ein farbiges Hinweisfeld „Kündigen in … Tagen“ (innerhalb von 90 Tagen vor der Kündigungsfrist) und „Zahlung in … Tagen“ (innerhalb von 30 Tagen, ohne monatliche Zahlungen). Farben: grau = noch Zeit, orange = bald, rot = dringend. Im geöffneten Vertrag stehen die Resttage direkt unter „Zahlung fällig am“ und „Kündigungsfrist“. Die Berechnung nutzt die Uhr Ihres Geräts, eine Internetverbindung ist nicht nötig.</li>'+
       '<li><strong>Auswertung „Nach Haushalt“:</strong> neue Kachelansicht in der Übersicht (bei mehreren Haushalten) mit den Jahreskosten je Haushalt; ein Klick öffnet dessen Verträge. Tipp: ein eigener Haushalt „Privat …“ mit nur einer Person trennt persönliche Ausgaben von den Haushaltskosten.</li>'+
       '<li><strong>Versionsnummer:</strong> Am Ende jeder Seite steht dezent die Version der App (z. B. „Version 3.0 · Stand 12.10.2026“). Daran sehen Sie, ob ein Gerät nach dem Aktualisieren wirklich die neue Fassung geladen hat; zeigt es noch eine ältere Nummer, die App schließen und neu öffnen bzw. die Seite in Safari neu laden.</li>'+
       '<li><strong>Zahlung fällig am:</strong> neues Feld im Vertrag, Sortierung „nach Fälligkeit“ in der Vertragsliste und auf der Übersicht eine Karte „Zahlungen in den nächsten 30 Tagen“ (ohne monatliche Zahlungen). CSV-Export und Druck enthalten „Nächste Zahlung“.</li>'+
@@ -2579,6 +2637,7 @@ function contractCardHTML(c){
         (c.nextDueDate ? '<span title="Nächster Termin">'+icon("calendar")+' Termin '+formatDate(c.nextDueDate)+'</span>' : '')+
         (c.autoRenew ? '<span title="Verlängert sich automatisch, wenn nicht rechtzeitig gekündigt">'+icon("refresh")+' automat. Verlängerung</span>' : '')+
         statusBadge+
+        cardCountdownBadges(c)+
         priceBadgeHTML(c)+
       '</div>'+
     '</div>'+
@@ -3233,7 +3292,7 @@ function contractModalHTML(c, isNew){
       '</div>'+
       '<div id="price-history-host"></div>'+
 
-      '<div class="field"><label for="f-paymentdate">Zahlung fällig am</label><input id="f-paymentdate" type="date" value="'+escapeHtml(c.paymentDate||"")+'"><span class="hint">Datum einer Fälligkeit (z. B. die nächste Abbuchung). Die weiteren Fälligkeiten rechnet die App aus dem Zahlungsrhythmus selbst fort – Sie müssen das Datum nicht jedes Jahr ändern.</span></div>'+
+      '<div class="field"><label for="f-paymentdate">Zahlung fällig am</label><input id="f-paymentdate" type="date" value="'+escapeHtml(c.paymentDate||"")+'"><span class="hint">Datum einer Fälligkeit (z. B. die nächste Abbuchung). Die weiteren Fälligkeiten rechnet die App aus dem Zahlungsrhythmus selbst fort – Sie müssen das Datum nicht jedes Jahr ändern.</span><span class="hint" id="payment-countdown" style="font-weight:600;"></span></div>'+
 
       '<div class="field"><label for="f-nextdue">Nächster Termin (z. B. Wartung, Prüfung)</label><input id="f-nextdue" type="date" value="'+escapeHtml(c.nextDueDate)+'"><span class="hint">Für Serviceverträge, die erst bei erbrachter Leistung bezahlt werden: Das Datum erscheint in den anstehenden Fristen auf der Übersicht.</span></div>'+
 
@@ -3242,7 +3301,7 @@ function contractModalHTML(c, isNew){
         '<div class="field"><label for="f-end">Vertragsende / Verlängerung</label><input id="f-end" type="date" value="'+escapeHtml(c.endDate)+'"></div>'+
       '</div>'+
 
-      '<div class="field"><label for="f-notice">Kündigungsfrist (Monate vor Vertragsende)</label><input id="f-notice" type="number" min="0" step="1" value="'+escapeHtml(c.noticePeriodMonths)+'"><span class="hint">Wird genutzt, um anstehende Fristen auf der Übersicht anzuzeigen.</span></div>'+
+      '<div class="field"><label for="f-notice">Kündigungsfrist (Monate vor Vertragsende)</label><input id="f-notice" type="number" min="0" step="1" value="'+escapeHtml(c.noticePeriodMonths)+'"><span class="hint">Wird genutzt, um anstehende Fristen auf der Übersicht anzuzeigen.</span><span class="hint" id="cancel-countdown" style="font-weight:600;"></span></div>'+
 
       '<div class="field"><label for="f-special-cancel">Sonderkündigungsrecht (nur Info)</label>'+
         '<input id="f-special-cancel" type="text" maxlength="200" placeholder="z. B. Ja – bei Beitragserhöhung" value="'+escapeHtml(c.specialCancel)+'">'+
@@ -3452,6 +3511,11 @@ function wireContractModal(overlay, source, isNew){
       overlay.querySelector("#renewal-term-field").style.display = autoRenewCheckbox.checked ? "" : "none";
     });
   }
+  ["#f-paymentdate","#f-frequency","#f-end","#f-notice","#f-autorenew","#f-renewal-term"].forEach(function(sel){
+    const el = overlay.querySelector(sel);
+    if (el){ el.addEventListener("input", function(){ updateCountdownHints(overlay); }); el.addEventListener("change", function(){ updateCountdownHints(overlay); }); }
+  });
+  updateCountdownHints(overlay);
 
   const portalBtn = overlay.querySelector("#open-portal-btn");
   if (portalBtn){
