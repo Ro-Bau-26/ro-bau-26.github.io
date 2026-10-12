@@ -235,7 +235,7 @@ details.paste textarea{margin-top:8px}
 
 <script>
 'use strict';
-const VERSION='1.24';
+const VERSION='1.25';
 const FUELS=[
  {id:'e5',label:'Super E5 (95)',unit:'L',g:'Kraftstoff'},
  {id:'e10',label:'Super E10',unit:'L',g:'Kraftstoff'},
@@ -252,6 +252,16 @@ const COUNTRIES=[['DE','Deutschland'],['AT','Österreich'],['CH','Schweiz'],['IT
 const CNAME=Object.fromEntries(COUNTRIES);
 const CATS=[['betriebsmittel','Betriebsmittel (Öl, AdBlue …)'],['waschwasser','Scheibenwaschwasser'],['waschstrasse','Waschstraße'],['pflege','Pflege & Polieren'],['zubehoer','Duftbaum & Kleinzubehör'],['parken','Parken'],['maut','Maut & Vignette'],['werkstatt','Werkstatt & Service'],['reifen','Reifen'],['sonstiges','Sonstiges']];
 const CAT=Object.fromEntries(CATS);
+const PAYS=[['bar','Bar'],['debit','Girocard / Bankomat'],['credit','Kreditkarte'],['fuelcard','Tankkarte'],['other','Sonstige']];
+const PAY=Object.fromEntries(PAYS);
+function payDetect(t){const L=String(t||'').toLowerCase();
+ if(/dkv|\buta\b|routex|tankkarte|shell ?card|aral ?card|esso ?card|bp ?plus|jet ?card|fleet ?card/.test(L))return'fuelcard';
+ const credit=/mastercard|\bvisa\b|amex|american express|kreditkarte|diners/.test(L),debit=/girocard|maestro|bankomat|v ?pay|debit|sepa|ec-karte|\bec\b|kartenzahlung/.test(L);
+ if(debit&&!(/mastercard|visa/.test(L)&&!/debit|girocard|maestro|bankomat|sepa/.test(L)))return'debit';if(credit)return'credit';
+ if(/\bbar\b|bargeld|gegeben|rückgeld|ruckgeld|wechselgeld/.test(L))return'bar';return null}
+function payField(vid,val){const v=veh(vid);return`<div id="payBox"${v&&v.business?'':' hidden'}><label>Bezahlt mit<select name="pay"><option value="">– bitte wählen –</option>${PAYS.map(([k,l])=>`<option value="${k}"${k===val?' selected':''}>${l}</option>`).join('')}</select></label></div>`}
+function wirePay(f){const upd=()=>{const v=veh(f.vehicleId.value);$('#payBox').hidden=!(v&&v.business)};f.vehicleId.addEventListener('change',()=>{upd();if(!f.pay.value){const l=S.meta.last[f.vehicleId.value]||{};if(l.pay)f.pay.value=l.pay}});upd()}
+const payRead=f=>{const v=veh(f.vehicleId.value);return v&&v.business&&f.pay.value?f.pay.value:undefined};
 const ICON={
  fuel:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="4" y="3" width="10" height="18" rx="2"/><path d="M6.5 7h5M14 9h2.5l2 2.5V18a1.5 1.5 0 0 1-3 0v-3H14"/></svg>',
  ev:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M13 2 5 13.5h6L10 22l8-11.5h-6z"/></svg>',
@@ -449,7 +459,7 @@ function viewVerlauf(){
 function row(e,D){
  const v=veh(e.vehicleId);const multi=S.vehicles.length>1;
  const where=[e.place].filter(Boolean).map(esc).join('');
- const sub=`<span>${fDate(e.date)}</span><span>${flag(e.country)} ${where||esc(CNAME[e.country]||'')}</span>${multi&&v?`<span>${esc(v.plate||v.name)}</span>`:''}`;
+ const sub=`<span>${fDate(e.date)}</span><span>${flag(e.country)} ${where||esc(CNAME[e.country]||'')}</span>${multi&&v?`<span>${esc(v.plate||v.name)}</span>`:''}${e.pay&&v&&v.business?`<span>${esc(PAY[e.pay]||'')}</span>`:''}`;
  if(e.type==='fuel'){const f=FUEL[e.fuel]||{label:'?',unit:'L'};const d=D.get(e.id)||{};const ev=f.unit==='kWh';
   const meta=[e.amount!=null?`<span>${f2.format(e.amount)} ${f.unit}${e.full?'':' (Teil)'}</span>`:'',
    d.up!=null?`<span>${f3.format(d.up)} €/${f.unit} ${delta(d.pDelta)}</span>`:'',
@@ -532,6 +542,10 @@ function viewAuswertung(){
   if(S.persons.length){const rows=[...S.persons,{id:null,name:'Ohne Person'}].map(p=>{const ids=S.vehicles.filter(v=>(v.personId||null)===p.id).map(v=>v.id);const st=stats(list.filter(e=>ids.includes(e.vehicleId)),D);return st.total?`<div class="row"><span class="k">${esc(p.name)}</span><span class="v">${eur(st.total)}</span></div>`:''}).join('');
    if(rows)h+=tag('Nach Person',rows)}}
  const cats=Object.entries(s.cats).sort((a,b)=>b[1]-a[1]);const max=cats.length?cats[0][1]:1;
+ const bizList=list.filter(e=>{const v=veh(e.vehicleId);return v&&v.business});
+ if(bizList.length){const by={};bizList.forEach(e=>{const k=e.pay||'none';by[k]=(by[k]||0)+total(e)});
+  const rows=[...PAYS.map(([k,l])=>[k,l]),['none','Ohne Angabe']].filter(([k])=>by[k]).map(([k,l])=>`<div class="row"><span class="k">${l}${k==='none'?'<small>bei betrieblichen Fahrzeugen bitte nachtragen</small>':''}</span><span class="v">${eur(by[k])}</span></div>`).join('');
+  h+=tag('Betrieblich – nach Zahlungsart',rows+`<div class="row"><span class="k"><b>Summe betrieblich</b></span><span class="v">${eur(bizList.reduce((a,e)=>a+total(e),0))}</span></div>`)}
  if(cats.length)h+=tag('Nach Art',cats.map(([k,val])=>{const isF=k.startsWith('fuel:');const f=isF?FUEL[k.slice(5)]:null;
   return`<div class="row" style="display:block"><div style="display:flex;justify-content:space-between"><span>${esc(isF?(f?f.label:'Kraftstoff'):(CAT[k]||k))}</span><span class="v">${eur(val)}</span></div><div class="bar ${isF?(f&&f.unit==='kWh'?'ev':''):'cost'}" style="width:${Math.max(2,val/max*100)}%"></div></div>`}).join(''));
  return h}
@@ -542,7 +556,7 @@ function viewFahrzeuge(){
  let h='';
  h+=S.vehicles.length?tag('Fahrzeuge',S.vehicles.map(v=>{const p=person(v.personId);const n=S.entries.filter(e=>e.vehicleId===v.id).length;
   const al=!!v.alias;
-  return`<div class="card vcard${v.archived?' arch':''}"><button class="vmain" onclick="toggleAlias('${v.id}',this)"${al?' aria-label="Zwischen Spitzname und Bezeichnung wechseln"':''}><span class="vname">${esc(al&&!ui.tech.has(v.id)?v.alias:v.name)}</span>${al?'<span class="swap" aria-hidden="true">⇄</span>':''}${plateLine(v)}<div class="hint">${p?esc(p.name)+' – ':''}${esc((FUEL[v.fuel]||{}).label||'')} – ${n} ${n===1?'Eintrag':'Einträge'}${v.archived?' – stillgelegt':''}</div></button><button class="vedit" onclick="vehicleForm('${v.id}')" aria-label="${esc(v.name)} bearbeiten"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></button></div>`}).join('')):tag('Fahrzeuge','<p class="hint">Noch kein Fahrzeug.</p>',0,1);
+  return`<div class="card vcard${v.archived?' arch':''}"><button class="vmain" onclick="toggleAlias('${v.id}',this)"${al?' aria-label="Zwischen Spitzname und Bezeichnung wechseln"':''}><span class="vname">${esc(al&&!ui.tech.has(v.id)?v.alias:v.name)}</span>${al?'<span class="swap" aria-hidden="true">⇄</span>':''}${plateLine(v)}<div class="hint">${p?esc(p.name)+' – ':''}${esc((FUEL[v.fuel]||{}).label||'')} – ${n} ${n===1?'Eintrag':'Einträge'}${v.business?' – betrieblich':''}${v.archived?' – stillgelegt':''}</div></button><button class="vedit" onclick="vehicleForm('${v.id}')" aria-label="${esc(v.name)} bearbeiten"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></button></div>`}).join('')):tag('Fahrzeuge','<p class="hint">Noch kein Fahrzeug.</p>',0,1);
  h+=`<button class="btn primary wide" onclick="vehicleForm()">Fahrzeug hinzufügen</button>`;
  h+=S.persons.length?tag('Personen',S.persons.map(p=>{const vs=S.vehicles.filter(v=>v.personId===p.id);
   return`<div class="card vcard"><button class="vmain" onclick="personForm('${p.id}')"><span class="vname">${esc(p.name)}</span><div class="hint">${vs.length?vs.map(v=>esc(v.alias||v.name)).join(', '):'Kein Fahrzeug zugeordnet'}</div></button><button class="vedit" onclick="personForm('${p.id}')" aria-label="${esc(p.name)} bearbeiten"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></button></div>`}).join('')):tag('Personen','<p class="hint">Noch keine Person. Jedes Fahrzeug kann einer Person zugeordnet werden – die Auswertung zeigt dann auch die Kosten je Person.</p>',0,1);
@@ -600,9 +614,9 @@ const HELP=`
 <p>„Stattdessen alles durch die aktuellste Sicherung ersetzen“ ist für den Notfall, etwa auf einem neuen Gerät oder um einen alten Stand wiederherzustellen. Änderungen, die nur auf diesem Gerät sind, gehen dabei verloren.</p>
 <p><strong>Empfohlener Ablauf:</strong> Vor dem Erfassen kurz abgleichen, nach dem Erfassen sichern. Dank Zusammenführen ist die Reihenfolge aber nicht mehr entscheidend.</p><p><strong>Erinnerung:</strong> Gibt es Änderungen und ist die letzte Sicherung älter als 30 Tage (oder gab es noch keine), erscheint oben im Verlauf das Schild „Zeit für eine Sicherung“ mit „Jetzt sichern“. „Später“ blendet es für 7 Tage aus. Ohne Änderungen seit der letzten Sicherung bleibt es weg. Die Erinnerung gilt je Gerät – sie hilft also auch auf dem iPhone, auf dem nicht so oft ans Sichern gedacht wird.</p></details>
 <details class="faq"><summary>Ältere Aufzeichnungen per CSV übernehmen</summary><p>Unter „Mehr“ › „CSV-Import“ die Vorlage herunterladen und in Numbers oder Excel öffnen. Eine Zeile pro Tankstopp oder Ausgabe. Die Beispielzeilen löschen oder einfach stehen lassen – Zeilen mit „Beispielzeile“ in der Notiz werden beim Import ignoriert. Danach als CSV exportieren (Numbers: Ablage › Exportieren › CSV) und mit „CSV importieren“ einlesen. Schreibt Numbers den Tabellennamen als erste Zeile mit hinein, ist das kein Problem – Zapfwerk sucht die Überschriften selbst. Vor dem Hinzufügen zeigt Zapfwerk, was erkannt wurde.</p>
-<ul><li><strong>Typ:</strong> Tanken oder Kosten</li><li><strong>Datum:</strong> TT.MM.JJJJ</li><li><strong>Fahrzeug:</strong> Kennzeichen, Spitzname oder Bezeichnung – das Fahrzeug muss in Zapfwerk angelegt sein</li><li><strong>Energie oder Art:</strong> beim Tanken z. B. Super E5, E10, Super Plus, Diesel, HVO, LPG, CNG, Strom AC, Strom DC; bei Kosten z. B. Waschstraße, Öl, AdBlue, Vignette, Parken, Werkstatt, Reifen</li><li><strong>Menge, Preis je Einheit, Betrag:</strong> mit Komma, zwei der drei genügen</li><li><strong>Vollgetankt:</strong> ja oder nein (leer = ja)</li><li><strong>Kilometerstand oder Tageskilometer:</strong> einer genügt</li><li><strong>Land:</strong> DE, AT, CH … oder ausgeschrieben</li></ul>
+<ul><li><strong>Typ:</strong> Tanken oder Kosten</li><li><strong>Datum:</strong> TT.MM.JJJJ</li><li><strong>Fahrzeug:</strong> Kennzeichen, Spitzname oder Bezeichnung – das Fahrzeug muss in Zapfwerk angelegt sein</li><li><strong>Energie oder Art:</strong> beim Tanken z. B. Super E5, E10, Super Plus, Diesel, HVO, LPG, CNG, Strom AC, Strom DC; bei Kosten z. B. Waschstraße, Öl, AdBlue, Vignette, Parken, Werkstatt, Reifen</li><li><strong>Menge, Preis je Einheit, Betrag:</strong> mit Komma, zwei der drei genügen</li><li><strong>Vollgetankt:</strong> ja oder nein (leer = ja)</li><li><strong>Kilometerstand oder Tageskilometer:</strong> einer genügt</li><li><strong>Land:</strong> DE, AT, CH … oder ausgeschrieben</li><li><strong>Bezahlt mit</strong> (nur bei betrieblichen Fahrzeugen): Bar, Girocard, Bankomat, Kreditkarte, Tankkarte</li></ul>
 <p>Die Einträge werden zu den vorhandenen hinzugefügt. Zeilen mit gleichem Fahrzeug, Datum, Typ und Betrag gelten als doppelt und werden übersprungen – ein versehentlich zweimal importierter Stapel richtet also keinen Schaden an. Tipp: Vor dem ersten Import trotzdem eine Sicherung exportieren.</p></details>
-<details class="faq"><summary>Kassenbeleg scannen</summary><p>Im Formular „Kassenbeleg übernehmen“ aufklappen und „Beleg fotografieren“ tippen. Das iPhone bietet dann „Foto aufnehmen“ oder die Auswahl aus der Fotos-App an. Zapfwerk liest den Beleg direkt auf dem Gerät, füllt die Felder aus und hängt das Foto gleichzeitig als Beleg an – ein Griff für beides.</p><p>Beim ersten Mal lädt Zapfwerk dafür einmalig die Texterkennung (etwa 5 MB) aus dem Internet; danach geht es schneller. Tipps: Beleg flach hinlegen, gutes Licht, Beleg füllt das Bild. Alternativ lässt sich unter „Oder Belegtext einfügen“ kopierter Text einsetzen.</p><p>Gesucht werden Datum, Menge, Preis je Einheit, Betrag, Kraftstoff, Tankstelle, Adresse (Ort, Straße, PLZ) und Land (z. B. an der UID-Nummer „ATU…“). Die Texterkennung passiert auf dem Gerät, das Foto wird nirgends hochgeladen. Belege sind sehr unterschiedlich aufgebaut – bitte die übernommenen Werte kurz prüfen.</p></details>
+<details class="faq"><summary>Kassenbeleg scannen</summary><p>Im Formular „Kassenbeleg übernehmen“ aufklappen und „Beleg fotografieren“ tippen. Das iPhone bietet dann „Foto aufnehmen“ oder die Auswahl aus der Fotos-App an. Zapfwerk liest den Beleg direkt auf dem Gerät, füllt die Felder aus und hängt das Foto gleichzeitig als Beleg an – ein Griff für beides.</p><p>Beim ersten Mal lädt Zapfwerk dafür einmalig die Texterkennung (etwa 5 MB) aus dem Internet; danach geht es schneller. Tipps: Beleg flach hinlegen, gutes Licht, Beleg füllt das Bild. Am besten erfassen, bevor der Bon gelocht oder gestempelt wird. Die Adresse kommt am zuverlässigsten über einen Favoriten. Alternativ lässt sich unter „Oder Belegtext einfügen“ kopierter Text einsetzen.</p><p>Statt eines Fotos geht auch ein PDF, etwa ein eingescannter Bon für den Steuerberater: Zapfwerk liest die erste Seite aus und hängt das PDF als Beleg an.</p><p>Gesucht werden Datum, Menge, Preis je Einheit, Betrag, Kraftstoff, Tankstelle, Adresse (Ort, Straße, PLZ) und Land (z. B. an der UID-Nummer „ATU…“). Die Texterkennung passiert auf dem Gerät, das Foto wird nirgends hochgeladen. Belege sind sehr unterschiedlich aufgebaut – bitte die übernommenen Werte kurz prüfen.</p></details>
 <details class="faq"><summary>Beleg anhängen (Foto oder PDF)</summary><p>Unten im Formular „Beleg anhängen“ tippen. Auf dem iPhone kannst du direkt ein Foto machen, eins aus der Fotos-App wählen oder ein PDF aus „Dateien“ nehmen. Fotos werden automatisch verkleinert, bleiben aber gut lesbar. Einträge mit Beleg tragen im Verlauf eine Büroklammer.</p><p>Ein Tipp auf das Vorschaubild öffnet den Beleg auf Bildschirmbreite eingepasst; ein Tipp auf den Beleg vergrößert die angetippte Stelle, ein weiterer Tipp passt ihn wieder ein. PDFs werden dafür in Bilder umgewandelt – das braucht beim ersten Öffnen eine Internetverbindung. über „Teilen“ lässt er sich weitergeben, drucken oder in „Dateien“ ablegen. Mit „Entfernen“ und „Speichern“ wird er wieder gelöst.</p><p>Belege sind Teil der Sicherung und kommen so auf das andere Gerät. Dadurch wird die Sicherungsdatei größer – pro Foto grob 150 bis 300 KB.</p></details>
 <details class="faq"><summary>Günstige Tankstelle finden</summary><p>Beim gelben + gibt es unter „Preise vergleichen“ Knöpfe für Preisportale je Land. Ein Tipp öffnet das Portal in Safari; dort Standort und Sorte wählen. Vorbelegt sind der ADAC (Deutschland, amtliche Daten der Markttransparenzstelle), Mehr-Tanken Ladesäulen (Ladetarife für E-Autos), der Spritpreisrechner der E-Control (Österreich) und das Osservaprezzi des italienischen Ministeriums.</p><p>Unter „Mehr“ › „Preisportale“ lassen sich Portale ändern, löschen oder neu anlegen – mit Land, Name und Internetadresse. Die Portale sind Teil der Sicherung. Zapfwerk übergibt keinen Standort an das Portal und übernimmt keine Preise automatisch.</p></details>
 <details class="faq"><summary>Adresse eingeben</summary><p>Alles in eine Zeile, durch Kommas getrennt, z. B. „Kufstein, Hauptstraße 5, 6330“. Zapfwerk speichert Ort, Straße und PLZ getrennt; unter dem Feld steht, wie es aufgeteilt wurde. Die Reihenfolge ist egal: Die PLZ erkennt die App an den Ziffern, die Straße an der Hausnummer. Der Belegscan füllt die Adresse mit aus.</p></details>
@@ -617,8 +631,9 @@ const HELP=`
 <details class="faq"><summary>Hintergrundbild</summary><p>Unter „Mehr“ › „Hintergrundbild“ ein Foto auswählen. Es erscheint nur im Hellmodus hinter den Schildern; im Dunkelmodus bleibt der dunkle Hintergrund. Das Bild wird verkleinert und nur auf diesem Gerät gespeichert – es ist nicht Teil der JSON-Sicherung, damit die Datei klein bleibt. Auf jedem Gerät kann also ein anderes Bild stehen. Ruhige, helle Motive wirken am besten.</p></details>
 <details class="faq"><summary>Jahrestag der Zulassung</summary><p>Am Jahrestag der Zulassung erscheint oben im Verlauf ein Jubiläums-Schild mit kurzem Funkeln. Grundlage ist das Datum „Zugelassen auf uns seit“ (Feld I im Fahrzeugschein) – bei einem Gebrauchten ist das der Tag, an dem das Auto zu euch kam. Ist es nicht eingetragen, nimmt Zapfwerk die Erstzulassung (Feld B).</p><p>Die Zahlen (km, getankte Menge, Ø Verbrauch) stammen aus den zwölf Monaten vor dem Jahrestag, soweit sie in Zapfwerk erfasst sind. Im 1., 3., 5. und 10. Jahr sowie danach alle fünf Jahre gibt es einen eigenen Text. Das Schild bleibt eine Woche stehen, falls die App am Tag selbst nicht geöffnet wird, und verschwindet mit „Danke!“. Eine Mitteilung bei geschlossener App ist bei einer Web-App nicht möglich.</p></details>
 <details class="faq"><summary>Kilometer laut Versicherung</summary><p>Viele Kfz-Versicherungen rechnen nach der jährlichen Fahrleistung. Trag sie im Fahrzeug unter „Fahrzeugdaten und Versicherung“ ein, zusammen mit dem Beginn des Versicherungsjahres (steht im Versicherungsschein, oft der 1. Januar). In der Auswertung erscheint dann das Schild „Versicherung“: gefahrene Kilometer im laufenden Versicherungsjahr, wie viele noch möglich sind und eine Hochrechnung bis zum Ende des Versicherungsjahres.</p><p>Die Tankanzeige füllt sich gelb mit den gefahrenen Kilometern; hell gelb ist die Hochrechnung. Grün ✓ = passt mit Luft, gelb ● = ab 90 % wird es knapp, rot ▲ = die Hochrechnung liegt über dem Tarif – dann die Versicherung rechtzeitig informieren. Die Hochrechnung erscheint erst nach einem Monat Daten. Grundlage sind die Kilometerstände der Tankstopps; liegt keiner genau am Stichtag, schätzt Zapfwerk den Stand aus den Tankstopps davor und danach. Bei „Gesamt“, „Dieses Jahr“ und „Letzte 12 Monate“ zeigt das Schild das laufende Versicherungsjahr. Bei „Vorjahr“ zeigt es das vorherige, abgeschlossene Versicherungsjahr mit dem Ergebnis: im Tarif geblieben oder darüber. Sind für ein Versicherungsjahr keine Kilometerstände erfasst, steht das dort statt einer Zahl; ist es nur teilweise erfasst, wird darauf hingewiesen.</p></details>
+<details class="faq"><summary>Betrieblich genutztes Fahrzeug (Zahlungsart)</summary><p>Im Fahrzeug „Betrieblich genutzt“ anhaken. Dann erscheint bei Tankstopps und Kosten dieses Fahrzeugs das Feld „Bezahlt mit“: Bar, Girocard / Bankomat, Kreditkarte, Tankkarte oder Sonstige. Es wird vom letzten Eintrag des Fahrzeugs vorbelegt und beim Auslesen eines Belegs automatisch erkannt (z. B. „girocard“, „SEPA“, „Bankomat“ → Girocard / Bankomat; „Mastercard“, „Visa“ → Kreditkarte; „Bar“, „Rückgeld“ → Bar).</p><p>Die Auswertung zeigt im Schild „Betrieblich – nach Zahlungsart“ die Summen getrennt nach Bar und Karte – praktisch für Kassenbuch und Bankabgleich in der Buchhaltung. Kartennummern werden nie gespeichert, nur die Art der Zahlung. Im CSV-Import heißt die Spalte „Bezahlt mit“.</p></details>
 <details class="faq"><summary>Fahrzeug verkauft</summary><p>Im Fahrzeug „Stillgelegt“ anhaken. Es verschwindet aus der Auswahl beim Erfassen, die Einträge bleiben in der Auswertung erhalten. Löschen geht nur, solange keine Einträge vorhanden sind.</p></details>
-<details class="faq"><summary>Änderungen</summary><ul><li><strong>1.24</strong> – Sicherung und Abgleich: Gerätename, Sicherungen mehrerer Geräte auf einmal abgleichen mit Übersicht (★ aktuellste) und Ampel, Zusammenführen statt Ersetzen – neue, geänderte und gelöschte Einträge sowie Belege aller Geräte bleiben erhalten.</li><li><strong>1.23</strong> – Kassenbeleg scannen neu: „Beleg fotografieren“ liest den Beleg mit eigener Texterkennung auf dem Gerät aus, füllt die Felder und hängt das Foto als Beleg an. Unabhängig von der iOS-Funktion „Text scannen“.</li><li><strong>1.22</strong> – Plausibilitätsprüfung: auffällig niedrige oder hohe Verbrauchswerte werden mit Erklärung gemeldet („Bitte prüfen“), lassen sich bearbeiten oder als geklärt abschließen und zählen bis dahin nicht als Bestwert.</li><li><strong>1.21</strong> – PDF-Belege werden auf dem iPhone vollständig und auf Bildschirmbreite eingepasst angezeigt; Tippen vergrößert die angetippte Stelle (auch bei Fotos).</li><li><strong>1.20</strong> – Schild „Versicherung“ (vorher „Versicherung – Kilometer“) folgt dem gewählten Zeitraum: bei „Vorjahr“ das abgeschlossene Versicherungsjahr mit Ergebnis, ohne Daten ein klarer Hinweis statt Zahlen aus dem laufenden Jahr.</li><li><strong>1.19</strong> – Erinnerung an die Sicherung: Schild im Verlauf, wenn es Änderungen gibt und die letzte Sicherung älter als 30 Tage ist; „Später“ für 7 Tage. Eine abgebrochene Sicherung zählt nicht mehr als erledigt.</li><li><strong>1.18</strong> – Versicherung – Kilometer: vereinbarte Jahresfahrleistung und Beginn des Versicherungsjahres beim Fahrzeug; Tankanzeige mit gefahrenen und noch möglichen Kilometern und Hochrechnung in der Auswertung.</li><li><strong>1.17</strong> – CSV-Import: Titelzeilen vor den Spaltenüberschriften (z. B. der Tabellenname aus Numbers) werden übersprungen.</li><li><strong>1.16</strong> – Preise vergleichen: Preisportale je Land beim gelben + (vorbelegt: ADAC, Mehr-Tanken Ladesäulen, E-Control-Spritpreisrechner, Osservaprezzi Italien), unter „Mehr“ frei änderbar.</li><li><strong>1.15</strong> – Beleg anhängen: Foto oder PDF der Quittung am Tankstopp oder an sonstigen Kosten, Büroklammer im Verlauf, Ansicht in voller Größe, Belege in der Sicherung enthalten.</li><li><strong>1.14</strong> – CSV-Import für ältere Aufzeichnungen mit herunterladbarer Vorlage, Vorschau vor dem Hinzufügen und Schutz vor doppelten Einträgen.</li><li><strong>1.13</strong> – Jahrestag der Zulassung: neues Feld „Zugelassen auf uns seit (Feld I)“, Jubiläums-Schild mit Funkeln und den Zahlen des letzten Jahres im Verlauf.</li><li><strong>1.12</strong> – Personen wie Fahrzeuge: eigene Liste mit zugeordneten Fahrzeugen und Stift zum Bearbeiten, darunter der Knopf „Person hinzufügen“.</li><li><strong>1.11</strong> – Kennzeichen steht in der Fahrzeugliste und der Auswertung jetzt in einer eigenen, leicht eingerückten Zeile unter dem Namen.</li><li><strong>1.10</strong> – Kachel „Kosten gesamt“: Gesamtkosten und Kosten je km rechtsbündig wie an der Zapfsäule, gefahrene km bleiben links.</li><li><strong>1.9</strong> – Eigenes Hintergrundbild im Hellmodus (unter „Mehr“), wird nur auf dem Gerät gespeichert.</li><li><strong>1.8</strong> – Slogan „Jeder Tropfen auf der Liste.“ unter dem Namen; das Zählwerk der Gesamtkosten in sanfterem Espressobraun statt Schwarz.</li><li><strong>1.7</strong> – Verbrauchstrend als Abzeichen (▲ höher / ▼ niedriger als beim letzten Volltanken); ★ Bestwert für den niedrigsten Verbrauch je Fahrzeug im Verlauf und neues Schild „Bestwerte“ in der Auswertung.</li><li><strong>1.6</strong> – Preisschild-Look in allen Ansichten: Verlauf (je Monat ein Schild mit Monatssumme), Fahrzeuge, Personen, Sicherung und Hilfe.</li><li><strong>1.5</strong> – Auswertung im Preisschild-Look: Jeder Bereich (Tanken und Laden, nach Fahrzeug, Person und Art) steht in einem eigenen gerahmten Schild.</li><li><strong>1.4</strong> – Fahrzeugdaten: HSN, TSN, Leistung (kW mit PS-Umrechnung), Erstzulassung und FIN mit Plausibilitätsprüfung.</li><li><strong>1.3</strong> – Spitzname fürs Fahrzeug; in der Fahrzeugliste per Tipp zwischen Spitzname und Bezeichnung wechseln. Fahrzeug bearbeiten jetzt über den Stift rechts.</li><li><strong>1.2</strong> – Adresse in einer Zeile (Ort, Straße, PLZ mit Komma getrennt, wird getrennt gespeichert); Favoriten für Tankstellen und Anbieter mit Schnellwahl; Belegscan übernimmt auch Straße und PLZ. Im Formular stehen Land und Tankstelle jetzt nebeneinander, die Adresse hat die volle Breite.</li><li><strong>1.1</strong> – Neues App-Icon im 70er-Stil, auch oben neben dem Namen. Damit das Icon auf dem Home-Bildschirm erscheint, Zapfwerk dort einmal entfernen und neu hinzufügen – die Daten bleiben nur erhalten, wenn vorher eine Sicherung exportiert wurde.</li><li><strong>1.0</strong> – Erste Version: Tankstopps (Kraftstoff, Gas, Strom), sonstige Kosten, mehrere Fahrzeuge mit Kennzeichen und Person, Länderwahl, Kilometer-Automatik, Verbrauch mit Veränderung in %, Auswertung nach Fahrzeug, Person und Art, Belegübernahme per Texterkennung, JSON-Sicherung.</li></ul></details>`;
+<details class="faq"><summary>Änderungen</summary><ul><li><strong>1.25</strong> – Betrieblich genutzte Fahrzeuge: Zahlungsart je Eintrag (automatisch vom Beleg erkannt) und Auswertung nach Bar und Karte. Belege als PDF lassen sich jetzt ebenfalls auslesen.</li><li><strong>1.24</strong> – Sicherung und Abgleich: Gerätename, Sicherungen mehrerer Geräte auf einmal abgleichen mit Übersicht (★ aktuellste) und Ampel, Zusammenführen statt Ersetzen – neue, geänderte und gelöschte Einträge sowie Belege aller Geräte bleiben erhalten.</li><li><strong>1.23</strong> – Kassenbeleg scannen neu: „Beleg fotografieren“ liest den Beleg mit eigener Texterkennung auf dem Gerät aus, füllt die Felder und hängt das Foto als Beleg an. Unabhängig von der iOS-Funktion „Text scannen“.</li><li><strong>1.22</strong> – Plausibilitätsprüfung: auffällig niedrige oder hohe Verbrauchswerte werden mit Erklärung gemeldet („Bitte prüfen“), lassen sich bearbeiten oder als geklärt abschließen und zählen bis dahin nicht als Bestwert.</li><li><strong>1.21</strong> – PDF-Belege werden auf dem iPhone vollständig und auf Bildschirmbreite eingepasst angezeigt; Tippen vergrößert die angetippte Stelle (auch bei Fotos).</li><li><strong>1.20</strong> – Schild „Versicherung“ (vorher „Versicherung – Kilometer“) folgt dem gewählten Zeitraum: bei „Vorjahr“ das abgeschlossene Versicherungsjahr mit Ergebnis, ohne Daten ein klarer Hinweis statt Zahlen aus dem laufenden Jahr.</li><li><strong>1.19</strong> – Erinnerung an die Sicherung: Schild im Verlauf, wenn es Änderungen gibt und die letzte Sicherung älter als 30 Tage ist; „Später“ für 7 Tage. Eine abgebrochene Sicherung zählt nicht mehr als erledigt.</li><li><strong>1.18</strong> – Versicherung – Kilometer: vereinbarte Jahresfahrleistung und Beginn des Versicherungsjahres beim Fahrzeug; Tankanzeige mit gefahrenen und noch möglichen Kilometern und Hochrechnung in der Auswertung.</li><li><strong>1.17</strong> – CSV-Import: Titelzeilen vor den Spaltenüberschriften (z. B. der Tabellenname aus Numbers) werden übersprungen.</li><li><strong>1.16</strong> – Preise vergleichen: Preisportale je Land beim gelben + (vorbelegt: ADAC, Mehr-Tanken Ladesäulen, E-Control-Spritpreisrechner, Osservaprezzi Italien), unter „Mehr“ frei änderbar.</li><li><strong>1.15</strong> – Beleg anhängen: Foto oder PDF der Quittung am Tankstopp oder an sonstigen Kosten, Büroklammer im Verlauf, Ansicht in voller Größe, Belege in der Sicherung enthalten.</li><li><strong>1.14</strong> – CSV-Import für ältere Aufzeichnungen mit herunterladbarer Vorlage, Vorschau vor dem Hinzufügen und Schutz vor doppelten Einträgen.</li><li><strong>1.13</strong> – Jahrestag der Zulassung: neues Feld „Zugelassen auf uns seit (Feld I)“, Jubiläums-Schild mit Funkeln und den Zahlen des letzten Jahres im Verlauf.</li><li><strong>1.12</strong> – Personen wie Fahrzeuge: eigene Liste mit zugeordneten Fahrzeugen und Stift zum Bearbeiten, darunter der Knopf „Person hinzufügen“.</li><li><strong>1.11</strong> – Kennzeichen steht in der Fahrzeugliste und der Auswertung jetzt in einer eigenen, leicht eingerückten Zeile unter dem Namen.</li><li><strong>1.10</strong> – Kachel „Kosten gesamt“: Gesamtkosten und Kosten je km rechtsbündig wie an der Zapfsäule, gefahrene km bleiben links.</li><li><strong>1.9</strong> – Eigenes Hintergrundbild im Hellmodus (unter „Mehr“), wird nur auf dem Gerät gespeichert.</li><li><strong>1.8</strong> – Slogan „Jeder Tropfen auf der Liste.“ unter dem Namen; das Zählwerk der Gesamtkosten in sanfterem Espressobraun statt Schwarz.</li><li><strong>1.7</strong> – Verbrauchstrend als Abzeichen (▲ höher / ▼ niedriger als beim letzten Volltanken); ★ Bestwert für den niedrigsten Verbrauch je Fahrzeug im Verlauf und neues Schild „Bestwerte“ in der Auswertung.</li><li><strong>1.6</strong> – Preisschild-Look in allen Ansichten: Verlauf (je Monat ein Schild mit Monatssumme), Fahrzeuge, Personen, Sicherung und Hilfe.</li><li><strong>1.5</strong> – Auswertung im Preisschild-Look: Jeder Bereich (Tanken und Laden, nach Fahrzeug, Person und Art) steht in einem eigenen gerahmten Schild.</li><li><strong>1.4</strong> – Fahrzeugdaten: HSN, TSN, Leistung (kW mit PS-Umrechnung), Erstzulassung und FIN mit Plausibilitätsprüfung.</li><li><strong>1.3</strong> – Spitzname fürs Fahrzeug; in der Fahrzeugliste per Tipp zwischen Spitzname und Bezeichnung wechseln. Fahrzeug bearbeiten jetzt über den Stift rechts.</li><li><strong>1.2</strong> – Adresse in einer Zeile (Ort, Straße, PLZ mit Komma getrennt, wird getrennt gespeichert); Favoriten für Tankstellen und Anbieter mit Schnellwahl; Belegscan übernimmt auch Straße und PLZ. Im Formular stehen Land und Tankstelle jetzt nebeneinander, die Adresse hat die volle Breite.</li><li><strong>1.1</strong> – Neues App-Icon im 70er-Stil, auch oben neben dem Namen. Damit das Icon auf dem Home-Bildschirm erscheint, Zapfwerk dort einmal entfernen und neu hinzufügen – die Daten bleiben nur erhalten, wenn vorher eine Sicherung exportiert wurde.</li><li><strong>1.0</strong> – Erste Version: Tankstopps (Kraftstoff, Gas, Strom), sonstige Kosten, mehrere Fahrzeuge mit Kennzeichen und Person, Länderwahl, Kilometer-Automatik, Verbrauch mit Veränderung in %, Auswertung nach Fahrzeug, Person und Art, Belegübernahme per Texterkennung, JSON-Sicherung.</li></ul></details>`;
 
 /* ---------- Sheet ---------- */
 function openSheet(html){$('#panel').innerHTML=html;$('#sheet').hidden=false;document.body.style.overflow='hidden';$('#panel').querySelectorAll('[data-close]').forEach(b=>b.onclick=closeSheet)}
@@ -629,8 +644,8 @@ function actions(del){return`<div class="actions">${del?'<button type="button" c
 function vehicleOptions(sel){const list=S.vehicles.filter(v=>!v.archived||v.id===sel);return list.map(v=>`<option value="${v.id}"${v.id===sel?' selected':''}>${esc(vText(v))}</option>`).join('')}
 function countryOptions(sel){return COUNTRIES.map(([c,n])=>`<option value="${c}"${c===sel?' selected':''}>${flag(c)} ${n}</option>`).join('')}
 function fuelOptions(sel){return['Kraftstoff','Gas','Strom'].map(g=>`<optgroup label="${g}">${FUELS.filter(f=>f.g===g).map(f=>`<option value="${f.id}"${f.id===sel?' selected':''}>${f.label}</option>`).join('')}</optgroup>`).join('')}
-function scanBox(){return`<details class="scan"><summary>Kassenbeleg übernehmen</summary><p class="hint">Beleg fotografieren oder ein Foto wählen. Zapfwerk liest die Werte aus und hängt das Foto als Beleg an.</p>
-<button type="button" class="btn primary wide" id="ocrBtn">Beleg fotografieren</button><input type="file" id="ocrFile" accept="image/*" hidden>
+function scanBox(){return`<details class="scan"><summary>Kassenbeleg übernehmen</summary><p class="hint">Beleg fotografieren, ein Foto oder ein PDF wählen. Zapfwerk liest die Werte aus und hängt den Beleg an.</p>
+<button type="button" class="btn primary wide" id="ocrBtn">Beleg fotografieren oder PDF wählen</button><input type="file" id="ocrFile" accept="image/*,application/pdf" hidden>
 <p class="hint" id="parseInfo" aria-live="polite"></p>
 <details class="paste"><summary>Oder Belegtext einfügen</summary><textarea name="receipt" rows="4" placeholder="Belegtext"></textarea><button type="button" class="btn secondary wide" id="parse">Felder übernehmen</button></details></details>`}
 /* ---------- Texterkennung (auf dem Gerät) ---------- */
@@ -641,20 +656,28 @@ async function ocrWorker(){if(TESS_W)return TESS_W;
  TESS_W=(async()=>{if(!window.Tesseract)await loadScript(TESS+'tesseract.js@5.1.1/dist/tesseract.min.js');
   return window.Tesseract.createWorker('deu',1,{workerPath:TESS+'tesseract.js@5.1.1/dist/worker.min.js',corePath:TESS+'tesseract.js-core@5.1.1',langPath:TESS+'@tesseract.js-data/deu/4.0.0_best_int',
    logger:m=>{if(OCR_CB)OCR_CB(m)}})})().catch(e=>{TESS_W=null;throw e});return TESS_W}
-function ocrPrep(data){return new Promise((res,rej)=>{const img=new Image();img.onload=()=>{const sc=Math.min(1,1600/img.width);const c=document.createElement('canvas');c.width=Math.round(img.width*sc);c.height=Math.round(img.height*sc);
- const g=c.getContext('2d');g.drawImage(img,0,0,c.width,c.height);const d=g.getImageData(0,0,c.width,c.height),px=d.data;let lo=255,hi=0;
- for(let i=0;i<px.length;i+=4){const y=.299*px[i]+.587*px[i+1]+.114*px[i+2];px[i]=y;if(y<lo)lo=y;if(y>hi)hi=y}
- const k=255/Math.max(40,hi-lo);for(let i=0;i<px.length;i+=4){const y=Math.max(0,Math.min(255,(px[i]-lo)*k));px[i]=px[i+1]=px[i+2]=y}
+function ocrPrep(data){return new Promise((res,rej)=>{const img=new Image();img.onload=()=>{const sc=Math.min(1,1800/img.width);const c=document.createElement('canvas');const w=c.width=Math.round(img.width*sc),h=c.height=Math.round(img.height*sc);
+ const g=c.getContext('2d');g.drawImage(img,0,0,w,h);const d=g.getImageData(0,0,w,h),px=d.data,n=w*h;const Y=new Float32Array(n);for(let i=0;i<n;i++)Y[i]=.299*px[4*i]+.587*px[4*i+1]+.114*px[4*i+2];
+ // adaptiver Schwellwert: entfernt durchscheinende Rückseite, Stempel und Schatten
+ const I=new Float64Array((w+1)*(h+1));for(let y=0;y<h;y++){let r=0;for(let x=0;x<w;x++){r+=Y[y*w+x];I[(y+1)*(w+1)+x+1]=I[y*(w+1)+x+1]+r}}
+ const R=Math.max(8,Math.round(w/16));for(let y=0;y<h;y++){const y0=Math.max(0,y-R),y1=Math.min(h-1,y+R);for(let x=0;x<w;x++){const x0=Math.max(0,x-R),x1=Math.min(w-1,x+R);
+  const s=I[(y1+1)*(w+1)+x1+1]-I[y0*(w+1)+x1+1]-I[(y1+1)*(w+1)+x0]+I[y0*(w+1)+x0];const v=Y[y*w+x]<s/((x1-x0+1)*(y1-y0+1))*.85?0:255;const q=4*(y*w+x);px[q]=px[q+1]=px[q+2]=v}}
  g.putImageData(d,0,0);res(c)};img.onerror=()=>rej(new Error('Bild'));img.src=data})}
+async function pdfFirstPage(data){const lib=await loadPdfJs();const bin=atob(data.split(',')[1]);const u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);
+ const doc=await lib.getDocument({data:u}).promise;const page=await doc.getPage(1);const v0=page.getViewport({scale:1});const sc=Math.min(1800/v0.width,Math.sqrt(12e6/(v0.width*v0.height)));const vp=page.getViewport({scale:sc});
+ const c=document.createElement('canvas');c.width=Math.round(vp.width);c.height=Math.round(vp.height);const g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,c.width,c.height);
+ await page.render({canvasContext:g,viewport:vp}).promise;return c.toDataURL('image/jpeg',.9)}
 function wireOcr(f,R){const info=$('#parseInfo');
  $('#ocrBtn').onclick=()=>$('#ocrFile').click();
  $('#ocrFile').onchange=async ev=>{const file=ev.target.files[0];ev.target.value='';if(!file)return;const btn=$('#ocrBtn');
-  let data;try{data=await shrinkImage(file,1800,.8)}catch(e){info.textContent='Das Foto konnte nicht gelesen werden.';return}
-  R.setImage(data);btn.disabled=true;info.textContent='Texterkennung wird vorbereitet …';
+  const isPdf=file.type==='application/pdf'||/\.pdf$/i.test(file.name);let data,img;
+  try{if(isPdf){if(file.size>8*1048576){info.textContent='PDF ist zu groß (max. 8 MB).';return}data=await fileToDataURL(file);R.setPdf(data)}else{data=await shrinkImage(file,1800,.8);R.setImage(data);img=data}}
+  catch(e){info.textContent=isPdf?'Das PDF konnte nicht gelesen werden.':'Das Foto konnte nicht gelesen werden.';return}
+  btn.disabled=true;info.textContent='Texterkennung wird vorbereitet …';
   try{OCR_CB=m=>{if(!$('#parseInfo'))return;if(m.status==='recognizing text')info.textContent=`Beleg wird gelesen … ${Math.round(m.progress*100)} %`;else if(/load|init/.test(m.status))info.textContent='Texterkennung wird geladen …'};
-   const w=await ocrWorker();const c=await ocrPrep(data);const out=await w.recognize(c);OCR_CB=null;
+   if(isPdf)img=await pdfFirstPage(data);const w=await ocrWorker();const c=await ocrPrep(img);const out=await w.recognize(c);OCR_CB=null;
    if(!$('#parseInfo'))return;f.receipt.value=out.data.text||'';$('#parse').click()}
-  catch(e){OCR_CB=null;if($('#parseInfo'))info.textContent='Die Texterkennung braucht beim ersten Mal eine Internetverbindung. Das Foto ist als Beleg angehängt – Werte bitte von Hand eintragen.'}
+  catch(e){OCR_CB=null;if($('#parseInfo'))info.textContent='Die Texterkennung braucht beim ersten Mal eine Internetverbindung. Der Beleg ist angehängt – Werte bitte von Hand eintragen.'}
   finally{if($('#ocrBtn'))btn.disabled=false}}}
 
 function chooseNew(){
@@ -725,7 +748,8 @@ function wireReceipt(e){
    const size=Math.round((data.length-data.indexOf(',')-1)*3/4);state={meta:{type,size,added:new Date().toISOString()},data,changed:true};draw()}
   catch(err){toast('Beleg konnte nicht gelesen werden.')}};
  draw();
- return{setImage(data){const size=Math.round((data.length-data.indexOf(',')-1)*3/4);state={meta:{type:'image',size,added:new Date().toISOString()},data,changed:true};draw()},
+ return{setPdf(data){const size=Math.round((data.length-data.indexOf(',')-1)*3/4);state={meta:{type:'pdf',size,added:new Date().toISOString()},data,changed:true};draw()},
+ setImage(data){const size=Math.round((data.length-data.indexOf(',')-1)*3/4);state={meta:{type:'image',size,added:new Date().toISOString()},data,changed:true};draw()},
  commit(o){if(!state.changed){if(e.receipt)o.receipt=e.receipt;return}
   if(state.meta){o.receipt=state.meta;kvSet('rc:'+o.id,state.data).then(ok=>{if(!ok)toast('Beleg konnte nicht gespeichert werden.')})}
   else{delete o.receipt;kvSet('rc:'+o.id,null)}}}}
@@ -764,7 +788,7 @@ function viewReceipt(data,meta,name){
 function fuelForm(e){
  const isNew=!e;
  if(isNew){const vid=defaultVehicle();const last=S.meta.last[vid]||{};const v=veh(vid)||{};
-  e={type:'fuel',vehicleId:vid,date:todayISO(),fuel:last.fuel||v.fuel||'e5',full:true,country:last.country||'DE',station:last.station||'',place:last.place||'',street:last.street||'',zip:last.zip||''}}
+  e={type:'fuel',vehicleId:vid,date:todayISO(),fuel:last.fuel||v.fuel||'e5',full:true,country:last.country||'DE',station:last.station||'',place:last.place||'',street:last.street||'',zip:last.zip||'',pay:last.pay||''}}
  openSheet(`<form id="f" autocomplete="off"><h2>${isNew?'Tanken oder Laden':'Tankstopp bearbeiten'}</h2>${scanBox()}<div id="favBox"></div>
  <label>Fahrzeug<select name="vehicleId">${vehicleOptions(e.vehicleId)}</select></label>
  <div class="grid2"><label>Datum<input type="date" name="date" value="${e.date}" required></label><label>Energie<select name="fuel">${fuelOptions(e.fuel)}</select></label></div>
@@ -773,6 +797,7 @@ function fuelForm(e){
  <div class="grid2"><label>Kilometerstand<input name="odometer" inputmode="numeric" value="${fin(e.odometer)}"></label><label>Tageskilometer<input name="tripKm" inputmode="decimal" value="${fin(e.tripKm)}"></label></div>
  <p class="hint" id="odoHint"></p>
  ${placeFields(e,'Tankstelle / Anbieter')}
+ ${payField(e.vehicleId,e.pay)}
  <label>Notiz<input name="note" value="${esc(e.note)}"></label>
  ${receiptField()}
  ${actions(!isNew)}</form>`);
@@ -798,43 +823,44 @@ function fuelForm(e){
  $('#parse').onclick=()=>{const r=parseReceipt(f.receipt.value);
   if(r.date)f.date.value=r.date;if(r.fuel){f.fuel.value=r.fuel;setUnit()}
   if(r.amount!=null)f.amount.value=fin(r.amount);if(r.unitPrice!=null)f.unitPrice.value=fin(r.unitPrice);if(r.total!=null)f.total.value=fin(r.total);
-  P.apply(r);
+  P.apply(r);if(r.pay&&f.pay){const vv=veh(f.vehicleId.value);if(vv&&vv.business)f.pay.value=r.pay;else r.found=r.found.filter(x=>x!=='Zahlungsart')}
   calc();odo();$('#parseInfo').textContent=r.found.length?'Übernommen: '+r.found.join(', ')+'. Bitte kurz prüfen.':'Nichts erkannt – bitte Werte von Hand eintragen.'};
- wireOcr(f,R);
+ wireOcr(f,R);wirePay(f);
  if(!isNew)$('#del').onclick=()=>delEntry(e.id);
  f.onsubmit=ev=>{ev.preventDefault();calc();
   const o={...e,id:e.id||uid(),created:e.created||Date.now(),type:'fuel',vehicleId:f.vehicleId.value,date:f.date.value,fuel:f.fuel.value,
    amount:pn(f.amount.value),unitPrice:pn(f.unitPrice.value),total:pn(f.total.value),full:f.full.checked,
-   odometer:pn(f.odometer.value),tripKm:pn(f.tripKm.value),country:f.country.value,station:f.station.value.trim(),...P.read(),note:f.note.value.trim()};
+   odometer:pn(f.odometer.value),tripKm:pn(f.tripKm.value),country:f.country.value,station:f.station.value.trim(),...P.read(),note:f.note.value.trim(),pay:payRead(f)};if(!o.pay)delete o.pay;
   if(!o.vehicleId)return toast('Bitte ein Fahrzeug wählen.');
   if(o.amount==null&&o.total==null)return toast('Bitte Menge oder Betrag eintragen.');
   if(isNew)P.used(o);R.commit(o);
-  upsert(o);S.meta.last[o.vehicleId]={fuel:o.fuel,country:o.country,station:o.station,place:o.place,street:o.street,zip:o.zip};S.meta.lastVehicle=o.vehicleId;
+  upsert(o);S.meta.last[o.vehicleId]={fuel:o.fuel,country:o.country,station:o.station,place:o.place,street:o.street,zip:o.zip,pay:o.pay};S.meta.lastVehicle=o.vehicleId;
   save();closeSheet();render();toast(isNew?'Tankstopp gespeichert':'Änderung gespeichert')}}
 
 /* ---------- Sonstige Kosten ---------- */
 function costForm(e){
  const isNew=!e;
- if(isNew){const vid=defaultVehicle();const last=S.meta.last[vid]||{};e={type:'cost',vehicleId:vid,date:todayISO(),category:'waschstrasse',country:last.country||'DE'}}
+ if(isNew){const vid=defaultVehicle();const last=S.meta.last[vid]||{};e={type:'cost',vehicleId:vid,date:todayISO(),category:'waschstrasse',country:last.country||'DE',pay:last.pay||''}}
  openSheet(`<form id="f" autocomplete="off"><h2>${isNew?'Sonstige Kosten':'Kosten bearbeiten'}</h2>${scanBox()}<div id="favBox"></div>
  <label>Fahrzeug<select name="vehicleId">${vehicleOptions(e.vehicleId)}</select></label>
  <div class="grid2"><label>Datum<input type="date" name="date" value="${e.date}" required></label><label>Betrag €<input name="total" inputmode="decimal" value="${fin(e.total)}"></label></div>
  <label>Art<select name="category">${CATS.map(([k,l])=>`<option value="${k}"${k===e.category?' selected':''}>${l}</option>`).join('')}</select></label>
  ${placeFields(e,'Anbieter')}
+ ${payField(e.vehicleId,e.pay)}
  <label>Notiz<input name="note" value="${esc(e.note)}" placeholder="z. B. 1 l 5W-30, Programm Premium"></label>
  ${receiptField()}
  ${actions(!isNew)}</form>`);
  const f=$('#f');const P=wirePlace(f);const R=wireReceipt(e);
  $('#parse').onclick=()=>{const r=parseReceipt(f.receipt.value,true);
-  if(r.date)f.date.value=r.date;if(r.total!=null)f.total.value=fin(r.total);P.apply(r);
+  if(r.date)f.date.value=r.date;if(r.total!=null)f.total.value=fin(r.total);P.apply(r);if(r.pay&&f.pay){const vv=veh(f.vehicleId.value);if(vv&&vv.business)f.pay.value=r.pay;else r.found=r.found.filter(x=>x!=='Zahlungsart')}
   $('#parseInfo').textContent=r.found.length?'Übernommen: '+r.found.join(', ')+'. Bitte kurz prüfen.':'Nichts erkannt – bitte Werte von Hand eintragen.'};
- wireOcr(f,R);
+ wireOcr(f,R);wirePay(f);
  if(!isNew)$('#del').onclick=()=>delEntry(e.id);
  f.onsubmit=ev=>{ev.preventDefault();
-  const o={...e,id:e.id||uid(),created:e.created||Date.now(),type:'cost',vehicleId:f.vehicleId.value,date:f.date.value,total:pn(f.total.value),category:f.category.value,country:f.country.value,station:f.station.value.trim(),...P.read(),note:f.note.value.trim()};
+  const o={...e,id:e.id||uid(),created:e.created||Date.now(),type:'cost',vehicleId:f.vehicleId.value,date:f.date.value,total:pn(f.total.value),category:f.category.value,country:f.country.value,station:f.station.value.trim(),...P.read(),note:f.note.value.trim(),pay:payRead(f)};if(!o.pay)delete o.pay;
   if(!o.vehicleId)return toast('Bitte ein Fahrzeug wählen.');if(o.total==null)return toast('Bitte einen Betrag eintragen.');
   if(isNew)P.used(o);R.commit(o);
-  upsert(o);S.meta.lastVehicle=o.vehicleId;save();closeSheet();render();toast(isNew?'Kosten gespeichert':'Änderung gespeichert')}}
+  upsert(o);if(o.pay)S.meta.last[o.vehicleId]={...(S.meta.last[o.vehicleId]||{}),pay:o.pay};S.meta.lastVehicle=o.vehicleId;save();closeSheet();render();toast(isNew?'Kosten gespeichert':'Änderung gespeichert')}}
 
 function upsert(o){const i=S.entries.findIndex(x=>x.id===o.id);i<0?S.entries.push(o):S.entries[i]=o}
 function delEntry(id){if(!confirm('Diesen Eintrag löschen?'))return;S.entries=S.entries.filter(e=>e.id!==id);kvSet('rc:'+id,null);save();closeSheet();render();toast('Eintrag gelöscht')}
@@ -857,6 +883,7 @@ function vehicleForm(id){
  <label>Monat<select name="insMon">${MONTHS.map((m,i)=>`<option value="${i+1}"${(+(v.insStart||'01-01').slice(0,2))===i+1?' selected':''}>${m}</option>`).join('')}</select></label></div>
  <label>Fahrzeug-Identifizierungsnummer (FIN)<input name="vin" value="${esc(v.vin)}" maxlength="17" autocapitalize="characters" spellcheck="false" placeholder="Feld E, 17 Zeichen"></label>
  <p class="hint" id="vehHint"></p></details>
+ <label class="check"><input type="checkbox" name="business"${v.business?' checked':''}> Betrieblich genutzt (Zahlungsart für die Buchhaltung erfassen)</label>
  ${id?`<label class="check"><input type="checkbox" name="archived"${v.archived?' checked':''}> Stillgelegt (nicht mehr in der Auswahl)</label>`:''}
  ${!S.persons.length?'<p class="hint">Personen legst du unter Fahrzeuge › „Person hinzufügen“ an.</p>':''}
  ${actions(id&&!n)}</form>`);
@@ -865,7 +892,7 @@ function vehicleForm(id){
   if(vin&&vin.length!==17)t.push(`FIN hat ${vin.length} statt 17 Zeichen`);else if(/[IOQ]/i.test(vin))t.push('Die FIN enthält nie I, O oder Q – bitte prüfen (1 bzw. 0?)');$('#vehHint').textContent=t.join(' – ')};
  f.kw.addEventListener('input',vh);f.vin.addEventListener('input',vh);vh();
  if(id&&!n)$('#del').onclick=()=>{if(!confirm('Fahrzeug löschen?'))return;S.vehicles=S.vehicles.filter(x=>x.id!==id);save();closeSheet();render()};
- f.onsubmit=ev=>{ev.preventDefault();const o={...v,id:v.id||uid(),name:f.name.value.trim(),alias:f.alias.value.trim(),plate:f.plate.value.trim().toUpperCase(),personId:f.personId.value||null,fuel:f.fuel.value,archived:!!(f.archived&&f.archived.checked),hsn:f.hsn.value.trim(),tsn:f.tsn.value.trim().toUpperCase(),kw:pn(f.kw.value),firstReg:f.firstReg.value,regDate:f.regDate.value,insKm:csvNum(f.insKm.value,true)||null,insStart:String(f.insMon.value).padStart(2,'0')+'-'+String(f.insDay.value).padStart(2,'0'),vin:f.vin.value.trim().toUpperCase()};
+ f.onsubmit=ev=>{ev.preventDefault();const o={...v,id:v.id||uid(),name:f.name.value.trim(),alias:f.alias.value.trim(),plate:f.plate.value.trim().toUpperCase(),personId:f.personId.value||null,fuel:f.fuel.value,archived:!!(f.archived&&f.archived.checked),business:f.business.checked||undefined,hsn:f.hsn.value.trim(),tsn:f.tsn.value.trim().toUpperCase(),kw:pn(f.kw.value),firstReg:f.firstReg.value,regDate:f.regDate.value,insKm:csvNum(f.insKm.value,true)||null,insStart:String(f.insMon.value).padStart(2,'0')+'-'+String(f.insDay.value).padStart(2,'0'),vin:f.vin.value.trim().toUpperCase()};
   if(!o.name)return toast('Bitte eine Bezeichnung eintragen.');
   const i=S.vehicles.findIndex(x=>x.id===o.id);i<0?S.vehicles.push(o):S.vehicles[i]=o;save();closeSheet();render();toast('Fahrzeug gespeichert')}}
 function personForm(id){
@@ -880,14 +907,16 @@ const BRANDS=['Aral','Shell','Esso','JET','TotalEnergies','OMV','BP','Avia','Agi
 function parseReceipt(raw,costOnly){
  const r={found:[]};const t=String(raw||'').replace(/\r/g,'').replace(/[ \t]+/g,' ');const lines=t.split('\n').map(s=>s.trim()).filter(Boolean);const L=t.toLowerCase();
  if(!t.trim())return r;
- let m=t.match(/\b(\d{1,2})[.\/-](\d{1,2})[.\/-](20\d{2}|\d{2})\b/);
- if(m){let y=+m[3];if(y<100)y+=2000;const mo=+m[2],d=+m[1];if(mo>=1&&mo<=12&&d>=1&&d<=31){r.date=`${y}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`;r.found.push('Datum')}}
+ let m;const DRE=/\b(\d{1,2})[.\/-](\d{1,2})[.\/-](20\d{2}|\d{2})\b/;const toISO=m=>{let y=+m[3];if(y<100)y+=2000;const mo=+m[2],d=+m[1];return mo>=1&&mo<=12&&d>=1&&d<=31&&y>=2000&&y<=2100?`${y}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`:null};
+ {const cand=[];lines.forEach((ln,i)=>{const mm=ln.match(DRE);const iso=mm&&toISO(mm);if(iso)cand.push({iso,i,near:/datum|date|data/i.test(ln)||(i>0&&/datum|date|data/i.test(lines[i-1]))})});
+  const pick=cand.find(c=>c.near)||cand[0];if(pick){r.date=pick.iso;r.found.push('Datum')}}
  if(!costOnly){
   if((m=t.match(/(\d{1,3}(?:[.,]\d{1,3})?)\s*kwh\b/i))){r.amount=pn(m[1]);r.unit='kWh'}
   else if((m=t.match(/(\d{1,3}[.,]\d{1,3})\s*(?:l|lt|ltr|liter|li|ll|il)\b/i))){r.amount=pn(m[1]);r.unit='L'}
   else if((m=t.match(/(\d{1,3}[.,]\d{1,3})\s*kg\b/i))){r.amount=pn(m[1]);r.unit='kg'}
   if(r.amount!=null)r.found.push('Menge');
   m=t.match(/(\d[.,]\d{2,3})\s*(?:€|eur)?\s*\/\s*(?:l|lt|ltr|liter|kwh|kg|1|i)\b/i)||t.match(/(?:l|ltr|liter|kwh|kg)\s*[x×*]\s*(?:€|eur)?\s*(\d[.,]\d{2,3})/i)||t.match(/[x×*]\s*(\d[.,]\d{3})\b/);
+  if(!m){const c=[...t.matchAll(/(?:^|[^\d.,])(\d[.,]\d{3})(?![\d.,])/g)].map(x=>pn(x[1])).filter(x=>x>=.15&&x<=4);if(c.length)m=[null,String(c[0])]}
   if(m){r.unitPrice=pn(m[1]);r.found.push('Preis')}
   if(r.unit==='kWh'||/ladevorgang|ladesäule|ladepunkt|kwh/.test(L))r.fuel=/\bdc\b|hpc|schnell|ionity|tesla|fastned|ccs/.test(L)?'dc':'ac';
   else if(/hvo/.test(L))r.fuel='hvo';
@@ -902,23 +931,27 @@ function parseReceipt(raw,costOnly){
  // Betrag
  const AM=/(\d{1,4}[.,]\d{2})(?!\d)/g;const all=[...t.matchAll(AM)].map(x=>pn(x[1])).filter(x=>x!=null&&x>0);
  let tot=null;
- if(r.amount&&r.unitPrice){const exp=r.amount*r.unitPrice;const c=all.filter(x=>Math.abs(x-exp)<=Math.max(.05,exp*.01)).sort((a,b)=>Math.abs(a-exp)-Math.abs(b-exp));if(c.length)tot=c[0]}
  const bad=/netto|mwst|ust|steuer|rückgeld|gegeben|wechselgeld/i;
+ if(r.amount&&r.unitPrice){const exp=r.amount*r.unitPrice;const c=all.filter(x=>Math.abs(x-exp)<=Math.max(.05,exp*.01)).sort((a,b)=>Math.abs(a-exp)-Math.abs(b-exp));if(c.length)tot=c[0]}
+ if(tot==null){const cnt=new Map();for(const ln of lines){if(bad.test(ln))continue;for(const x of ln.matchAll(AM)){const v=pn(x[1]);if(v>0&&v<5000)cnt.set(v,(cnt.get(v)||0)+1)}}
+  let best=null,bc=1;for(const [v,c] of cnt)if(c>bc||(c===bc&&c>1&&v>best)){best=v;bc=c}if(best!=null&&bc>=2)tot=best}
  if(tot==null)for(const re of[/summe|gesamt|total|zu zahlen/i,/betrag|bar\b|ec|girocard|karte|visa|mastercard|maestro/i]){for(const ln of lines){if(re.test(ln)&&!bad.test(ln)){const a=[...ln.matchAll(AM)];if(a.length){tot=pn(a[a.length-1][1]);break}}}if(tot!=null)break}
  if(tot==null&&all.length)tot=Math.max(...all.filter(x=>x<5000));
  if(tot!=null&&isFinite(tot)){r.total=tot;r.found.push('Betrag')}
  // Anbieter, Land, Ort
  for(const b of BRANDS){if(new RegExp('(^|[^a-zäöü])'+b.replace(/[.]/g,'\\.')+'($|[^a-zäöü])','i').test(t)){r.station=b;r.found.push('Anbieter');break}}
- if(/\batu ?\d{8}\b|österreich|austria|\ba-\d{4}\b/i.test(t))r.country='AT';
+ if(/\batu ?\d{8}\b|\batu[0-9a-z]{6,9}\b|österreich|austria|\ba-\d{4}\b|\bbankomat\b/i.test(t))r.country='AT';
  else if(/\bche[- ]?\d{3}\.?\d{3}|schweiz|suisse|svizzera|\bch-\d{4}\b/i.test(t))r.country='CH';
  else if(/\bde ?\d{9}\b|deutschland|germany|\bd-\d{5}\b/i.test(t))r.country='DE';
  else if(/\bcz ?\d{8,10}\b|česk/i.test(t))r.country='CZ';
  else if(/\bit ?\d{11}\b|italia/i.test(t))r.country='IT';
+ if(!r.country){const vat=t.match(/(\d{1,2})[.,]\d{1,2}\s*%\s*(?:mwst|ust|vat|iva)/i);const rate=vat&&+vat[1];if(rate===19||rate===7)r.country='DE';else if(rate===20||rate===10)r.country='AT';else if(rate===22)r.country='IT';else if(rate===8)r.country='CH'}
  for(let i=0;i<lines.length;i++){const pm=lines[i].match(/^(?:[A-Z]{1,2}[- ])?(\d{4,5}) ([A-ZÄÖÜ][A-Za-zÄÖÜäöüß .\-\/]{2,40})$/);if(!pm)continue;
-  r.zip=pm[1];r.place=pm[2].trim();if(!r.country)r.country=pm[1].length===5?'DE':'AT';
+  r.zip=pm[1];r.place=pm[2].replace(/(\s+\S{1,2})+$/,'').trim();if(!r.country)r.country=pm[1].length===5?'DE':'AT';
   const prev=i>0?lines[i-1]:'';if(/[A-Za-zÄÖÜäöüß]{3}/.test(prev)&&(/\d{1,4}\s?[a-z]?$/i.test(prev)||/(straße|strasse|str\.|gasse|weg|platz|allee)/i.test(prev))&&!/\d[.,]\d{2}/.test(prev))r.street=prev;
   r.found.push('Adresse');break}
  if(r.country)r.found.push('Land');
+ r.pay=payDetect(t);if(r.pay)r.found.push('Zahlungsart');
  return r}
 
 /* ---------- Sicherung ---------- */
@@ -943,10 +976,10 @@ $('#bgFile').addEventListener('change',async ev=>{const file=ev.target.files[0];
  try{await setBg(await shrinkImage(file))}catch(e){toast(e.message)}});
 
 /* ---------- CSV-Import ---------- */
-const CSV_HEAD=['Typ','Datum','Fahrzeug','Energie oder Art','Menge','Preis je Einheit','Betrag','Vollgetankt','Kilometerstand','Tageskilometer','Land','Tankstelle oder Anbieter','Ort','Straße','PLZ','Notiz'];
+const CSV_HEAD=['Typ','Datum','Fahrzeug','Energie oder Art','Menge','Preis je Einheit','Betrag','Vollgetankt','Kilometerstand','Tageskilometer','Land','Tankstelle oder Anbieter','Ort','Straße','PLZ','Notiz','Bezahlt mit'];
 const CSV_KEYS=['typ','date','vehicle','kind','amount','unitPrice','total','full','odometer','tripKm','country','station','place','street','zip','note'];
 const normH=t=>String(t||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/ß/g,'ss').replace(/[^a-z0-9]/g,'');
-const HMAP={typ:'typ',eintrag:'typ',art:'kind',datum:'date',date:'date',fahrzeug:'vehicle',kennzeichen:'vehicle',auto:'vehicle',energieoderart:'kind',energie:'kind',kraftstoff:'kind',sorte:'kind',kategorie:'kind',menge:'amount',liter:'amount',kwh:'amount',preisjeeinheit:'unitPrice',preis:'unitPrice',literpreis:'unitPrice',betrag:'total',summe:'total',kosten:'total',gesamt:'total',vollgetankt:'full',voll:'full',kilometerstand:'odometer',kmstand:'odometer',tachostand:'odometer',tageskilometer:'tripKm',gefahrenekm:'tripKm',strecke:'tripKm',land:'country',tankstelleoderanbieter:'station',tankstelle:'station',anbieter:'station',ort:'place',strasse:'street',plz:'zip',notiz:'note',bemerkung:'note'};
+const HMAP={typ:'typ',eintrag:'typ',art:'kind',datum:'date',date:'date',fahrzeug:'vehicle',kennzeichen:'vehicle',auto:'vehicle',energieoderart:'kind',energie:'kind',kraftstoff:'kind',sorte:'kind',kategorie:'kind',menge:'amount',liter:'amount',kwh:'amount',preisjeeinheit:'unitPrice',preis:'unitPrice',literpreis:'unitPrice',betrag:'total',summe:'total',kosten:'total',gesamt:'total',vollgetankt:'full',voll:'full',kilometerstand:'odometer',kmstand:'odometer',tachostand:'odometer',tageskilometer:'tripKm',gefahrenekm:'tripKm',strecke:'tripKm',land:'country',tankstelleoderanbieter:'station',tankstelle:'station',anbieter:'station',ort:'place',strasse:'street',plz:'zip',notiz:'note',bemerkung:'note',bezahltmit:'pay',zahlungsart:'pay',zahlung:'pay',bezahlung:'pay'};
 function csvRows(text){text=text.replace(/^﻿/,'');const head=text.split(/\r?\n/).slice(0,6);
  const sep=[';','\t',','].map(c=>[c,Math.max(...head.map(l=>l.split(c).length))]).sort((a,b)=>b[1]-a[1])[0][0];
  const rows=[];let row=[],f='',q=false;
@@ -988,7 +1021,7 @@ function parseCSV(text){
   const amount=csvNum(g('amount')),unitPrice=csvNum(g('unitPrice')),tot=csvNum(g('total'));
   let type=/kost|ausgab|sonst/.test(tt)?'cost':/tank|lad|fuel/.test(tt)?'fuel':fuel?'fuel':cat?'cost':amount!=null?'fuel':null;
   if(!type)return errs.push(`Zeile ${line}: Typ unklar (Tanken oder Kosten?)`);
-  const country=csvCountry(g('country'))||'DE';const base={id:uid(),created:Date.now()+i,vehicleId:v.id,date,country,station:g('station'),place:g('place'),street:g('street'),zip:g('zip'),note:g('note'),src:'csv'};
+  const country=csvCountry(g('country'))||'DE';const base={id:uid(),created:Date.now()+i,vehicleId:v.id,date,country,station:g('station'),place:g('place'),street:g('street'),zip:g('zip'),note:g('note'),src:'csv'};if(v.business&&g('pay')){const pp=payDetect(g('pay'))||(/karte/i.test(g('pay'))?'debit':null);if(pp)base.pay=pp}
   let e;
   if(type==='fuel'){const fu=fuel||v.fuel||'e5';let a=amount,p=unitPrice,t=tot;
    if(a!=null&&p!=null&&t==null)t=rnd(a*p,2);else if(a&&t!=null&&p==null)p=rnd(t/a,3);else if(p&&t!=null&&a==null)a=rnd(t/p,2);
@@ -1014,9 +1047,9 @@ $('#csvFile').addEventListener('change',async ev=>{const file=ev.target.files[0]
  catch(e){toast('Import nicht möglich: '+e.message)}});
 async function downloadTemplate(){
  const v=S.vehicles.find(x=>!x.archived)||{plate:'RO-AB 123'};const pl=v.plate||v.name;
- const ex=[['Tanken','02.08.2026',pl,'Super E5','41,20','1,749','72,06','ja','84210','','DE','Aral','Rosenheim','Münchener Str. 40','83022','Beispielzeile – bitte löschen'],
-  ['Tanken','24.08.2026',pl,'Super E5','44,80','1,689','75,67','ja','','640','AT','OMV','Kufstein','','6330','Beispielzeile – bitte löschen'],
-  ['Kosten','25.08.2026',pl,'Waschstraße','','','14,00','','','','DE','Mr. Wash','Rosenheim','','','Beispielzeile – bitte löschen']];
+ const ex=[['Tanken','02.08.2026',pl,'Super E5','41,20','1,749','72,06','ja','84210','','DE','Aral','Rosenheim','Münchener Str. 40','83022','Beispielzeile – bitte löschen','Girocard'],
+  ['Tanken','24.08.2026',pl,'Super E5','44,80','1,689','75,67','ja','','640','AT','OMV','Kufstein','','6330','Beispielzeile – bitte löschen','Kreditkarte'],
+  ['Kosten','25.08.2026',pl,'Waschstraße','','','14,00','','','','DE','Mr. Wash','Rosenheim','','','Beispielzeile – bitte löschen','Bar']];
  const q=x=>/[;"\n]/.test(x)?'"'+x.replace(/"/g,'""')+'"':x;
  const csv='﻿'+[CSV_HEAD,...ex].map(r=>r.map(q).join(';')).join('\r\n')+'\r\n';
  const file=new File([csv],'zapfwerk-vorlage.csv',{type:'text/csv'});
