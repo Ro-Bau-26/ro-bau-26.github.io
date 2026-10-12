@@ -576,6 +576,8 @@
 
   /* Print */
   #print-area{ display:none; }
+  .app-footer{ margin:28px 0 4px; text-align:center; font-size:0.72rem; color:var(--text-muted); letter-spacing:0.01em; }
+  @media (max-width:859px){ .app-footer{ margin-bottom:84px; } }
   @media print{
     body > *:not(#print-area){ display:none !important; }
     #print-area{ display:block !important; position:absolute; left:0; top:0; width:100%; color:#000; background:#fff; }
@@ -629,6 +631,7 @@
       <section class="view" id="view-household"></section>
       <section class="view" id="view-backup"></section>
       <section class="view" id="view-help"></section>
+      <footer class="app-footer" id="app-footer"></footer>
     </main>
   </div>
 
@@ -647,6 +650,10 @@
 "use strict";
 
 /* ======================= Constants ======================= */
+
+/* Versionsnummer: wird bei jeder Lieferung hochgezählt und als dezente Fußzeile angezeigt (nicht Teil der Sicherung) */
+const APP_VERSION = "3.0";
+const APP_VERSION_DATE = "2026-10-12";
 
 const CATEGORIES = [
   { id:"kfz",           label:"Kfz",                                   varName:"--cat-1" },
@@ -737,6 +744,7 @@ const state = {
   members: [],
   households: [],          // [{id, name, colorIndex, createdAt}] – frei benennbare Haushalte/Standorte (z. B. "Wohnhaus A", "Praxis")
   activeHousehold: "__all", // "__all" oder die id eines Haushalts – steuert Dashboard/Vertragsliste; nicht Teil der Sicherung
+  contractsSort: "name",   // "name" | "due" – nur Ansicht, nicht Teil der Sicherung
   contractsView: "list",   // "list" | "provider" – Darstellung der Vertragsliste (nicht gespeichert)
   contractsLoaded: false,
   membersLoaded: false,
@@ -1156,7 +1164,12 @@ document.addEventListener("paste", function(e){
 
 /* ======================= Boot ======================= */
 
+function renderFooter(){
+  const f = document.getElementById("app-footer");
+  if (f) f.textContent = "Vertragsraum · Version "+APP_VERSION+" · Stand "+formatDate(APP_VERSION_DATE);
+}
 async function boot(){
+  renderFooter();
   renderNav();
   document.getElementById("view-dashboard").innerHTML = '<div class="member-sub" style="padding:24px;">Wird geladen …</div>';
   const cmpInput = document.getElementById("compare-file-input");
@@ -1192,6 +1205,45 @@ function addMonthsISO(iso, delta){
   return d;
 }
 function daysBetween(a,b){ return Math.round((b-a)/86400000); }
+
+/* Nächste Zahlungsfälligkeit eines Vertrags (ISO) – aus dem hinterlegten Datum und dem Rhythmus fortgerechnet; null, wenn nichts hinterlegt/mehr offen ist.
+   Monatsende-Regel: Gibt es den Tag im Zielmonat nicht (z. B. 31.), gilt der letzte Tag des Monats. */
+function nextPaymentISO(c, fromISO){
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(c && c.paymentDate || "");
+  const f = c ? FREQ_BY_ID[c.frequency] : null;
+  if (!m || !f) return null;
+  const from = fromISO || todayISO();
+  const y0 = Number(m[1]), mo0 = Number(m[2])-1, day0 = Number(m[3]);
+  if (!f.perYear) return c.paymentDate>=from ? c.paymentDate : null;   // einmalig
+  const step = Math.max(1, Math.round(12/f.perYear));
+  const fy = Number(from.slice(0,4)), fm = Number(from.slice(5,7))-1;
+  let k = Math.max(0, Math.floor(((fy-y0)*12 + (fm-mo0))/step) - 1);
+  for (let guard=0; guard<500; guard++, k++){
+    const total = mo0 + k*step;
+    const y = y0 + Math.floor(total/12), mo = ((total%12)+12)%12;
+    const dim = new Date(y, mo+1, 0).getDate();
+    const iso = y+"-"+(mo+1<10?"0":"")+(mo+1)+"-"+(Math.min(day0,dim)<10?"0":"")+Math.min(day0,dim);
+    if (iso>=from){
+      if (c.endDate && !c.autoRenew && iso>c.endDate) return null;
+      return iso;
+    }
+  }
+  return null;
+}
+function upcomingPayments(days){
+  const today = todayISO();
+  const t0 = new Date(today+"T00:00:00");
+  const items = [];
+  visibleContracts().filter(function(c){ return c.status==="aktiv"; }).forEach(function(c){
+    const f = FREQ_BY_ID[c.frequency];
+    if (!f || c.frequency==="monatlich") return;           // monatliche Zahlungen bewusst nicht aufgeführt
+    const iso = nextPaymentISO(c, today);
+    if (!iso) return;
+    const d = daysBetween(t0, new Date(iso+"T00:00:00"));
+    if (d<=days) items.push({ c:c, iso:iso, days:d });
+  });
+  return items.sort(function(a,b){ return a.iso<b.iso ? -1 : a.iso>b.iso ? 1 : (a.c.name||"").localeCompare(b.c.name||"", "de"); });
+}
 
 function annualCost(c){
   const f = FREQ_BY_ID[c.frequency];
@@ -1550,7 +1602,8 @@ const HELP_TOPICS = [
     '<p>Alle Zahlen auf der <strong>Übersicht</strong> (jährliche Kosten, anstehende Kündigungsfristen, Ausgabenverteilung) aktualisieren sich automatisch, sobald Verträge vorhanden sind.</p>' },
 
   { title:"Verträge anlegen", body:
-    '<p>Über „Neuer Vertrag“ (unten rechts bzw. in der Seitenleiste) öffnet sich das Erfassungsformular. Pflichtfeld ist nur die Bezeichnung – alle anderen Angaben wie Kategorie, Anbieter, Vertragsnummer, Betrag, Zahlungsrhythmus, Laufzeiten und Notizen sind optional und können jederzeit nachgetragen werden. Wie Sie Dokumente (Vertragsurkunde, Police, Scan) anhängen, steht im nächsten Thema „Dokumente anhängen“.</p>' },
+    '<p>Über „Neuer Vertrag“ (unten rechts bzw. in der Seitenleiste) öffnet sich das Erfassungsformular. Pflichtfeld ist nur die Bezeichnung – alle anderen Angaben wie Kategorie, Anbieter, Vertragsnummer, Betrag, Zahlungsrhythmus, Laufzeiten und Notizen sind optional und können jederzeit nachgetragen werden. Wie Sie Dokumente (Vertragsurkunde, Police, Scan) anhängen, steht im nächsten Thema „Dokumente anhängen“.</p>'+
+    '<p><strong>Zahlung fällig am:</strong> Tragen Sie hier das Datum einer Fälligkeit ein, z. B. die nächste Abbuchung. Die weiteren Fälligkeiten rechnet die App aus dem Zahlungsrhythmus selbst fort, bei „jährlich“ und „1. März“ also jedes Jahr der 1. März, bei „vierteljährlich“ alle drei Monate. Gibt es den Tag in einem Monat nicht (z. B. der 31.), gilt der letzte Tag des Monats. Das Feld ist optional; die nächste Zahlung erscheint auf der Vertragskarte und in der Übersicht. In der Vertragsliste lässt sich nach Fälligkeit sortieren, Verträge ohne Datum stehen dann am Ende.</p>' },
 
   { title:"Dokumente anhängen (Foto, Scan, Datei)", body:
     '<p>Im Vertrag finden Sie unter „Dokument“ die Schaltfläche <strong>„Foto / Scan / Datei hinzufügen“</strong>. Angehängt werden können Fotos und PDF-Dateien (maximal 20 MB je Datei). Fotos werden automatisch verkleinert, PDFs unverändert übernommen. Die Dokumente sind ausschließlich im geöffneten Vertrag sichtbar, nicht in der Vertragsliste; ein Klick auf ein Dokument öffnet es in einem neuen Tab.</p>'+
@@ -1634,6 +1687,7 @@ const HELP_TOPICS = [
 
   { title:"Ausgaben im Überblick", body:
     '<p>Der Diagrammbereich auf der Übersicht lässt sich zwischen drei Auswertungen umschalten: „Nach Kategorie“, „Nach Zahler:in“ und „Nach Anbieter“ – jeweils wahlweise als Kacheln, Balkendiagramm oder Tabelle. Bei vielen Anbietern werden automatisch nur die zehn größten einzeln aufgeführt, der Rest wird unter „Weitere“ zusammengefasst.</p>'+
+    '<p><strong>Zahlungen in den nächsten 30 Tagen:</strong> Haben Sie in Verträgen das Feld „Zahlung fällig am“ ausgefüllt, zeigt die Übersicht eine Karte mit den nächsten nicht-monatlichen Zahlungen (z. B. vierteljährliche oder jährliche Beiträge) samt Summe. Monatliche Zahlungen sind dort bewusst nicht aufgeführt, damit die Karte kurz und aussagekräftig bleibt. „Alle nach Fälligkeit“ öffnet die Vertragsliste, nach Fälligkeit sortiert.</p>'+
     '<p>Ein Klick auf eine Kachel oder einen Balken springt direkt zur passend gefilterten Vertragsliste; ein kleiner Chip oberhalb der Liste zeigt den aktiven Filter an und lässt sich mit einem Klick wieder entfernen.</p>'+
     '<p>Im Balkendiagramm werden sehr lange Bezeichnungen (z. B. Kategorien oder Anbieter) mit „…“ gekürzt, damit sie den Balken nicht überdecken. Der vollständige Name erscheint, sobald Sie mit der Maus über die Zeile fahren; in der Kachel- und Tabellenansicht wird immer der volle Name gezeigt.</p>' },
 
@@ -1697,6 +1751,8 @@ const HELP_TOPICS = [
       '<li><strong>Anhänge nur im Vertrag:</strong> Die Vertragsliste zeigt keine Vorschaubilder mehr; Fotos und PDFs sind ausschließlich im geöffneten Vertrag sichtbar. Der Anhänge-Button heißt „Foto / Scan / Datei hinzufügen“.</li>'+
       '<li><strong>Neuer Name und neues Icon:</strong> aus „Vertragsordner“ wird „Vertragsraum“ mit dem Slogan „Verträge einfach im Blick“ (in der Seitenleiste am Mac/iPad quer) und neuem App-Icon (ein offener Raum um ein Dokument mit Haken). Ihre Daten und Sicherungen sind davon nicht betroffen; zu bereits angelegten Home-Bildschirm-Symbolen siehe „Auf dem iPad/iPhone als App nutzen“.</li>'+
       '<li><strong>Dokumente sortieren:</strong> Pfeile „nach oben / nach unten“ ändern die Reihenfolge angehängter Dokumente.</li>'+
+      '<li><strong>Versionsnummer:</strong> Am Ende jeder Seite steht dezent die Version der App (z. B. „Version 3.0 · Stand 12.10.2026“). Daran sehen Sie, ob ein Gerät nach dem Aktualisieren wirklich die neue Fassung geladen hat; zeigt es noch eine ältere Nummer, die App schließen und neu öffnen bzw. die Seite in Safari neu laden.</li>'+
+      '<li><strong>Zahlung fällig am:</strong> neues Feld im Vertrag, Sortierung „nach Fälligkeit“ in der Vertragsliste und auf der Übersicht eine Karte „Zahlungen in den nächsten 30 Tagen“ (ohne monatliche Zahlungen). CSV-Export und Druck enthalten „Nächste Zahlung“.</li>'+
       '<li><strong>Haushalt anklicken:</strong> Unter „Mitglieder“ zeigt ein Klick auf einen Haushalt jetzt die zugehörigen Verträge, genau wie bei einer Person. Ein Klick auf eine Person zeigt deren Verträge aus allen Haushalten.</li>'+
       '<li><strong>Lange Dokumentnamen:</strong> Namen angehängter Dokumente werden jetzt vollständig angezeigt (mehrzeilig umgebrochen) statt abgeschnitten, damit auch beim Sortieren der volle Name lesbar ist. Ein Tipp öffnet weiterhin das Dokument; am Mac zeigt der Mauszeiger den Namen zusätzlich als Tooltip.</li>'+
       '<li><strong>Neue Info-Felder:</strong> „Sonderkündigungsrecht“ (Freitext, nur Hinweis) und „Schadenmeldung online“ (Website mit Öffnen-Symbol, auch in der Ansicht „Nach Anbieter“).</li>'+
@@ -1789,6 +1845,7 @@ function renderDashboard(){
         (upcoming.length ? upcoming.map(deadlineRowHTML).join("") : '<div class="chart-empty">Keine Fristen oder Termine in den nächsten 90 Tagen.</div>')+
       '</div>'+
     '</div>'+
+    upcomingPaymentsCardHTML()+
     priceChangesCardHTML();
 
   document.querySelectorAll("#chart-toggle button").forEach(function(btn){
@@ -1811,6 +1868,39 @@ function renderDashboard(){
   el.querySelectorAll("[data-open-contract]").forEach(function(row){
     row.addEventListener("click", function(){ openContractModal(row.getAttribute("data-open-contract")); });
   });
+  const dueLink = document.getElementById("due-sort-link");
+  if (dueLink) dueLink.addEventListener("click", function(){
+    state.contractsSort = "due";
+    state.filterCategory = ""; state.filterStatus = ""; state.filterPayer = ""; state.filterProvider = ""; state.search = "";
+    setView("contracts");
+  });
+}
+
+function upcomingPaymentsCardHTML(){
+  const hasAny = visibleContracts().some(function(c){ return c.status==="aktiv" && c.paymentDate; });
+  if (!hasAny) return "";
+  const items = upcomingPayments(30);
+  const total = items.reduce(function(s,x){ return s+(Number(x.c.amount)||0); }, 0);
+  const t0 = new Date(todayISO()+"T00:00:00");
+  return '<div class="section card"><div class="card-pad">'+
+    '<div class="section-head"><h2>Zahlungen in den nächsten 30 Tagen</h2>'+
+      '<button class="link-btn" id="due-sort-link" type="button">Alle nach Fälligkeit</button></div>'+
+    (items.length
+      ? '<p style="margin:0 0 8px;font-size:0.9rem;">Summe: <strong>'+escapeHtml(formatEUR(total))+'</strong> <span class="member-sub">· '+items.length+(items.length===1?' Zahlung':' Zahlungen')+' (ohne monatliche Zahlungen)</span></p>'+
+        items.slice(0,8).map(function(x){
+          const d = x.days;
+          const badge = d<=0 ? '<span class="badge badge-critical">heute</span>' : d<=7 ? '<span class="badge badge-warning">'+d+(d===1?' Tag':' Tage')+'</span>' : '<span class="badge badge-neutral">'+d+' Tage</span>';
+          const f = FREQ_BY_ID[x.c.frequency];
+          return '<div class="deadline-row" data-open-contract="'+x.c.id+'" style="cursor:pointer;">'+
+            '<span class="dot" style="background:'+catColor(x.c.category)+'"></span>'+
+            '<div class="deadline-main"><div class="deadline-name">'+escapeHtml(x.c.name||"(ohne Namen)")+'</div>'+
+              '<div class="deadline-sub">'+icon("card")+' '+escapeHtml(formatDate(x.iso))+' · '+escapeHtml(formatEUR(x.c.amount))+(f?' · '+escapeHtml(f.label):'')+'</div></div>'+
+            badge+
+          '</div>';
+        }).join("")+
+        (items.length>8 ? '<div class="member-sub" style="margin-top:6px;">… und '+(items.length-8)+' weitere</div>' : '')
+      : '<div class="chart-empty">Keine nicht-monatlichen Zahlungen in den nächsten 30 Tagen.</div>')+
+  '</div></div>';
 }
 
 function priceChangesCardHTML(){
@@ -2127,7 +2217,18 @@ function filteredContractsList(){
       return state.filterProvider==="__none" ? !(c.provider||"").trim() : (c.provider||"").trim()===state.filterProvider;
     });
   }
-  list.sort(function(a,b){ return (a.name||"").localeCompare(b.name||"", "de"); });
+  if (state.contractsSort==="due"){
+    const today = todayISO();
+    list.sort(function(a,b){
+      const da = nextPaymentISO(a, today), db = nextPaymentISO(b, today);
+      if (da && db && da!==db) return da<db ? -1 : 1;
+      if (da && !db) return -1;
+      if (!da && db) return 1;
+      return (a.name||"").localeCompare(b.name||"", "de");
+    });
+  } else {
+    list.sort(function(a,b){ return (a.name||"").localeCompare(b.name||"", "de"); });
+  }
   return list;
 }
 
@@ -2242,6 +2343,7 @@ function renderContracts(){
       '<select class="filter-select" id="filter-status"><option value="">Alle Status</option>'+
         STATUSES.map(function(s){ return '<option value="'+s.id+'"'+(state.filterStatus===s.id?' selected':'')+'>'+escapeHtml(s.label)+'</option>'; }).join("")+
       '</select>'+
+      '<select class="filter-select" id="filter-sort" aria-label="Sortierung"><option value="name"'+(state.contractsSort!=="due"?' selected':'')+'>Sortiert nach Name</option><option value="due"'+(state.contractsSort==="due"?' selected':'')+'>Sortiert nach Fälligkeit</option></select>'+
       '<select class="filter-select" id="filter-payer"><option value="">Alle Zahler:innen</option>'+
         state.members.map(function(m){ return '<option value="'+m.id+'"'+(state.filterPayer===m.id?' selected':'')+'>'+escapeHtml(m.name)+'</option>'; }).join("")+
       '</select>'+
@@ -2275,6 +2377,7 @@ function renderContracts(){
   si.addEventListener("input", function(){ state.search = si.value; renderContracts(); });
   document.getElementById("filter-category").addEventListener("change", function(e){ state.filterCategory = e.target.value; renderContracts(); });
   document.getElementById("filter-status").addEventListener("change", function(e){ state.filterStatus = e.target.value; renderContracts(); });
+  document.getElementById("filter-sort").addEventListener("change", function(e){ state.contractsSort = e.target.value; renderContracts(); });
   document.getElementById("filter-payer").addEventListener("change", function(e){ state.filterPayer = e.target.value; renderContracts(); });
   const chip = document.getElementById("payer-filter-chip");
   if (chip) chip.addEventListener("click", function(){ state.filterPayer = ""; renderContracts(); });
@@ -2432,6 +2535,7 @@ function contractCardHTML(c){
         (payer ? '<span>'+icon("users")+' '+escapeHtml(payer.name)+'</span>' : '')+
         (bankAccount ? '<span>'+icon("card")+' '+escapeHtml(bankAccountLabel(bankAccount))+'</span>' : '')+
         (c.endDate ? '<span>bis '+formatDate(c.endDate)+'</span>' : '')+
+        (function(){ const np = nextPaymentISO(c); return np ? '<span title="Nächste Zahlung">'+icon("card")+' Zahlung '+formatDate(np)+'</span>' : ''; })()+
         (c.nextDueDate ? '<span title="Nächster Termin">'+icon("calendar")+' Termin '+formatDate(c.nextDueDate)+'</span>' : '')+
         (c.autoRenew ? '<span title="Verlängert sich automatisch, wenn nicht rechtzeitig gekündigt">'+icon("refresh")+' automat. Verlängerung</span>' : '')+
         statusBadge+
@@ -2472,7 +2576,7 @@ function csvDate(iso){
   return m ? m[3]+"."+m[2]+"."+m[1] : "";
 }
 function buildContractsCSV(list){
-  const head = ["Bezeichnung","Haushalt(e)","Kategorie","Anbieter","Vertragsnummer","Status","Zahler:in","Betrag","Rhythmus","Jahreskosten","Monatlich Ø","Vertragsbeginn","Vertragsende","Kündigungsfrist (Monate)","Nächste Kündigungsfrist","Nächster Termin","Automatische Verlängerung","Verlängerung (Monate)","Sonderkündigungsrecht","Notizen"];
+  const head = ["Bezeichnung","Haushalt(e)","Kategorie","Anbieter","Vertragsnummer","Status","Zahler:in","Betrag","Rhythmus","Jahreskosten","Monatlich Ø","Vertragsbeginn","Vertragsende","Kündigungsfrist (Monate)","Nächste Kündigungsfrist","Nächste Zahlung","Nächster Termin","Automatische Verlängerung","Verlängerung (Monate)","Sonderkündigungsrecht","Notizen"];
   const lines = [head.map(csvText).join(";")];
   list.forEach(function(c){
     const cat = CATEGORY_BY_ID[c.category];
@@ -2496,6 +2600,7 @@ function buildContractsCSV(list){
       csvDate(c.endDate),
       (c.noticePeriodMonths!=null && c.noticePeriodMonths!=="") ? String(c.noticePeriodMonths) : "",
       cb ? csvDate(dateToISO(cb)) : "",
+      csvDate(nextPaymentISO(c)),
       csvDate(c.nextDueDate),
       c.autoRenew ? "Ja" : "Nein",
       (c.autoRenew && c.renewalTermMonths!=null && c.renewalTermMonths!=="") ? String(c.renewalTermMonths) : "",
@@ -2589,6 +2694,7 @@ function printSingleContract(c){
       row("Kündigungsfrist", (c.noticePeriodMonths!=null && c.noticePeriodMonths!=="") ? c.noticePeriodMonths+" Monate vor Vertragsende" : "") +
       row("Sonderkündigungsrecht", escapeHtml(c.specialCancel)) +
       row("Automatische Verlängerung", c.autoRenew ? ("Ja"+(c.renewalTermMonths?", jeweils um "+c.renewalTermMonths+" Monate":"")) : "") +
+      row("Nächste Zahlung", nextPaymentISO(c) ? formatDate(nextPaymentISO(c)) : "") +
       row("Nächster Termin", c.nextDueDate ? formatDate(c.nextDueDate) : "") +
       row("Nächste Kündigungsfrist", cb ? formatDate(dateToISO(cb)) : "") +
       row("URL / Login", escapeHtml(c.portalUrl)) +
@@ -2961,7 +3067,7 @@ function confirmDialog(title, body, onConfirm, confirmLabel, danger){
 
 function blankContract(){
   return { name:"", category:"kfz", provider:"", contractNumber:"", payerId:"", bankAccountId:"", amount:"", frequency:"monatlich",
-    startDate:"", endDate:"", nextDueDate:"", noticePeriodMonths:"", autoRenew:false, renewalTermMonths:"", status:"aktiv", notes:"", attachments:[],
+    startDate:"", endDate:"", paymentDate:"", nextDueDate:"", noticePeriodMonths:"", autoRenew:false, renewalTermMonths:"", status:"aktiv", notes:"", attachments:[],
     portalUrl:"", cancelContactName:"", cancelPhone:"", cancelEmail:"", servicePhone:"", claimUrl:"", specialCancel:"", priceHistory:[] };
 }
 
@@ -3086,6 +3192,8 @@ function contractModalHTML(c, isNew){
         '<div class="field"><label for="f-frequency">Zahlungsrhythmus / Intervall</label><select id="f-frequency">'+FREQUENCIES.map(function(f){ return '<option value="'+f.id+'"'+(c.frequency===f.id?' selected':'')+'>'+escapeHtml(f.label)+'</option>'; }).join("")+'</select></div>'+
       '</div>'+
       '<div id="price-history-host"></div>'+
+
+      '<div class="field"><label for="f-paymentdate">Zahlung fällig am</label><input id="f-paymentdate" type="date" value="'+escapeHtml(c.paymentDate||"")+'"><span class="hint">Datum einer Fälligkeit (z. B. die nächste Abbuchung). Die weiteren Fälligkeiten rechnet die App aus dem Zahlungsrhythmus selbst fort – Sie müssen das Datum nicht jedes Jahr ändern.</span></div>'+
 
       '<div class="field"><label for="f-nextdue">Nächster Termin (z. B. Wartung, Prüfung)</label><input id="f-nextdue" type="date" value="'+escapeHtml(c.nextDueDate)+'"><span class="hint">Für Serviceverträge, die erst bei erbrachter Leistung bezahlt werden: Das Datum erscheint in den anstehenden Fristen auf der Übersicht.</span></div>'+
 
@@ -3421,6 +3529,7 @@ function collectContractFormSnapshot(overlay, source){
     frequency: val("#f-frequency"),
     startDate: val("#f-start"),
     endDate: val("#f-end"),
+    paymentDate: val("#f-paymentdate"),
     nextDueDate: val("#f-nextdue"),
     noticePeriodMonths: val("#f-notice")===""? null : Number(val("#f-notice")),
     autoRenew: !!(overlay.querySelector("#f-autorenew") && overlay.querySelector("#f-autorenew").checked),
@@ -3598,6 +3707,7 @@ function saveContract(overlay, source, isNew, priceMeta){
     priceHistory: hist,
     startDate: val("#f-start"),
     endDate: val("#f-end"),
+    paymentDate: val("#f-paymentdate"),
     nextDueDate: val("#f-nextdue"),
     noticePeriodMonths: val("#f-notice")===""? null : Number(val("#f-notice")),
     autoRenew: !!(overlay.querySelector("#f-autorenew") && overlay.querySelector("#f-autorenew").checked),
