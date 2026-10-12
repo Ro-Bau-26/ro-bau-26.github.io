@@ -250,6 +250,8 @@
   .section{ margin-bottom:20px; }
   .section-head{ display:flex; align-items:baseline; justify-content:space-between; gap:10px; margin-bottom:10px; }
   .section-head h2{ font-size:1.06rem; }
+  .chart-head{ flex-wrap:wrap; }
+  @media (max-width:859px){ .chart-head #chart-toggle{ width:100%; } .chart-head #chart-toggle button{ flex:1; padding:6px 4px; min-width:0; } }
   .link-btn{ background:none; border:none; color:var(--accent); font-size:0.84rem; font-weight:600; cursor:pointer; padding:2px; }
 
   /* Chart */
@@ -652,7 +654,7 @@
 /* ======================= Constants ======================= */
 
 /* Versionsnummer: wird bei jeder Lieferung hochgezählt und als dezente Fußzeile angezeigt (nicht Teil der Sicherung) */
-const APP_VERSION = "3.0";
+const APP_VERSION = "3.1";
 const APP_VERSION_DATE = "2026-10-12";
 
 const CATEGORIES = [
@@ -1688,6 +1690,7 @@ const HELP_TOPICS = [
   { title:"Ausgaben im Überblick", body:
     '<p>Der Diagrammbereich auf der Übersicht lässt sich zwischen drei Auswertungen umschalten: „Nach Kategorie“, „Nach Zahler:in“ und „Nach Anbieter“ – jeweils wahlweise als Kacheln, Balkendiagramm oder Tabelle. Bei vielen Anbietern werden automatisch nur die zehn größten einzeln aufgeführt, der Rest wird unter „Weitere“ zusammengefasst.</p>'+
     '<p><strong>Zahlungen in den nächsten 30 Tagen:</strong> Haben Sie in Verträgen das Feld „Zahlung fällig am“ ausgefüllt, zeigt die Übersicht eine Karte mit den nächsten nicht-monatlichen Zahlungen (z. B. vierteljährliche oder jährliche Beiträge) samt Summe. Monatliche Zahlungen sind dort bewusst nicht aufgeführt, damit die Karte kurz und aussagekräftig bleibt. „Alle nach Fälligkeit“ öffnet die Vertragsliste, nach Fälligkeit sortiert.</p>'+
+    '<p><strong>Nach Haushalt:</strong> Sind mehrere Haushalte angelegt und oben „Alle Haushalte“ gewählt, gibt es zusätzlich die Auswertung „Nach Haushalt“. Sie zeigt, was jeder Haushalt im Jahr kostet, z. B. „Wohnhaus A“, „Praxis“ oder ein privater Haushalt wie „Privat Rob“, in dem nur eine Person Mitglied ist (so lassen sich Haushaltskosten und persönliche Ausgaben trennen). Ein Klick auf eine Kachel öffnet die Verträge dieses Haushalts. Verträge, die mehreren Haushalten zugeordnet sind, zählen in jedem Haushalt mit.</p>'+
     '<p>Ein Klick auf eine Kachel oder einen Balken springt direkt zur passend gefilterten Vertragsliste; ein kleiner Chip oberhalb der Liste zeigt den aktiven Filter an und lässt sich mit einem Klick wieder entfernen.</p>'+
     '<p>Im Balkendiagramm werden sehr lange Bezeichnungen (z. B. Kategorien oder Anbieter) mit „…“ gekürzt, damit sie den Balken nicht überdecken. Der vollständige Name erscheint, sobald Sie mit der Maus über die Zeile fahren; in der Kachel- und Tabellenansicht wird immer der volle Name gezeigt.</p>' },
 
@@ -1751,6 +1754,7 @@ const HELP_TOPICS = [
       '<li><strong>Anhänge nur im Vertrag:</strong> Die Vertragsliste zeigt keine Vorschaubilder mehr; Fotos und PDFs sind ausschließlich im geöffneten Vertrag sichtbar. Der Anhänge-Button heißt „Foto / Scan / Datei hinzufügen“.</li>'+
       '<li><strong>Neuer Name und neues Icon:</strong> aus „Vertragsordner“ wird „Vertragsraum“ mit dem Slogan „Verträge einfach im Blick“ (in der Seitenleiste am Mac/iPad quer) und neuem App-Icon (ein offener Raum um ein Dokument mit Haken). Ihre Daten und Sicherungen sind davon nicht betroffen; zu bereits angelegten Home-Bildschirm-Symbolen siehe „Auf dem iPad/iPhone als App nutzen“.</li>'+
       '<li><strong>Dokumente sortieren:</strong> Pfeile „nach oben / nach unten“ ändern die Reihenfolge angehängter Dokumente.</li>'+
+      '<li><strong>Auswertung „Nach Haushalt“:</strong> neue Kachelansicht in der Übersicht (bei mehreren Haushalten) mit den Jahreskosten je Haushalt; ein Klick öffnet dessen Verträge. Tipp: ein eigener Haushalt „Privat …“ mit nur einer Person trennt persönliche Ausgaben von den Haushaltskosten.</li>'+
       '<li><strong>Versionsnummer:</strong> Am Ende jeder Seite steht dezent die Version der App (z. B. „Version 3.0 · Stand 12.10.2026“). Daran sehen Sie, ob ein Gerät nach dem Aktualisieren wirklich die neue Fassung geladen hat; zeigt es noch eine ältere Nummer, die App schließen und neu öffnen bzw. die Seite in Safari neu laden.</li>'+
       '<li><strong>Zahlung fällig am:</strong> neues Feld im Vertrag, Sortierung „nach Fälligkeit“ in der Vertragsliste und auf der Übersicht eine Karte „Zahlungen in den nächsten 30 Tagen“ (ohne monatliche Zahlungen). CSV-Export und Druck enthalten „Nächste Zahlung“.</li>'+
       '<li><strong>Haushalt anklicken:</strong> Unter „Mitglieder“ zeigt ein Klick auf einen Haushalt jetzt die zugehörigen Verträge, genau wie bei einer Person. Ein Klick auf eine Person zeigt deren Verträge aus allen Haushalten.</li>'+
@@ -1792,8 +1796,12 @@ function activeRecurring(){
   return visibleContracts().filter(function(c){ return c.status==="aktiv" && c.frequency!=="einmalig"; });
 }
 
+function householdModeAvailable(){
+  return state.households.length>1 && state.activeHousehold==="__all";
+}
 function renderDashboard(){
   const el = document.getElementById("view-dashboard");
+  if (state.chartMode==="household" && !householdModeAvailable()) state.chartMode = "category";
   if (!state.contractsLoaded){
     el.innerHTML = '<div class="chart-empty">Wird geladen …</div>';
     return;
@@ -1820,12 +1828,13 @@ function renderDashboard(){
 
     '<div class="section card">'+
       '<div class="card-pad">'+
-        '<div class="section-head">'+
+        '<div class="section-head chart-head">'+
           '<h2>Ausgaben im Überblick</h2>'+
           '<div class="chart-toggle" id="chart-toggle">'+
             '<button data-mode="category" type="button">Nach Kategorie</button>'+
             '<button data-mode="payer" type="button">Nach Zahler:in</button>'+
             '<button data-mode="provider" type="button">Nach Anbieter</button>'+
+            (householdModeAvailable() ? '<button data-mode="household" type="button">Nach Haushalt</button>' : '')+
           '</div>'+
         '</div>'+
         '<div class="chart-display-row">'+
@@ -1864,6 +1873,16 @@ function renderDashboard(){
   });
 
   renderChart(document.getElementById("chart-host"));
+  if (state.chartMode==="household"){
+    const overlap = activeRecurring().some(function(c){ return (c.householdIds||[]).filter(householdById).length>1; });
+    if (overlap){
+      const hint = document.createElement("div");
+      hint.className = "member-sub";
+      hint.style.marginTop = "10px";
+      hint.textContent = "Verträge, die mehreren Haushalten zugeordnet sind, zählen in jedem dieser Haushalte mit; die Summe der Kacheln kann daher über den Gesamtkosten liegen.";
+      document.getElementById("chart-host").appendChild(hint);
+    }
+  }
 
   el.querySelectorAll("[data-open-contract]").forEach(function(row){
     row.addEventListener("click", function(){ openContractModal(row.getAttribute("data-open-contract")); });
@@ -2001,6 +2020,19 @@ function chartData(){
       return Object.assign({}, r, { color: r.key==="__other" ? "var(--cat-other)" : "var(--cat-"+((i%8)+1)+")" });
     });
   }
+  if (state.chartMode==="household"){
+    const totals = {}, counts = {};
+    rec.forEach(function(c){
+      (c.householdIds||[]).forEach(function(hid){
+        if (!householdById(hid)) return;
+        totals[hid] = (totals[hid]||0) + annualCost(c);
+        counts[hid] = (counts[hid]||0) + 1;
+      });
+    });
+    return state.households.filter(function(hh){ return totals[hh.id]>0; }).map(function(hh){
+      return { key:hh.id, label:hh.name, value:totals[hh.id], count:counts[hh.id], color:"var("+householdColorVar(hh)+")" };
+    }).sort(function(a,b){ return b.value-a.value; });
+  }
   const totals = {}, order = [];
   rec.forEach(function(c){
     if (!c.payerId) return;
@@ -2019,9 +2051,15 @@ function chartData(){
   return rows;
 }
 
-function chartModeLabel(){
-  return state.chartMode==="category" ? "Kategorie" : (state.chartMode==="provider" ? "Anbieter" : "Zahler:in");
+function openHouseholdContracts(hid){
+  state.activeHousehold = hid;
+  state.filterPayer = ""; state.filterCategory = ""; state.filterStatus = ""; state.filterProvider = ""; state.search = "";
+  setView("contracts");
 }
+function chartModeLabel(){
+  return state.chartMode==="category" ? "Kategorie" : (state.chartMode==="provider" ? "Anbieter" : (state.chartMode==="household" ? "Haushalt" : "Zahler:in"));
+}
+function chartHasCount(){ return state.chartMode==="provider" || state.chartMode==="household"; }
 function contractCountLabel(n){
   return n+' Vertrag/Verträge';
 }
@@ -2039,7 +2077,7 @@ function renderChart(host){
     host.innerHTML = '<div style="overflow-x:auto;"><table class="chart-table"><thead><tr><th>'+chartModeLabel()+'</th><th>Anteil</th><th>Jährlich</th></tr></thead><tbody>'+
       data.map(function(r){
         const pct = total? Math.round(r.value/total*100) : 0;
-        const countSuffix = (state.chartMode==="provider")
+        const countSuffix = chartHasCount()
           ? ' <span class="chart-count">('+contractCountLabel(r.count)+')</span>' : '';
         return '<tr><td><span class="dot" style="background:'+r.color+';margin-right:7px;"></span>'+escapeHtml(r.label)+countSuffix+'</td><td>'+pct+' %</td><td class="amount">'+formatEUR(r.value)+'</td></tr>';
       }).join("")+
@@ -2050,9 +2088,9 @@ function renderChart(host){
   if (state.chartDisplay==="tiles"){
     host.innerHTML = '<div class="tile-grid">'+data.map(function(r){
       const pct = total? Math.round(r.value/total*100) : 0;
-      const countHTML = (state.chartMode==="provider")
+      const countHTML = chartHasCount()
         ? '<span class="cat-tile-count">'+contractCountLabel(r.count)+'</span>' : '';
-      const ariaCount = (state.chartMode==="provider") ? ', '+contractCountLabel(r.count) : '';
+      const ariaCount = chartHasCount() ? ', '+contractCountLabel(r.count) : '';
       return '<div class="cat-tile" data-tile-key="'+r.key+'" tabindex="0" role="button" aria-label="'+escapeHtml(r.label)+ariaCount+', '+formatEUR(r.value)+' pro Jahr, '+pct+' Prozent">'+
         '<div class="cat-tile-head"><span class="dot" style="background:'+r.color+'"></span><span class="cat-tile-label">'+escapeHtml(r.label)+'</span></div>'+
         countHTML+
@@ -2068,6 +2106,7 @@ function renderChart(host){
         if (state.chartMode==="category"){ state.filterCategory = key; setView("contracts"); }
         else if (state.chartMode==="payer"){ state.filterPayer = key; setView("contracts"); }
         else if (state.chartMode==="provider"){ state.filterProvider = key; setView("contracts"); }
+        else if (state.chartMode==="household"){ openHouseholdContracts(key); }
       }
       el.addEventListener("click", activate);
       el.addEventListener("keydown", function(e){ if (e.key==="Enter" || e.key===" "){ e.preventDefault(); activate(); } });
@@ -2075,7 +2114,7 @@ function renderChart(host){
     return;
   }
 
-  const showCount = state.chartMode==="provider";
+  const showCount = chartHasCount();
   const rowH = showCount ? 46 : 34, gap = 8, topPad = 6, labelColW = 168, axisH = 22;
   const chartW = 640;
   const plotW = chartW - labelColW - 54;
@@ -2150,7 +2189,7 @@ function renderChart(host){
     function show(evt){
       rect.classList.add("hovered");
       const pct = total? Math.round(r.value/total*100) : 0;
-      const countLine = (state.chartMode==="provider") ? '<br>'+contractCountLabel(r.count) : '';
+      const countLine = chartHasCount() ? '<br>'+contractCountLabel(r.count) : '';
       tooltip.innerHTML = '<div style="font-weight:600;margin-bottom:2px;">'+escapeHtml(r.label)+'</div>'+
         'Jährlich: <b>'+formatEUR(r.value)+'</b><br>Monatlich Ø: <b>'+formatEUR(r.value/12)+'</b><br>Anteil: <b>'+pct+' %</b>'+countLine;
       const wrapRect = wrap.getBoundingClientRect();
@@ -2168,6 +2207,7 @@ function renderChart(host){
       if (state.chartMode==="category"){ state.filterCategory = r.key; setView("contracts"); }
       else if (state.chartMode==="payer"){ state.filterPayer = r.key; setView("contracts"); }
       else if (state.chartMode==="provider"){ state.filterProvider = r.key; setView("contracts"); }
+      else if (state.chartMode==="household"){ openHouseholdContracts(r.key); }
     });
   });
 }
