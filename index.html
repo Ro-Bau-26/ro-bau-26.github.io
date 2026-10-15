@@ -664,7 +664,7 @@
 /* ======================= Constants ======================= */
 
 /* Versionsnummer: wird bei jeder Lieferung hochgezählt und als dezente Fußzeile angezeigt (nicht Teil der Sicherung) */
-const APP_VERSION = "3.3";
+const APP_VERSION = "3.4";
 const APP_VERSION_DATE = "2026-10-15";
 
 const CATEGORIES = [
@@ -767,6 +767,7 @@ const state = {
   filterStatus: "",
   filterPayer: "",
   filterProvider: "",
+  filterAccount: "",
   editingId: null,       // contract currently open in modal, or "new"
   draftPriceHistory: [], // Preisverlauf des geöffneten Vertrags (Entwurf bis zum Speichern)
   editingSource: null,
@@ -1406,6 +1407,17 @@ function memberBankAccounts(id){
 function bankAccountById(memberId, accountId){
   return memberBankAccounts(memberId).find(function(a){ return a.id===accountId; });
 }
+/* Alle hinterlegten Konten mit Besitzer:in (für den Konto-Filter) */
+function allBankAccounts(){
+  const out = [];
+  state.members.forEach(function(m){ (m.bankAccounts||[]).forEach(function(a){ out.push({ account:a, member:m }); }); });
+  return out;
+}
+function accountFilterLabel(id){
+  if (id==="__none") return "Ohne Konto";
+  const hit = allBankAccounts().find(function(x){ return x.account.id===id; });
+  return hit ? bankAccountLabel(hit.account)+" ("+hit.member.name+")" : "Unbekanntes Konto";
+}
 function bankAccountLabel(a){
   return a.iban ? (a.label||"Konto")+" · "+a.iban : (a.label||"Konto");
 }
@@ -1707,6 +1719,7 @@ const HELP_TOPICS = [
   { title:"Zahler:in & Bankkonten", body:
     '<p>Jedem Vertrag kann eine Person aus dem Haushalt als Zahler:in zugeordnet werden. Sobald eine Person ausgewählt ist, erscheint darunter das Feld „Zahlungsquelle“ mit den für diese Person hinterlegten Bankkonten – sind noch keine vorhanden, lässt sich direkt aus dem Vertragsformular heraus eines anlegen.</p>'+
     '<p>Bankkonten verwalten Sie dauerhaft über „Mitglieder“ → Person bearbeiten. Die gewählte Zahlungsquelle wird auf der Vertragskarte als zusätzliche Information angezeigt.</p>'+
+    '<p><strong>Nach Konto filtern:</strong> Sobald mindestens ein Bankkonto hinterlegt ist, gibt es in der Vertragsliste neben „Alle Zahler:innen“ die Auswahl „Alle Konten“. Wählen Sie ein Konto, zeigt die Liste alle Verträge, die davon abgebucht werden, und darüber die Summe der laufenden Zahlungen (pro Jahr und Ø pro Monat; ohne beendete und einmalige Verträge). Es ist der volle abgebuchte Betrag, die Summe passt also zum Kontoauszug – auch wenn der Vertrag auf mehrere Personen aufgeteilt ist. „Ohne Konto“ zeigt Verträge, bei denen noch kein Konto eingetragen ist. Der Filter wirkt auch auf Druck und CSV-Export. Hinweis: Das Monatsmittel ist ein Durchschnitt; eine Jahresprämie belastet das Konto im Fälligkeitsmonat in voller Höhe.</p>'+
     '<p><strong>Kosten auf mehrere Personen aufteilen:</strong> Wird ein Vertrag von mehreren Personen getragen (z. B. KFZ-Versicherung 50 / 50 oder 75 / 25), wählen Sie zuerst die Hauptzahler:in – das ist die Person, von deren Konto der volle Betrag abgebucht wird. Darunter tippen Sie auf „+ Kosten mit weiterer Person aufteilen“, wählen die weitere Person und tragen deren Prozentanteil ein. Der Anteil der Hauptzahler:in ergibt sich automatisch (100 % minus die übrigen Anteile); daneben zeigt die App, wie viel Euro pro Zahlung auf jede Person entfallen. Mit „+ Weitere Person“ sind auch mehr als zwei möglich, mit „Aufteilung aufheben“ zahlt wieder allein die Hauptzahler:in.</p>'+
     '<p>Das Bankkonto gehört immer zur Hauptzahler:in; die weiteren Personen überweisen ihren Anteil an sie, brauchen also kein Konto in der App. Der Vertragsbetrag selbst bleibt der volle Betrag. Angezeigt wird die Aufteilung auf der Vertragskarte („Anna 50 % · Ben 50 %“), im Druck und in der CSV-Tabelle (Spalte „Zahler:in“). In der Übersicht „Nach Zahler:in“ werden die Jahreskosten nach den Anteilen verteilt, die Summe bleibt also gleich. Der Filter nach einer Person zeigt alle Verträge, an denen sie beteiligt ist.</p>' },
 
@@ -1830,6 +1843,7 @@ const HELP_TOPICS = [
 
   { title:"Neuerungen (Stand Oktober 2026)", body:
     '<ul style="margin:0 0 8px 18px;padding:0;">'+
+      '<li><strong>Filter „Konto“ (Version 3.4):</strong> In der Vertragsliste lassen sich die Verträge eines Bankkontos anzeigen, mit Summe der laufenden Zahlungen pro Jahr und Monat; auch „Ohne Konto“ zur Kontrolle. Details unter „Zahler:in &amp; Bankkonten“.</li>'+
       '<li><strong>Kosten aufteilen (Version 3.3):</strong> Ein Vertrag kann von mehreren Personen getragen werden (z. B. 50 / 50 oder 75 / 25). Die Hauptzahler:in zahlt den vollen Betrag, die anderen überweisen ihren Anteil. Die Aufteilung erscheint auf der Karte, im Druck, in der CSV-Tabelle und in „Nach Zahler:in“; Änderungen stehen im Verlauf. Details unter „Zahler:in &amp; Bankkonten“.</li>'+
       '<li><strong>Mehrere Haushalte:</strong> frei benennbare Haushalte, Personen und Verträge können mehreren Haushalten zugeordnet werden; „Alle Haushalte“ zeigt die Gesamtübersicht. Der Bereich „Haushalt“ heißt jetzt „Mitglieder“.</li>'+
       '<li><strong>Sicherung mit Gerätename:</strong> jedes Gerät erhält einen Namen, der samt Datum in die Sicherungsdatei geschrieben wird. Beim Laden zeigt die App, von welchem Gerät und wann die Datei stammt.</li>'+
@@ -1980,7 +1994,7 @@ function renderDashboard(){
   const dueLink = document.getElementById("due-sort-link");
   if (dueLink) dueLink.addEventListener("click", function(){
     state.contractsSort = "due";
-    state.filterCategory = ""; state.filterStatus = ""; state.filterPayer = ""; state.filterProvider = ""; state.search = "";
+    state.filterCategory = ""; state.filterStatus = ""; state.filterPayer = ""; state.filterProvider = ""; state.filterAccount = ""; state.search = "";
     setView("contracts");
   });
 }
@@ -2145,7 +2159,7 @@ function chartData(){
 
 function openHouseholdContracts(hid){
   state.activeHousehold = hid;
-  state.filterPayer = ""; state.filterCategory = ""; state.filterStatus = ""; state.filterProvider = ""; state.search = "";
+  state.filterPayer = ""; state.filterCategory = ""; state.filterStatus = ""; state.filterProvider = ""; state.filterAccount = ""; state.search = "";
   setView("contracts");
 }
 function chartModeLabel(){
@@ -2344,6 +2358,9 @@ function filteredContractsList(){
   if (state.filterCategory) list = list.filter(function(c){ return c.category===state.filterCategory; });
   if (state.filterStatus) list = list.filter(function(c){ return c.status===state.filterStatus; });
   if (state.filterPayer) list = list.filter(function(c){ return contractHasPayer(c, state.filterPayer); });
+  if (state.filterAccount){
+    list = list.filter(function(c){ return state.filterAccount==="__none" ? !c.bankAccountId : c.bankAccountId===state.filterAccount; });
+  }
   if (state.filterProvider){
     list = list.filter(function(c){
       return state.filterProvider==="__none" ? !(c.provider||"").trim() : (c.provider||"").trim()===state.filterProvider;
@@ -2465,6 +2482,28 @@ function renderContracts(){
 
   const activePayer = state.filterPayer ? memberById(state.filterPayer) : null;
   const activeProviderLabel = state.filterProvider ? (state.filterProvider==="__none" ? "Ohne Anbieter" : state.filterProvider) : null;
+  const accountEntries = allBankAccounts();
+  const accountSelectHTML = accountEntries.length
+    ? '<select class="filter-select" id="filter-account" aria-label="Bankkonto"><option value="">Alle Konten</option>'+
+        state.members.filter(function(m){ return (m.bankAccounts||[]).length; }).map(function(m){
+          return '<optgroup label="'+escapeHtml(m.name)+'">'+m.bankAccounts.map(function(a){
+            return '<option value="'+a.id+'"'+(state.filterAccount===a.id?' selected':'')+'>'+escapeHtml(bankAccountLabel(a))+'</option>';
+          }).join("")+'</optgroup>';
+        }).join("")+
+        '<option value="__none"'+(state.filterAccount==="__none"?' selected':'')+'>Ohne Konto</option>'+
+      '</select>'
+    : '';
+  /* Summe der laufenden Zahlungen des gewählten Kontos (nur aktive, wiederkehrende Verträge) */
+  let accountSummaryHTML = '';
+  if (state.filterAccount){
+    const act = list.filter(function(c){ return c.status==="aktiv" && c.frequency!=="einmalig"; });
+    const yearly = act.reduce(function(t,c){ return t + annualCost(c); }, 0);
+    accountSummaryHTML = '<div class="card" style="padding:10px 14px;margin:0 0 12px;font-size:0.88rem;">'+
+      '<strong>'+escapeHtml(accountFilterLabel(state.filterAccount))+'</strong>: '+(act.length===1 ? '1 laufender Vertrag' : act.length+' laufende Verträge')+' · '+
+      '<strong>'+formatEUR(yearly)+'</strong> pro Jahr · Ø '+formatEUR(yearly/12)+' pro Monat'+
+      (state.filterAccount==="__none" ? '' : '<div class="hint" style="font-size:0.73rem;color:var(--text-muted);margin-top:2px;">Voller abgebuchter Betrag; passt damit zum Kontoauszug.</div>')+
+    '</div>';
+  }
 
   el.innerHTML =
     '<div class="toolbar">'+
@@ -2479,6 +2518,7 @@ function renderContracts(){
       '<select class="filter-select" id="filter-payer"><option value="">Alle Zahler:innen</option>'+
         state.members.map(function(m){ return '<option value="'+m.id+'"'+(state.filterPayer===m.id?' selected':'')+'>'+escapeHtml(m.name)+'</option>'; }).join("")+
       '</select>'+
+      accountSelectHTML+
       '<button class="btn btn-ghost" id="print-contracts-btn" type="button" title="Gefilterte Liste drucken">'+icon("print")+' Drucken</button>'+
       '<button class="btn btn-ghost" id="csv-contracts-btn" type="button" title="Gefilterte Liste als CSV-Tabelle (Excel, Numbers) exportieren">'+icon("list")+' CSV</button>'+
     '</div>'+
@@ -2491,6 +2531,12 @@ function renderContracts(){
           icon("users")+' Zahler:in: '+escapeHtml(activePayer.name)+' '+icon("x")+
         '</div>'
       : '')+
+    (state.filterAccount
+      ? '<div class="badge badge-neutral" id="account-filter-chip" style="width:fit-content;margin:-4px 0 8px;cursor:pointer;">'+
+          icon("card")+' Konto: '+escapeHtml(accountFilterLabel(state.filterAccount))+' '+icon("x")+
+        '</div>'
+      : '')+
+    accountSummaryHTML+
     (activeProviderLabel
       ? '<div class="badge badge-neutral" id="provider-filter-chip" style="width:fit-content;margin:-4px 0 14px;cursor:pointer;">'+
           icon("building")+' Anbieter: '+escapeHtml(activeProviderLabel)+' '+icon("x")+
@@ -2511,6 +2557,10 @@ function renderContracts(){
   document.getElementById("filter-status").addEventListener("change", function(e){ state.filterStatus = e.target.value; renderContracts(); });
   document.getElementById("filter-sort").addEventListener("change", function(e){ state.contractsSort = e.target.value; renderContracts(); });
   document.getElementById("filter-payer").addEventListener("change", function(e){ state.filterPayer = e.target.value; renderContracts(); });
+  const accSel = document.getElementById("filter-account");
+  if (accSel) accSel.addEventListener("change", function(e){ state.filterAccount = e.target.value; renderContracts(); });
+  const accChip = document.getElementById("account-filter-chip");
+  if (accChip) accChip.addEventListener("click", function(){ state.filterAccount = ""; renderContracts(); });
   const chip = document.getElementById("payer-filter-chip");
   if (chip) chip.addEventListener("click", function(){ state.filterPayer = ""; renderContracts(); });
   const providerChip = document.getElementById("provider-filter-chip");
@@ -2767,6 +2817,7 @@ function printContractsList(list){
   if (state.filterCategory && CATEGORY_BY_ID[state.filterCategory]) filterParts.push("Kategorie: "+CATEGORY_BY_ID[state.filterCategory].label);
   if (state.filterStatus && STATUS_BY_ID[state.filterStatus]) filterParts.push("Status: "+STATUS_BY_ID[state.filterStatus].label);
   if (activePayer) filterParts.push("Zahler:in: "+activePayer.name);
+  if (state.filterAccount) filterParts.push("Konto: "+accountFilterLabel(state.filterAccount));
   if (activeProviderLabel) filterParts.push("Anbieter: "+activeProviderLabel);
   if (state.search) filterParts.push('Suche: „'+state.search+'“');
   const subtitle = (filterParts.length ? filterParts.join(" · ")+" · " : "Alle Verträge · ") + list.length+' Vertrag/Verträge';
@@ -2871,6 +2922,7 @@ function renderHousehold(){
       state.filterCategory = "";
       state.filterStatus = "";
       state.filterProvider = "";
+      state.filterAccount = "";
       state.search = "";
       setView("contracts");
     });
@@ -2905,6 +2957,7 @@ function renderHousehold(){
   el.querySelectorAll("[data-open-member]").forEach(function(btn){
     btn.addEventListener("click", function(){
       state.filterPayer = btn.getAttribute("data-open-member");
+      state.filterAccount = "";
       state.activeHousehold = "__all";
       state.filterCategory = "";
       state.filterStatus = "";
