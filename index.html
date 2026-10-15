@@ -481,6 +481,16 @@
   }
   .payer-history-date{ font-family:var(--font-sans); font-size:0.76rem; color:var(--text-muted); flex:none; }
   .payer-history-who{ font-size:0.84rem; font-weight:600; text-align:right; }
+  .split-box{ border:1px solid var(--border); background:var(--surface-2); border-radius:10px; padding:10px; display:flex; flex-direction:column; gap:8px; margin:-4px 0 14px; }
+  .split-row{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .split-row select{ flex:1; min-width:120px; }
+  .split-row input[type=number]{ width:64px; flex:none; text-align:right; }
+  .split-name{ flex:1; min-width:120px; font-weight:600; font-size:0.9rem; }
+  .split-pct{ font-weight:700; font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .split-eur{ font-size:0.76rem; color:var(--text-muted); font-variant-numeric:tabular-nums; white-space:nowrap; min-width:64px; text-align:right; }
+  .split-box .hint{ font-size:0.73rem; color:var(--text-muted); }
+  .split-links{ display:flex; gap:16px; flex-wrap:wrap; }
+  .split-bad{ color:var(--status-warning); }
   .price-row{ flex-wrap:wrap; align-items:center; }
   .price-row .price-main{ flex:1; min-width:140px; font-size:0.86rem; font-weight:600; }
   .price-row .price-main small{ display:block; font-weight:400; color:var(--text-muted); font-size:0.76rem; }
@@ -654,8 +664,8 @@
 /* ======================= Constants ======================= */
 
 /* Versionsnummer: wird bei jeder Lieferung hochgezählt und als dezente Fußzeile angezeigt (nicht Teil der Sicherung) */
-const APP_VERSION = "3.2";
-const APP_VERSION_DATE = "2026-10-12";
+const APP_VERSION = "3.3";
+const APP_VERSION_DATE = "2026-10-15";
 
 const CATEGORIES = [
   { id:"kfz",           label:"Kfz",                                   varName:"--cat-1" },
@@ -1339,6 +1349,23 @@ function memberColorVar(m){
   return MEMBER_COLORS[(m.colorIndex!=null?m.colorIndex:idx) % MEMBER_COLORS.length];
 }
 function memberById(id){ return state.members.find(function(m){ return m.id===id; }); }
+/* Zahler-Aufteilung: payerId = Hauptzahler:in (Bankkonto), payerShares = optional [{payerId, percent}] mit Summe 100 */
+function payerSharesOf(c){
+  const raw = Array.isArray(c.payerShares) ? c.payerShares : [];
+  const valid = raw.filter(function(x){ return x && x.payerId && Number(x.percent)>0; });
+  if (valid.length>=2) return valid.map(function(x){ return { payerId:x.payerId, percent:Number(x.percent) }; });
+  return c.payerId ? [{ payerId:c.payerId, percent:100 }] : [];
+}
+function isSplitContract(c){ return payerSharesOf(c).length>=2; }
+function contractHasPayer(c, id){ return c.payerId===id || payerSharesOf(c).some(function(x){ return x.payerId===id; }); }
+function payerSharesText(c){
+  const shares = payerSharesOf(c);
+  const split = shares.length>=2;
+  return shares.map(function(x){
+    const m = memberById(x.payerId);
+    return (m ? m.name : "Unbekannt") + (split ? " "+x.percent+" %" : "");
+  }).join(" · ");
+}
 function householdById(id){ return state.households.find(function(h){ return h.id===id; }); }
 function householdColorVar(h){
   const idx = state.households.findIndex(function(x){ return x.id===h.id; });
@@ -1679,10 +1706,13 @@ const HELP_TOPICS = [
 
   { title:"Zahler:in & Bankkonten", body:
     '<p>Jedem Vertrag kann eine Person aus dem Haushalt als Zahler:in zugeordnet werden. Sobald eine Person ausgewählt ist, erscheint darunter das Feld „Zahlungsquelle“ mit den für diese Person hinterlegten Bankkonten – sind noch keine vorhanden, lässt sich direkt aus dem Vertragsformular heraus eines anlegen.</p>'+
-    '<p>Bankkonten verwalten Sie dauerhaft über „Mitglieder“ → Person bearbeiten. Die gewählte Zahlungsquelle wird auf der Vertragskarte als zusätzliche Information angezeigt.</p>' },
+    '<p>Bankkonten verwalten Sie dauerhaft über „Mitglieder“ → Person bearbeiten. Die gewählte Zahlungsquelle wird auf der Vertragskarte als zusätzliche Information angezeigt.</p>'+
+    '<p><strong>Kosten auf mehrere Personen aufteilen:</strong> Wird ein Vertrag von mehreren Personen getragen (z. B. KFZ-Versicherung 50 / 50 oder 75 / 25), wählen Sie zuerst die Hauptzahler:in – das ist die Person, von deren Konto der volle Betrag abgebucht wird. Darunter tippen Sie auf „+ Kosten mit weiterer Person aufteilen“, wählen die weitere Person und tragen deren Prozentanteil ein. Der Anteil der Hauptzahler:in ergibt sich automatisch (100 % minus die übrigen Anteile); daneben zeigt die App, wie viel Euro pro Zahlung auf jede Person entfallen. Mit „+ Weitere Person“ sind auch mehr als zwei möglich, mit „Aufteilung aufheben“ zahlt wieder allein die Hauptzahler:in.</p>'+
+    '<p>Das Bankkonto gehört immer zur Hauptzahler:in; die weiteren Personen überweisen ihren Anteil an sie, brauchen also kein Konto in der App. Der Vertragsbetrag selbst bleibt der volle Betrag. Angezeigt wird die Aufteilung auf der Vertragskarte („Anna 50 % · Ben 50 %“), im Druck und in der CSV-Tabelle (Spalte „Zahler:in“). In der Übersicht „Nach Zahler:in“ werden die Jahreskosten nach den Anteilen verteilt, die Summe bleibt also gleich. Der Filter nach einer Person zeigt alle Verträge, an denen sie beteiligt ist.</p>' },
 
   { title:"Verlauf bei Zahler-Wechsel", body:
-    '<p>Ändern Sie bei einem bestehenden Vertrag die Zahler:in oder das Bankkonto, merkt sich die App diesen Wechsel automatisch mit Datum. Im Vertragsformular erscheint dafür unterhalb der Zahlungsquelle ein Verlauf mit allen bisherigen Wechseln – praktisch, um später nachzuvollziehen, wer wann für einen Vertrag aufgekommen ist.</p>' },
+    '<p>Ändern Sie bei einem bestehenden Vertrag die Zahler:in oder das Bankkonto, merkt sich die App diesen Wechsel automatisch mit Datum. Im Vertragsformular erscheint dafür unterhalb der Zahlungsquelle ein Verlauf mit allen bisherigen Wechseln – praktisch, um später nachzuvollziehen, wer wann für einen Vertrag aufgekommen ist.</p>'+
+    '<p>Auch eine Änderung der Aufteilung wird festgehalten, z. B. „Anna 50 % · Ben 50 %“. Übernimmt später eine Person wieder alles, steht im Verlauf „Anna 100 %“ – so bleibt nachvollziehbar, wie vorher aufgeteilt war.</p>' },
 
   { title:"Kündigungsfristen & automatische Verlängerung", body:
     '<p>Tragen Sie Vertragsende und Kündigungsfrist (in Monaten vor Vertragsende) ein, berechnet die App automatisch das späteste Kündigungsdatum und zeigt es unter „Anstehende Fristen &amp; Termine“ auf der Übersicht an, sobald es innerhalb der nächsten 90 Tage liegt. (Seit Oktober 2026 wird dieses Datum korrekt angezeigt – zuvor war es in manchen Zeitzonen, auch in Deutschland, einen Tag zu früh.)</p>'+
@@ -1746,6 +1776,7 @@ const HELP_TOPICS = [
 
   { title:"Ausgaben im Überblick", body:
     '<p>Der Diagrammbereich auf der Übersicht lässt sich zwischen drei Auswertungen umschalten: „Nach Kategorie“, „Nach Zahler:in“ und „Nach Anbieter“ – jeweils wahlweise als Kacheln, Balkendiagramm oder Tabelle. Bei vielen Anbietern werden automatisch nur die zehn größten einzeln aufgeführt, der Rest wird unter „Weitere“ zusammengefasst.</p>'+
+    '<p><strong>Aufgeteilte Verträge:</strong> Bei Verträgen mit mehreren Zahler:innen verteilt „Nach Zahler:in“ die Jahreskosten nach den eingetragenen Prozentanteilen. Ein Vertrag über 600 € im Jahr mit 75 / 25 erscheint also mit 450 € bei der einen und 150 € bei der anderen Person.</p>'+
     '<p><strong>Zahlungen in den nächsten 30 Tagen:</strong> Haben Sie in Verträgen das Feld „Zahlung fällig am“ ausgefüllt, zeigt die Übersicht eine Karte mit den nächsten nicht-monatlichen Zahlungen (z. B. vierteljährliche oder jährliche Beiträge) samt Summe. Monatliche Zahlungen sind dort bewusst nicht aufgeführt, damit die Karte kurz und aussagekräftig bleibt. „Alle nach Fälligkeit“ öffnet die Vertragsliste, nach Fälligkeit sortiert.</p>'+
     '<p><strong>Nach Haushalt:</strong> Sind mehrere Haushalte angelegt und oben „Alle Haushalte“ gewählt, gibt es zusätzlich die Auswertung „Nach Haushalt“. Sie zeigt, was jeder Haushalt im Jahr kostet, z. B. „Wohnhaus A“, „Praxis“ oder ein privater Haushalt wie „Privat Rob“, in dem nur eine Person Mitglied ist (so lassen sich Haushaltskosten und persönliche Ausgaben trennen). Ein Klick auf eine Kachel öffnet die Verträge dieses Haushalts. Verträge, die mehreren Haushalten zugeordnet sind, zählen in jedem Haushalt mit.</p>'+
     '<p>Ein Klick auf eine Kachel oder einen Balken springt direkt zur passend gefilterten Vertragsliste; ein kleiner Chip oberhalb der Liste zeigt den aktiven Filter an und lässt sich mit einem Klick wieder entfernen.</p>'+
@@ -1799,6 +1830,7 @@ const HELP_TOPICS = [
 
   { title:"Neuerungen (Stand Oktober 2026)", body:
     '<ul style="margin:0 0 8px 18px;padding:0;">'+
+      '<li><strong>Kosten aufteilen (Version 3.3):</strong> Ein Vertrag kann von mehreren Personen getragen werden (z. B. 50 / 50 oder 75 / 25). Die Hauptzahler:in zahlt den vollen Betrag, die anderen überweisen ihren Anteil. Die Aufteilung erscheint auf der Karte, im Druck, in der CSV-Tabelle und in „Nach Zahler:in“; Änderungen stehen im Verlauf. Details unter „Zahler:in &amp; Bankkonten“.</li>'+
       '<li><strong>Mehrere Haushalte:</strong> frei benennbare Haushalte, Personen und Verträge können mehreren Haushalten zugeordnet werden; „Alle Haushalte“ zeigt die Gesamtübersicht. Der Bereich „Haushalt“ heißt jetzt „Mitglieder“.</li>'+
       '<li><strong>Sicherung mit Gerätename:</strong> jedes Gerät erhält einen Namen, der samt Datum in die Sicherungsdatei geschrieben wird. Beim Laden zeigt die App, von welchem Gerät und wann die Datei stammt.</li>'+
       '<li><strong>Abgleich mit dem Sicherungsordner:</strong> Prüft per Dateiauswahl, ob eine neuere Sicherung vorliegt oder Ihr Stand neuer ist; dazu eine Statusanzeige „Gesichert/Ungesichert“ und eine Erinnerung beim Öffnen.</li>'+
@@ -2093,9 +2125,11 @@ function chartData(){
   }
   const totals = {}, order = [];
   rec.forEach(function(c){
-    if (!c.payerId) return;
-    if (!(c.payerId in totals)){ totals[c.payerId]=0; order.push(c.payerId); }
-    totals[c.payerId]+=annualCost(c);
+    const a = annualCost(c);
+    payerSharesOf(c).forEach(function(x){
+      if (!(x.payerId in totals)){ totals[x.payerId]=0; order.push(x.payerId); }
+      totals[x.payerId] += a * x.percent / 100;
+    });
   });
   let rows = order.map(function(id){
     const m = memberById(id);
@@ -2309,7 +2343,7 @@ function filteredContractsList(){
   }
   if (state.filterCategory) list = list.filter(function(c){ return c.category===state.filterCategory; });
   if (state.filterStatus) list = list.filter(function(c){ return c.status===state.filterStatus; });
-  if (state.filterPayer) list = list.filter(function(c){ return c.payerId===state.filterPayer; });
+  if (state.filterPayer) list = list.filter(function(c){ return contractHasPayer(c, state.filterPayer); });
   if (state.filterProvider){
     list = list.filter(function(c){
       return state.filterProvider==="__none" ? !(c.provider||"").trim() : (c.provider||"").trim()===state.filterProvider;
@@ -2630,7 +2664,7 @@ function contractCardHTML(c){
       '<div class="cc-meta">'+
         '<span>'+escapeHtml(cat?cat.label:"–")+'</span>'+
         householdSpan+
-        (payer ? '<span>'+icon("users")+' '+escapeHtml(payer.name)+'</span>' : '')+
+        (payerSharesOf(c).length ? '<span>'+icon("users")+' '+escapeHtml(payerSharesText(c))+'</span>' : '')+
         (bankAccount ? '<span>'+icon("card")+' '+escapeHtml(bankAccountLabel(bankAccount))+'</span>' : '')+
         (c.endDate ? '<span>bis '+formatDate(c.endDate)+'</span>' : '')+
         (function(){ const np = nextPaymentISO(c); return np ? '<span title="Nächste Zahlung">'+icon("card")+' Zahlung '+formatDate(np)+'</span>' : ''; })()+
@@ -2690,7 +2724,7 @@ function buildContractsCSV(list){
       csvText(c.provider),
       csvText(c.contractNumber),
       csvText(STATUS_BY_ID[c.status] ? STATUS_BY_ID[c.status].label : (c.status||"")),
-      csvText(payer ? payer.name : ""),
+      csvText(payerSharesText(c)),
       hasAmount ? csvNum(c.amount) : "",
       csvText(f ? f.label : ""),
       hasAmount ? csvNum(annualCost(c)) : "",
@@ -2749,7 +2783,7 @@ function printContractsList(list){
       householdCol+
       '<td>'+escapeHtml(cat?cat.label:"–")+'</td>'+
       '<td>'+escapeHtml(c.provider||"–")+'</td>'+
-      '<td>'+escapeHtml(payer?payer.name:"–")+'</td>'+
+      '<td>'+escapeHtml(payerSharesText(c)||"–")+'</td>'+
       '<td>'+formatEUR(c.amount)+(freqSuffix(f)?' '+escapeHtml(freqSuffix(f)):'')+'</td>'+
       '<td>'+escapeHtml(STATUS_BY_ID[c.status]?STATUS_BY_ID[c.status].label:(c.status||"–"))+'</td>'+
       '<td>'+(cb?formatDate(dateToISO(cb)):'–')+'</td>'+
@@ -2785,7 +2819,8 @@ function printSingleContract(c){
       row("Anbieter / Gesellschaft", escapeHtml(c.provider)) +
       row("Vertrags-/Versicherungsnr.", escapeHtml(c.contractNumber)) +
       row("Status", escapeHtml(STATUS_BY_ID[c.status]?STATUS_BY_ID[c.status].label:c.status)) +
-      row("Zahler:in", escapeHtml(payer?payer.name:"")) +
+      row("Zahler:in", escapeHtml(payerSharesText(c))) +
+      row("Kostenaufteilung", isSplitContract(c) ? escapeHtml(payerSharesOf(c).map(function(x){ const m = memberById(x.payerId); return (m?m.name:"Unbekannt")+" "+formatEUR((Number(c.amount)||0)*x.percent/100); }).join(" · "))+' pro Zahlung' : "") +
       row("Zahlungsquelle", escapeHtml(acct?bankAccountLabel(acct):"")) +
       row("Betrag", formatEUR(c.amount) + (freqSuffix(f) ? ' '+escapeHtml(freqSuffix(f)) : '') + (f ? ' · jährlich '+formatEUR(annualCost(c)) : '')) +
       row("Vertragsbeginn", c.startDate ? formatDate(c.startDate) : "") +
@@ -2887,7 +2922,7 @@ function renderHousehold(){
     btn.addEventListener("click", function(e){
       e.stopPropagation();
       const id = btn.getAttribute("data-del-member");
-      const inUse = state.contracts.some(function(c){ return c.payerId===id; });
+      const inUse = state.contracts.some(function(c){ return contractHasPayer(c, id); });
       if (inUse){ toast("Diese Person ist noch Verträgen zugeordnet – bitte zuerst dort ändern.", "error"); return; }
       confirmDialog("Person entfernen?", "Diese Person wird aus dem Haushalt entfernt. Bereits erfasste Verträge sind nicht betroffen.", function(){
         state.members = state.members.filter(function(m){ return m.id!==id; });
@@ -2900,7 +2935,7 @@ function renderHousehold(){
 }
 
 function memberRowHTML(m){
-  const count = state.contracts.filter(function(c){ return c.payerId===m.id; }).length;
+  const count = state.contracts.filter(function(c){ return contractHasPayer(c, m.id); }).length;
   const acctCount = (m.bankAccounts||[]).length;
   const sub = count+' Vertrag/Verträge'+(acctCount ? ' · '+acctCount+' Bankkonto/Bankkonten' : '');
   return '<div class="member-row">'+
@@ -3176,6 +3211,7 @@ function openContractModal(id){
   const source = isNew ? blankContract() : Object.assign({}, state.contracts.find(function(c){ return c.id===id; }));
   state.draftAttachments = (source.attachments || []).slice();
   state.draftPriceHistory = (source.priceHistory || []).map(function(e){ return Object.assign({}, e); });
+  state.draftExtraPayers = isSplitContract(source) ? payerSharesOf(source).filter(function(x){ return x.payerId!==source.payerId; }).map(function(x){ return { payerId:x.payerId, percent:x.percent }; }) : [];
   state.editingSource = source;
   if (isNew){
     state.draftHouseholdIds = state.activeHousehold!=="__all" ? [state.activeHousehold] : (state.households.length ? [state.households[0].id] : []);
@@ -3213,8 +3249,9 @@ function bankAccountFieldHTML(payerId, selectedId){
 function payerHistoryHTML(history){
   if (!Array.isArray(history) || history.length===0) return "";
   const rows = history.slice().reverse().map(function(h){
+    const shareText = Array.isArray(h.shares) && h.shares.length ? h.shares.map(function(x){ return escapeHtml(x.payerName||"Unbekannt")+' '+x.percent+' %'; }).join(' · ') : '';
     const who = h.payerName
-      ? escapeHtml(h.payerName) + (h.bankAccountLabel ? ' · '+escapeHtml(h.bankAccountLabel) : '')
+      ? (shareText || escapeHtml(h.payerName)) + (h.bankAccountLabel ? ' · '+escapeHtml(h.bankAccountLabel) : '')
       : '<span style="color:var(--text-muted);">– kein Zahler:in –</span>';
     return '<div class="payer-history-row">'+
       '<span class="payer-history-date">'+escapeHtml(formatDateTime(h.date))+'</span>'+
@@ -3283,6 +3320,8 @@ function contractModalHTML(c, isNew){
           '<div id="bankaccount-field">'+bankAccountFieldHTML(c.payerId, c.bankAccountId)+'</div>'+
         '</div>'+
       '</div>'+
+
+      '<div id="payer-split-host"></div>'+
 
       payerHistoryHTML(c.payerHistory)+
 
@@ -3434,6 +3473,118 @@ function setDocStatus(overlay, html, show){
   el.innerHTML = html || "";
 }
 
+function updateSplitSummary(overlay){
+  const host = overlay.querySelector("#payer-split-host");
+  if (!host || !host.querySelector(".split-box")) return;
+  const extras = state.draftExtraPayers || [];
+  const sum = extras.reduce(function(t,x){ return t + (Number(x.percent)||0); }, 0);
+  const mainPct = 100 - sum;
+  const amountEl = overlay.querySelector("#f-amount");
+  const amount = amountEl && amountEl.value!=="" ? Number(amountEl.value) : 0;
+  const mainEl = host.querySelector("#split-main-pct");
+  if (mainEl){ mainEl.textContent = mainPct+" %"; mainEl.classList.toggle("split-bad", mainPct<1); }
+  const mainEur = host.querySelector("#split-main-eur");
+  if (mainEur) mainEur.textContent = amount>0 && mainPct>0 ? formatEUR(amount*mainPct/100) : "";
+  host.querySelectorAll("[data-split-eur]").forEach(function(el){
+    const x = extras[Number(el.getAttribute("data-split-eur"))];
+    el.textContent = x && amount>0 ? formatEUR(amount*(Number(x.percent)||0)/100) : "";
+  });
+}
+
+function renderPayerSplit(overlay){
+  const host = overlay.querySelector("#payer-split-host");
+  if (!host) return;
+  const mainSel = overlay.querySelector("#f-payer");
+  const mainId = mainSel ? mainSel.value : "";
+  const main = memberById(mainId);
+  if (!main){ state.draftExtraPayers = []; host.innerHTML = ""; return; }
+  const candidates = membersForHouseholds(state.draftHouseholdIds).filter(function(m){ return m.id!==mainId; });
+  state.draftExtraPayers = (state.draftExtraPayers||[]).filter(function(x){
+    return !x.payerId || candidates.some(function(m){ return m.id===x.payerId; });
+  });
+  const extras = state.draftExtraPayers;
+  if (!extras.length){
+    host.innerHTML = candidates.length
+      ? '<div class="field" style="margin-top:-6px;"><button class="link-btn" id="split-start" type="button">+ Kosten mit weiterer Person aufteilen</button></div>'
+      : '';
+    const start = host.querySelector("#split-start");
+    if (start) start.addEventListener("click", function(){
+      state.draftExtraPayers = [{ payerId:"", percent:50 }];
+      renderPayerSplit(overlay);
+    });
+    return;
+  }
+  const rows = extras.map(function(x, i){
+    return '<div class="split-row">'+
+      '<select data-split-payer="'+i+'" aria-label="Weitere Person"><option value="">– Person wählen –</option>'+
+        candidates.filter(function(m){ return m.id===x.payerId || !extras.some(function(o, j){ return j!==i && o.payerId===m.id; }); })
+          .map(function(m){ return '<option value="'+m.id+'"'+(x.payerId===m.id?' selected':'')+'>'+escapeHtml(m.name)+'</option>'; }).join("")+
+      '</select>'+
+      '<input type="number" min="1" max="99" step="1" inputmode="numeric" value="'+escapeHtml(x.percent)+'" data-split-pct="'+i+'" aria-label="Anteil in Prozent"><span class="split-pct">%</span>'+
+      '<span class="split-eur" data-split-eur="'+i+'"></span>'+
+      '<button class="icon-btn" type="button" data-split-del="'+i+'" aria-label="Person entfernen">'+icon("x")+'</button>'+
+    '</div>';
+  }).join("");
+  const canAdd = candidates.length > extras.length;
+  host.innerHTML = '<div class="split-box">'+
+    '<div class="split-row"><span class="split-name">'+escapeHtml(main.name)+' <span style="font-weight:400;color:var(--text-muted);">(zahlt den vollen Betrag, Bankkonto oben)</span></span><span class="split-pct" id="split-main-pct"></span><span class="split-eur" id="split-main-eur"></span></div>'+
+    rows+
+    '<span class="hint">Die weiteren Personen überweisen ihren Anteil an '+escapeHtml(main.name)+'. In der Übersicht werden die Kosten nach diesen Anteilen verteilt.</span>'+
+    '<div class="split-links">'+
+      (canAdd ? '<button class="link-btn" id="split-add" type="button">+ Weitere Person</button>' : '')+
+      '<button class="link-btn" id="split-clear" type="button">Aufteilung aufheben</button>'+
+    '</div>'+
+  '</div>';
+  host.querySelectorAll("[data-split-payer]").forEach(function(sel){
+    sel.addEventListener("change", function(){
+      state.draftExtraPayers[Number(sel.getAttribute("data-split-payer"))].payerId = sel.value;
+      renderPayerSplit(overlay);
+    });
+  });
+  host.querySelectorAll("[data-split-pct]").forEach(function(inp){
+    inp.addEventListener("input", function(){
+      state.draftExtraPayers[Number(inp.getAttribute("data-split-pct"))].percent = inp.value===""? 0 : Math.round(Number(inp.value));
+      updateSplitSummary(overlay);
+    });
+  });
+  host.querySelectorAll("[data-split-del]").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      state.draftExtraPayers.splice(Number(btn.getAttribute("data-split-del")), 1);
+      renderPayerSplit(overlay);
+    });
+  });
+  const add = host.querySelector("#split-add");
+  if (add) add.addEventListener("click", function(){
+    const sum = state.draftExtraPayers.reduce(function(t,x){ return t + (Number(x.percent)||0); }, 0);
+    const mainPct = 100 - sum;
+    if (mainPct<2){ toast("Der Anteil von "+main.name+" ist schon sehr klein – bitte zuerst andere Anteile verringern.", "error"); return; }
+    state.draftExtraPayers.push({ payerId:"", percent:Math.max(1, Math.floor(mainPct/2)) });
+    renderPayerSplit(overlay);
+  });
+  host.querySelector("#split-clear").addEventListener("click", function(){
+    state.draftExtraPayers = [];
+    renderPayerSplit(overlay);
+  });
+  updateSplitSummary(overlay);
+}
+
+/* Liefert { shares:[...] } (leer = keine Aufteilung) oder { error:"…" } */
+function collectPayerShares(mainId){
+  const rows = state.draftExtraPayers || [];
+  if (!mainId || !rows.length) return { shares:[] };
+  if (rows.some(function(x){ return !x.payerId; })) return { error:"Bitte bei der Aufteilung eine Person wählen oder die Zeile entfernen." };
+  const seen = {};
+  for (let i=0;i<rows.length;i++){
+    if (rows[i].payerId===mainId || seen[rows[i].payerId]) return { error:"Jede Person kann nur einmal in der Aufteilung vorkommen." };
+    seen[rows[i].payerId] = true;
+    const pct = Math.round(Number(rows[i].percent)||0);
+    if (pct<1 || pct>99) return { error:"Die Anteile müssen zwischen 1 und 99 % liegen." };
+  }
+  const sum = rows.reduce(function(t,x){ return t + Math.round(Number(x.percent)||0); }, 0);
+  if (sum>99) return { error:"Die Anteile der weiteren Personen ergeben zusammen "+sum+" % – für die Hauptzahler:in muss mindestens 1 % bleiben." };
+  return { shares:[{ payerId:mainId, percent:100-sum }].concat(rows.map(function(x){ return { payerId:x.payerId, percent:Math.round(Number(x.percent)) }; })) };
+}
+
 function refreshContractPayerField(overlay){
   const field = overlay.querySelector("#payer-field");
   if (!field) return;
@@ -3447,6 +3598,7 @@ function refreshContractPayerField(overlay){
     const bf = overlay.querySelector("#bankaccount-field");
     if (bf) bf.innerHTML = bankAccountFieldHTML("", "");
   }
+  renderPayerSplit(overlay);
 }
 
 function wireContractPayerField(overlay){
@@ -3463,6 +3615,7 @@ function wireContractPayerField(overlay){
       const bfield = overlay.querySelector("#bankaccount-field");
       if (bfield){ bfield.innerHTML = bankAccountFieldHTML(payerSelect.value, ""); }
       wireBankAccountField(overlay);
+      renderPayerSplit(overlay);
     });
   }
 }
@@ -3504,6 +3657,9 @@ function wireContractModal(overlay, source, isNew){
   wireBankAccountField(overlay);
   renderContractHouseholdChips(overlay);
   wireContractPayerField(overlay);
+  renderPayerSplit(overlay);
+  const amountEl = overlay.querySelector("#f-amount");
+  if (amountEl){ amountEl.addEventListener("input", function(){ updateSplitSummary(overlay); }); }
 
   const autoRenewCheckbox = overlay.querySelector("#f-autorenew");
   if (autoRenewCheckbox){
@@ -3629,6 +3785,7 @@ function collectContractFormSnapshot(overlay, source){
     specialCancel: val("#f-special-cancel").trim(),
     payerId: val("#f-payer") || "",
     bankAccountId: val("#f-bankaccount") || "",
+    payerShares: collectPayerShares(val("#f-payer") || "").shares || [],
     amount: val("#f-amount")===""? 0 : Number(val("#f-amount")),
     frequency: val("#f-frequency"),
     startDate: val("#f-start"),
@@ -3735,19 +3892,23 @@ function handleBackgroundFileSelected(file){
   });
 }
 
-function payerHistorySnapshot(payerId, bankAccountId){
+function payerHistorySnapshot(payerId, bankAccountId, shares){
   if (!payerId){
     return { date:new Date().toISOString(), payerId:"", payerName:"", bankAccountId:"", bankAccountLabel:"" };
   }
   const m = memberById(payerId);
   const acct = bankAccountId ? bankAccountById(payerId, bankAccountId) : null;
-  return {
+  const snap = {
     date: new Date().toISOString(),
     payerId: payerId,
     payerName: m ? m.name : "",
     bankAccountId: bankAccountId || "",
     bankAccountLabel: acct ? bankAccountLabel(acct) : ""
   };
+  if (Array.isArray(shares) && shares.length){
+    snap.shares = shares.map(function(x){ const mm = memberById(x.payerId); return { payerId:x.payerId, payerName:mm?mm.name:"", percent:x.percent }; });
+  }
+  return snap;
 }
 
 function saveContract(overlay, source, isNew, priceMeta){
@@ -3783,11 +3944,19 @@ function saveContract(overlay, source, isNew, priceMeta){
   const payerId = val("#f-payer") || "";
   const bankAccountId = val("#f-bankaccount") || "";
 
+  const splitRes = collectPayerShares(payerId);
+  if (splitRes.error){ toast(splitRes.error, "error"); return; }
+  const newShares = splitRes.shares;
+  const sharesSig = function(list){ return list.map(function(x){ return x.payerId+":"+x.percent; }).join(","); };
+  const oldSplit = !isNew && isSplitContract(source);
+  const sharesChanged = sharesSig(oldSplit ? payerSharesOf(source) : []) !== sharesSig(newShares);
   const payerChanged = payerId !== (source.payerId||"");
   const acctChanged = bankAccountId !== (source.bankAccountId||"");
   let payerHistory = Array.isArray(source.payerHistory) ? source.payerHistory.slice() : [];
-  if ((isNew && payerId) || (!isNew && (payerChanged || acctChanged))){
-    payerHistory.push(payerHistorySnapshot(payerId, bankAccountId));
+  if ((isNew && payerId) || (!isNew && (payerChanged || acctChanged || sharesChanged))){
+    /* Auch der Wechsel zurück auf eine einzelne Person (100 %) wird im Verlauf festgehalten */
+    const histShares = newShares.length ? newShares : (oldSplit && payerId ? [{ payerId:payerId, percent:100 }] : null);
+    payerHistory.push(payerHistorySnapshot(payerId, bankAccountId, histShares));
   }
 
   const payload = {
@@ -3805,6 +3974,7 @@ function saveContract(overlay, source, isNew, priceMeta){
     specialCancel: val("#f-special-cancel").trim(),
     payerId: payerId,
     bankAccountId: bankAccountId,
+    payerShares: newShares,
     payerHistory: payerHistory,
     amount: newAmount,
     frequency: newFreq,
