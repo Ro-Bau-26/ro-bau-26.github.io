@@ -491,6 +491,16 @@
   .split-box .hint{ font-size:0.73rem; color:var(--text-muted); }
   .split-links{ display:flex; gap:16px; flex-wrap:wrap; }
   .split-bad{ color:var(--status-warning); }
+  .st-entry{ border:1px solid var(--border); background:var(--surface-2); border-radius:10px; padding:10px; display:flex; flex-direction:column; gap:10px; margin-bottom:8px; }
+  .st-head{ display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .st-head label{ display:flex; align-items:center; gap:8px; font-weight:600; font-size:0.88rem; }
+  .st-head input[type=number]{ width:84px; }
+  .st-line{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; align-items:center; }
+  .st-line .st-art{ grid-column:1 / 3; }
+  .st-line .st-del{ justify-self:end; }
+  .st-line input, .st-line select{ min-width:0; width:100%; }
+  .st-info{ grid-column:1 / -1; font-size:0.76rem; color:var(--text-muted); line-height:1.4; }
+  .st-total{ font-size:0.84rem; font-weight:600; }
   .price-row{ flex-wrap:wrap; align-items:center; }
   .price-row .price-main{ flex:1; min-width:140px; font-size:0.86rem; font-weight:600; }
   .price-row .price-main small{ display:block; font-weight:400; color:var(--text-muted); font-size:0.76rem; }
@@ -664,7 +674,7 @@
 /* ======================= Constants ======================= */
 
 /* Versionsnummer: wird bei jeder Lieferung hochgezählt und als dezente Fußzeile angezeigt (nicht Teil der Sicherung) */
-const APP_VERSION = "3.4";
+const APP_VERSION = "3.5";
 const APP_VERSION_DATE = "2026-10-15";
 
 const CATEGORIES = [
@@ -1747,6 +1757,11 @@ const HELP_TOPICS = [
     '</ul>'+
     '<p><strong>Gut zu wissen:</strong> Verglichen wird immer auf Jahresbasis. Wechselt der Rhythmus (z. B. von monatlich auf jährlich), sind die Änderungen dadurch vergleichbar. Bei bereits vorhandenen Verträgen beginnt der Verlauf mit der ersten Änderung: Der bisherige Beitrag wird dann als „Bisher“ gespeichert, sein genaues Datum kennt die App nicht. Der Preisverlauf ist Teil der Sicherungsdatei. Es gibt bewusst keine Diagramme und Prognosen – die App zeigt, was sich geändert hat, und bleibt eine schlanke Vertragsübersicht.</p>' },
 
+  { title:"Jahresabrechnung (Strom, Gas, Wasser)", body:
+    '<p>Bei Verträgen der Kategorie „Energie &amp; Wasser“ gibt es im Vertrag den Block „Jahresabrechnung“. Dort tragen Sie ein, was auf der jährlichen Abrechnung steht: für jedes Abrechnungsjahr eine Zeile je Verbrauchsart (Strom, Gas, Wasser, Kanal / Abwasser oder Sonstiges) mit Verbrauch, Einheit (kWh, m³, MWh) und Bruttobetrag. Die Einheit stellt die App passend zur Verbrauchsart vor.</p>'+
+    '<p>Die App rechnet daraus für jede Zeile den Anteil am Gesamtbetrag, den Betrag pro Monat und den Ø-Preis je Einheit, bei Strom z. B. 0,346 € pro kWh. Gibt es für dieselbe Verbrauchsart ein früheres Jahr, zeigt sie dahinter die Veränderung von Verbrauch und Ø-Preis gegenüber diesem Jahr. Für einen Vergleich genügt es, das Vorjahr nur mit dem Verbrauch einzutragen, wenn Sie den Betrag nicht zur Hand haben.</p>'+
+    '<p><strong>Gut zu wissen:</strong> Der Ø-Preis enthält den Grundpreis und ist deshalb ein Durchschnitt, kein Arbeitspreis; bei kleinen Mengen (z. B. 8 m³ Wasser) wirkt er hoch. Er eignet sich für den Jahresvergleich und bei Strom und Gas für einen Tarifvergleich. Die Jahresabrechnung ist reine Information: Der Betrag im Vertrag (Abschlag) und alle Summen der Übersicht bleiben unverändert, damit nichts doppelt gezählt wird. Das Scan-PDF der Abrechnung hängen Sie wie gewohnt als Dokument an den Vertrag. Der jeweils neueste Eintrag erscheint auch im Einzelausdruck des Vertrags.</p>' },
+
   { title:"Vorzeitig gekündigt: Vorauszahlung & Rückerstattung", body:
     '<p><strong>Beispiel:</strong> Sie haben eine Leistung für ein ganzes Jahr im Voraus bezahlt, kündigen während der Laufzeit und erhalten für den nicht genutzten Teil Geld zurück.</p>'+
     '<p><strong>Was die App kann:</strong> Sie zeigt laufende Verträge und deren künftige Kosten, aber sie führt keine Zahlungsliste. Weder Vorauszahlungen noch Rückerstattungen werden als Beträge verbucht, und es gibt keine Auswertung „tatsächlich gezahlt“. Stellen Sie den Vertrag auf „Gekündigt“, rechnet die App ihn aus „Ausgaben im Überblick“ sowie den Jahres- und Monatssummen heraus – genau das ist hier richtig, weil künftig nichts mehr anfällt. Der Vertrag bleibt mit Dokumenten und Notizen in der Liste erhalten.</p>'+
@@ -1843,6 +1858,7 @@ const HELP_TOPICS = [
 
   { title:"Neuerungen (Stand Oktober 2026)", body:
     '<ul style="margin:0 0 8px 18px;padding:0;">'+
+      '<li><strong>Jahresabrechnung (Version 3.5):</strong> Bei „Energie &amp; Wasser“ lassen sich Verbrauch und Kosten je Verbrauchsart und Jahr erfassen; die App zeigt Anteil, Monatsbetrag, Ø-Preis je Einheit und den Vergleich zum Vorjahr. Details unter „Jahresabrechnung (Strom, Gas, Wasser)“.</li>'+
       '<li><strong>Filter „Konto“ (Version 3.4):</strong> In der Vertragsliste lassen sich die Verträge eines Bankkontos anzeigen, mit Summe der laufenden Zahlungen pro Jahr und Monat; auch „Ohne Konto“ zur Kontrolle. Details unter „Zahler:in &amp; Bankkonten“.</li>'+
       '<li><strong>Kosten aufteilen (Version 3.3):</strong> Ein Vertrag kann von mehreren Personen getragen werden (z. B. 50 / 50 oder 75 / 25). Die Hauptzahler:in zahlt den vollen Betrag, die anderen überweisen ihren Anteil. Die Aufteilung erscheint auf der Karte, im Druck, in der CSV-Tabelle und in „Nach Zahler:in“; Änderungen stehen im Verlauf. Details unter „Zahler:in &amp; Bankkonten“.</li>'+
       '<li><strong>Mehrere Haushalte:</strong> frei benennbare Haushalte, Personen und Verträge können mehreren Haushalten zugeordnet werden; „Alle Haushalte“ zeigt die Gesamtübersicht. Der Bereich „Haushalt“ heißt jetzt „Mitglieder“.</li>'+
@@ -2648,6 +2664,167 @@ function priceHistoryHTML(c){
   }).join("");
   return '<div class="field"><label>Preisverlauf</label><div class="payer-history" style="max-height:240px;">'+rows+'</div></div>';
 }
+/* ======================= Jahresabrechnung (Kategorie Energie & Wasser) ======================= */
+
+const SETTLEMENT_ARTS = [
+  { id:"strom", label:"Strom", unit:"kWh" }, { id:"wasser", label:"Wasser", unit:"m³" },
+  { id:"kanal", label:"Kanal / Abwasser", unit:"m³" }, { id:"gas", label:"Gas", unit:"kWh" },
+  { id:"sonstiges", label:"Sonstiges", unit:"kWh" }
+];
+const SETTLEMENT_UNITS = ["kWh","m³","MWh"];
+function settlementNum(v){ const n = Number(v); return (v!=="" && v!=null && isFinite(n)) ? n : 0; }
+function settlementArtLabel(id){ const a = SETTLEMENT_ARTS.find(function(x){ return x.id===id; }); return a ? a.label : "Sonstiges"; }
+function fmtUnitPrice(n){ return (n<1 ? n.toFixed(3) : n.toFixed(2)).replace(".",",")+" €"; }
+function fmtQty(n){ return new Intl.NumberFormat("de-DE",{ maximumFractionDigits:2 }).format(n); }
+function previousSettlement(list, entry){
+  let best = null;
+  list.forEach(function(e){
+    if (e!==entry && Number(e.year)<Number(entry.year) && (!best || Number(e.year)>Number(best.year))) best = e;
+  });
+  return best;
+}
+function settlementLineInfo(list, entry, line){
+  const amount = settlementNum(line.amount), qty = settlementNum(line.qty);
+  const total = entry.lines.reduce(function(t,l){ return t + settlementNum(l.amount); }, 0);
+  const parts = [];
+  if (amount>0 && total>0 && entry.lines.length>1) parts.push(Math.round(amount/total*100)+" % vom Gesamtbetrag");
+  if (amount>0) parts.push(formatEUR(amount/12)+" pro Monat");
+  const price = (amount>0 && qty>0) ? amount/qty : 0;
+  if (price>0) parts.push("Ø-Preis <strong>"+fmtUnitPrice(price)+" / "+escapeHtml(line.unit||"")+"</strong>");
+  const prev = previousSettlement(list, entry);
+  const pl = prev ? (prev.lines||[]).find(function(l){ return l.art===line.art && (l.unit||"")===(line.unit||""); }) : null;
+  if (pl){
+    const pq = settlementNum(pl.qty), pa = settlementNum(pl.amount);
+    if (qty>0 && pq>0) parts.push("Verbrauch "+signedPct((qty-pq)/pq*100)+" ggü. "+escapeHtml(prev.year));
+    if (price>0 && pq>0 && pa>0) parts.push("Ø-Preis "+signedPct((price/(pa/pq)-1)*100)+" ggü. "+escapeHtml(prev.year));
+  }
+  return parts.join(" · ");
+}
+function settlementTotalText(entry){
+  const total = entry.lines.reduce(function(t,l){ return t + settlementNum(l.amount); }, 0);
+  return total>0 ? "Gesamt "+formatEUR(total)+" · Ø "+formatEUR(total/12)+" pro Monat" : "";
+}
+function updateSettlementInfo(host){
+  const list = state.draftSettlements || [];
+  host.querySelectorAll("[data-st-info]").forEach(function(el){
+    const k = el.getAttribute("data-st-info").split(":");
+    const e = list[Number(k[0])], l = e && e.lines[Number(k[1])];
+    el.innerHTML = l ? settlementLineInfo(list, e, l) : "";
+  });
+  host.querySelectorAll("[data-st-total]").forEach(function(el){
+    const e = list[Number(el.getAttribute("data-st-total"))];
+    el.textContent = e ? settlementTotalText(e) : "";
+  });
+}
+function renderSettlements(overlay){
+  const host = overlay.querySelector("#settlement-host");
+  if (!host) return;
+  const cat = overlay.querySelector("#f-category");
+  if (!cat || cat.value!=="energie"){ host.innerHTML = ""; return; }
+  const list = state.draftSettlements;
+  list.sort(function(a,b){ return (Number(b.year)||0)-(Number(a.year)||0); });
+  const entries = list.map(function(e, i){
+    const lines = e.lines.map(function(l, j){
+      return '<div class="st-line">'+
+        '<select class="st-art" data-st-art="'+i+':'+j+'" aria-label="Verbrauchsart">'+SETTLEMENT_ARTS.map(function(a){ return '<option value="'+a.id+'"'+(l.art===a.id?' selected':'')+'>'+escapeHtml(a.label)+'</option>'; }).join("")+'</select>'+
+        '<button class="icon-btn st-del" type="button" data-st-del-line="'+i+':'+j+'" aria-label="Zeile entfernen">'+icon("x")+'</button>'+
+        '<input type="number" min="0" step="any" inputmode="decimal" placeholder="Verbrauch" aria-label="Verbrauch" data-st-qty="'+i+':'+j+'" value="'+escapeHtml(l.qty||"")+'">'+
+        '<select data-st-unit="'+i+':'+j+'" aria-label="Einheit">'+SETTLEMENT_UNITS.map(function(u){ return '<option'+(l.unit===u?' selected':'')+'>'+u+'</option>'; }).join("")+'</select>'+
+        '<input type="number" min="0" step="0.01" inputmode="decimal" placeholder="Betrag €" aria-label="Bruttobetrag in Euro" data-st-amount="'+i+':'+j+'" value="'+escapeHtml(l.amount||"")+'">'+
+        '<div class="st-info" data-st-info="'+i+':'+j+'"></div>'+
+      '</div>';
+    }).join("");
+    return '<div class="st-entry">'+
+      '<div class="st-head"><label>Abrechnungsjahr <input type="number" min="2000" max="2100" step="1" inputmode="numeric" data-st-year="'+i+'" value="'+escapeHtml(e.year||"")+'"></label>'+
+        '<button class="icon-btn" type="button" data-st-del-entry="'+i+'" aria-label="Abrechnung entfernen" title="Diese Abrechnung entfernen">'+icon("trash")+'</button></div>'+
+      lines+
+      '<div class="split-links"><button class="link-btn" type="button" data-st-add-line="'+i+'">+ Verbrauchsart</button></div>'+
+      '<div class="st-total" data-st-total="'+i+'"></div>'+
+    '</div>';
+  }).join("");
+  host.innerHTML = '<div class="field"><label>Jahresabrechnung (optional)</label>'+
+    '<span class="hint">Verbrauch und Bruttobetrag je Verbrauchsart laut Abrechnung. Die App rechnet Anteil, Monatsbetrag und Ø-Preis aus und vergleicht mit dem Vorjahr. Der Vertragsbetrag oben (Abschlag) und die Summen der Übersicht bleiben unverändert.</span>'+
+    entries+
+    '<div class="split-links"><button class="link-btn" type="button" id="st-add-entry">+ Abrechnungsjahr hinzufügen</button></div>'+
+  '</div>';
+  const idx = function(el, attr){ return el.getAttribute(attr).split(":").map(Number); };
+  host.querySelectorAll("[data-st-year]").forEach(function(inp){
+    inp.addEventListener("input", function(){ list[Number(inp.getAttribute("data-st-year"))].year = inp.value===""? "" : Math.round(Number(inp.value)); updateSettlementInfo(host); });
+    inp.addEventListener("change", function(){ renderSettlements(overlay); });
+  });
+  host.querySelectorAll("[data-st-art]").forEach(function(sel){
+    sel.addEventListener("change", function(){
+      const k = idx(sel,"data-st-art"), l = list[k[0]].lines[k[1]];
+      l.art = sel.value;
+      const a = SETTLEMENT_ARTS.find(function(x){ return x.id===sel.value; });
+      if (a) l.unit = a.unit;
+      renderSettlements(overlay);
+    });
+  });
+  host.querySelectorAll("[data-st-unit]").forEach(function(sel){
+    sel.addEventListener("change", function(){ const k = idx(sel,"data-st-unit"); list[k[0]].lines[k[1]].unit = sel.value; updateSettlementInfo(host); });
+  });
+  host.querySelectorAll("[data-st-qty]").forEach(function(inp){
+    inp.addEventListener("input", function(){ const k = idx(inp,"data-st-qty"); list[k[0]].lines[k[1]].qty = inp.value; updateSettlementInfo(host); });
+  });
+  host.querySelectorAll("[data-st-amount]").forEach(function(inp){
+    inp.addEventListener("input", function(){ const k = idx(inp,"data-st-amount"); list[k[0]].lines[k[1]].amount = inp.value; updateSettlementInfo(host); });
+  });
+  host.querySelectorAll("[data-st-del-line]").forEach(function(btn){
+    btn.addEventListener("click", function(){ const k = idx(btn,"data-st-del-line"); list[k[0]].lines.splice(k[1],1); renderSettlements(overlay); });
+  });
+  host.querySelectorAll("[data-st-add-line]").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      const e = list[Number(btn.getAttribute("data-st-add-line"))];
+      const used = e.lines.map(function(l){ return l.art; });
+      const next = SETTLEMENT_ARTS.find(function(a){ return used.indexOf(a.id)<0; }) || SETTLEMENT_ARTS[SETTLEMENT_ARTS.length-1];
+      e.lines.push({ id:newId(), art:next.id, unit:next.unit, qty:"", amount:"" });
+      renderSettlements(overlay);
+    });
+  });
+  host.querySelectorAll("[data-st-del-entry]").forEach(function(btn){
+    btn.addEventListener("click", function(){ list.splice(Number(btn.getAttribute("data-st-del-entry")),1); renderSettlements(overlay); });
+  });
+  host.querySelector("#st-add-entry").addEventListener("click", function(){
+    const years = list.map(function(e){ return Number(e.year)||0; });
+    const newest = list.slice().sort(function(a,b){ return (Number(b.year)||0)-(Number(a.year)||0); })[0];
+    const year = years.length && Math.max.apply(null, years)>0 ? Math.max.apply(null, years)+1 : new Date().getFullYear()-1;
+    const lines = newest && newest.lines.length
+      ? newest.lines.map(function(l){ return { id:newId(), art:l.art, unit:l.unit, qty:"", amount:"" }; })
+      : [{ id:newId(), art:"strom", unit:"kWh", qty:"", amount:"" }];
+    list.push({ id:newId(), year:year, lines:lines });
+    renderSettlements(overlay);
+  });
+  updateSettlementInfo(host);
+}
+
+/* Liefert { settlements:[…] } (nur Einträge mit Zahlen, neueste zuerst) oder { error:"…" } */
+function collectSettlements(){
+  const out = [], seen = {};
+  const list = (state.draftSettlements || []).slice().sort(function(a,b){ return (Number(b.year)||0)-(Number(a.year)||0); });
+  for (let i=0;i<list.length;i++){
+    const lines = list[i].lines.filter(function(l){ return settlementNum(l.amount)>0 || settlementNum(l.qty)>0; }).map(function(l){
+      return { art:l.art, unit:l.unit, qty:settlementNum(l.qty), amount:settlementNum(l.amount) };
+    });
+    if (!lines.length) continue;
+    const year = Number(list[i].year);
+    if (!Number.isInteger(year) || year<2000 || year>2100) return { error:"Bitte bei der Jahresabrechnung ein gültiges Jahr eintragen (z. B. 2025)." };
+    if (seen[year]) return { error:"Die Jahresabrechnung "+year+" ist doppelt vorhanden." };
+    seen[year] = true;
+    out.push({ id:list[i].id || newId(), year:year, lines:lines });
+  }
+  return { settlements:out };
+}
+function settlementsPrintText(c){
+  const list = Array.isArray(c.settlements) ? c.settlements.slice().sort(function(a,b){ return b.year-a.year; }) : [];
+  if (!list.length) return "";
+  const e = list[0];
+  return e.year+": "+e.lines.map(function(l){
+    const q = settlementNum(l.qty), a = settlementNum(l.amount);
+    return settlementArtLabel(l.art)+(a>0?" "+formatEUR(a):"")+(q>0 ? " ("+fmtQty(q)+" "+(l.unit||"")+(a>0?", "+fmtUnitPrice(a/q)+"/"+(l.unit||""):"")+")" : "");
+  }).join(" · ");
+}
+
 function renderPriceHistory(overlay){
   const host = overlay.querySelector("#price-history-host");
   if (!host) return;
@@ -2873,6 +3050,7 @@ function printSingleContract(c){
       row("Zahler:in", escapeHtml(payerSharesText(c))) +
       row("Kostenaufteilung", isSplitContract(c) ? escapeHtml(payerSharesOf(c).map(function(x){ const m = memberById(x.payerId); return (m?m.name:"Unbekannt")+" "+formatEUR((Number(c.amount)||0)*x.percent/100); }).join(" · "))+' pro Zahlung' : "") +
       row("Zahlungsquelle", escapeHtml(acct?bankAccountLabel(acct):"")) +
+      row("Jahresabrechnung", escapeHtml(settlementsPrintText(c))) +
       row("Betrag", formatEUR(c.amount) + (freqSuffix(f) ? ' '+escapeHtml(freqSuffix(f)) : '') + (f ? ' · jährlich '+formatEUR(annualCost(c)) : '')) +
       row("Vertragsbeginn", c.startDate ? formatDate(c.startDate) : "") +
       row("Vertragsende", c.endDate ? formatDate(c.endDate) : "") +
@@ -3264,6 +3442,7 @@ function openContractModal(id){
   const source = isNew ? blankContract() : Object.assign({}, state.contracts.find(function(c){ return c.id===id; }));
   state.draftAttachments = (source.attachments || []).slice();
   state.draftPriceHistory = (source.priceHistory || []).map(function(e){ return Object.assign({}, e); });
+  state.draftSettlements = (Array.isArray(source.settlements) ? source.settlements : []).map(function(e){ return { id:e.id||newId(), year:e.year, lines:(e.lines||[]).map(function(l){ return Object.assign({ id:newId() }, l); }) }; });
   state.draftExtraPayers = isSplitContract(source) ? payerSharesOf(source).filter(function(x){ return x.payerId!==source.payerId; }).map(function(x){ return { payerId:x.payerId, percent:x.percent }; }) : [];
   state.editingSource = source;
   if (isNew){
@@ -3383,6 +3562,7 @@ function contractModalHTML(c, isNew){
         '<div class="field"><label for="f-frequency">Zahlungsrhythmus / Intervall</label><select id="f-frequency">'+FREQUENCIES.map(function(f){ return '<option value="'+f.id+'"'+(c.frequency===f.id?' selected':'')+'>'+escapeHtml(f.label)+'</option>'; }).join("")+'</select></div>'+
       '</div>'+
       '<div id="price-history-host"></div>'+
+      '<div id="settlement-host"></div>'+
 
       '<div class="field"><label for="f-paymentdate">Zahlung fällig am</label><input id="f-paymentdate" type="date" value="'+escapeHtml(c.paymentDate||"")+'"><span class="hint">Datum einer Fälligkeit (z. B. die nächste Abbuchung). Die weiteren Fälligkeiten rechnet die App aus dem Zahlungsrhythmus selbst fort – Sie müssen das Datum nicht jedes Jahr ändern.</span><span class="hint" id="payment-countdown" style="font-weight:600;"></span></div>'+
 
@@ -3707,6 +3887,9 @@ function wireBankAccountField(overlay){
 function wireContractModal(overlay, source, isNew){
   renderAttachmentList(overlay);
   renderPriceHistory(overlay);
+  renderSettlements(overlay);
+  const catEl = overlay.querySelector("#f-category");
+  if (catEl) catEl.addEventListener("change", function(){ renderSettlements(overlay); });
   wireBankAccountField(overlay);
   renderContractHouseholdChips(overlay);
   wireContractPayerField(overlay);
@@ -3839,6 +4022,7 @@ function collectContractFormSnapshot(overlay, source){
     payerId: val("#f-payer") || "",
     bankAccountId: val("#f-bankaccount") || "",
     payerShares: collectPayerShares(val("#f-payer") || "").shares || [],
+    settlements: val("#f-category")==="energie" ? (collectSettlements().settlements || []) : (source.settlements || []),
     amount: val("#f-amount")===""? 0 : Number(val("#f-amount")),
     frequency: val("#f-frequency"),
     startDate: val("#f-start"),
@@ -3969,6 +4153,12 @@ function saveContract(overlay, source, isNew, priceMeta){
   const name = val("#f-name").trim();
   if (!name){ toast("Bitte eine Bezeichnung eingeben.","error"); overlay.querySelector("#f-name").focus(); return; }
   if (!state.draftHouseholdIds.length){ toast("Bitte mindestens einen Haushalt auswählen.","error"); return; }
+  let settlements = Array.isArray(source.settlements) ? source.settlements : [];
+  if (val("#f-category")==="energie"){
+    const stRes = collectSettlements();
+    if (stRes.error){ toast(stRes.error, "error"); return; }
+    settlements = stRes.settlements;
+  }
   const amountRaw = val("#f-amount");
   const newAmount = amountRaw==="" ? 0 : Number(amountRaw);
   const newFreq = val("#f-frequency");
@@ -4028,6 +4218,7 @@ function saveContract(overlay, source, isNew, priceMeta){
     payerId: payerId,
     bankAccountId: bankAccountId,
     payerShares: newShares,
+    settlements: settlements,
     payerHistory: payerHistory,
     amount: newAmount,
     frequency: newFreq,
