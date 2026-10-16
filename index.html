@@ -674,8 +674,8 @@
 /* ======================= Constants ======================= */
 
 /* Versionsnummer: wird bei jeder Lieferung hochgezählt und als dezente Fußzeile angezeigt (nicht Teil der Sicherung) */
-const APP_VERSION = "3.5";
-const APP_VERSION_DATE = "2026-10-15";
+const APP_VERSION = "3.5.1";
+const APP_VERSION_DATE = "2026-10-16";
 
 const CATEGORIES = [
   { id:"kfz",           label:"Kfz",                                   varName:"--cat-1" },
@@ -1729,6 +1729,7 @@ const HELP_TOPICS = [
   { title:"Zahler:in & Bankkonten", body:
     '<p>Jedem Vertrag kann eine Person aus dem Haushalt als Zahler:in zugeordnet werden. Sobald eine Person ausgewählt ist, erscheint darunter das Feld „Zahlungsquelle“ mit den für diese Person hinterlegten Bankkonten – sind noch keine vorhanden, lässt sich direkt aus dem Vertragsformular heraus eines anlegen.</p>'+
     '<p>Bankkonten verwalten Sie dauerhaft über „Mitglieder“ → Person bearbeiten. Die gewählte Zahlungsquelle wird auf der Vertragskarte als zusätzliche Information angezeigt.</p>'+
+    '<p>In der Auswahl „Zahler:in“ stehen alle erfassten Personen zur Verfügung. Personen des gewählten Haushalts stehen zuerst, die übrigen darunter unter „Weitere Personen“. Ist einem neuen Haushalt noch niemand zugeordnet, weist die App darauf hin; die Zuordnung nehmen Sie unter „Mitglieder“ → Person bearbeiten vor.</p>'+
     '<p><strong>Nach Konto filtern:</strong> Sobald mindestens ein Bankkonto hinterlegt ist, gibt es in der Vertragsliste neben „Alle Zahler:innen“ die Auswahl „Alle Konten“. Wählen Sie ein Konto, zeigt die Liste alle Verträge, die davon abgebucht werden, und darüber die Summe der laufenden Zahlungen (pro Jahr und Ø pro Monat; ohne beendete und einmalige Verträge). Es ist der volle abgebuchte Betrag, die Summe passt also zum Kontoauszug – auch wenn der Vertrag auf mehrere Personen aufgeteilt ist. „Ohne Konto“ zeigt Verträge, bei denen noch kein Konto eingetragen ist. Der Filter wirkt auch auf Druck und CSV-Export. Hinweis: Das Monatsmittel ist ein Durchschnitt; eine Jahresprämie belastet das Konto im Fälligkeitsmonat in voller Höhe.</p>'+
     '<p><strong>Kosten auf mehrere Personen aufteilen:</strong> Wird ein Vertrag von mehreren Personen getragen (z. B. KFZ-Versicherung 50 / 50 oder 75 / 25), wählen Sie zuerst die Hauptzahler:in – das ist die Person, von deren Konto der volle Betrag abgebucht wird. Darunter tippen Sie auf „+ Kosten mit weiterer Person aufteilen“, wählen die weitere Person und tragen deren Prozentanteil ein. Der Anteil der Hauptzahler:in ergibt sich automatisch (100 % minus die übrigen Anteile); daneben zeigt die App, wie viel Euro pro Zahlung auf jede Person entfallen. Mit „+ Weitere Person“ sind auch mehr als zwei möglich, mit „Aufteilung aufheben“ zahlt wieder allein die Hauptzahler:in.</p>'+
     '<p>Das Bankkonto gehört immer zur Hauptzahler:in; die weiteren Personen überweisen ihren Anteil an sie, brauchen also kein Konto in der App. Der Vertragsbetrag selbst bleibt der volle Betrag. Angezeigt wird die Aufteilung auf der Vertragskarte („Anna 50 % · Ben 50 %“), im Druck und in der CSV-Tabelle (Spalte „Zahler:in“). In der Übersicht „Nach Zahler:in“ werden die Jahreskosten nach den Anteilen verteilt, die Summe bleibt also gleich. Der Filter nach einer Person zeigt alle Verträge, an denen sie beteiligt ist.</p>' },
@@ -1858,6 +1859,7 @@ const HELP_TOPICS = [
 
   { title:"Neuerungen (Stand Oktober 2026)", body:
     '<ul style="margin:0 0 8px 18px;padding:0;">'+
+      '<li><strong>Korrektur (Version 3.5.1):</strong> Bei einem neuen Haushalt ohne zugeordnete Personen ließ sich im Vertrag nur eine neue Person anlegen. Jetzt stehen im Feld „Zahler:in“ immer alle Personen zur Auswahl (Personen des gewählten Haushalts zuerst).</li>'+
       '<li><strong>Jahresabrechnung (Version 3.5):</strong> Bei „Energie &amp; Wasser“ lassen sich Verbrauch und Kosten je Verbrauchsart und Jahr erfassen; die App zeigt Anteil, Monatsbetrag, Ø-Preis je Einheit und den Vergleich zum Vorjahr. Details unter „Jahresabrechnung (Strom, Gas, Wasser)“.</li>'+
       '<li><strong>Filter „Konto“ (Version 3.4):</strong> In der Vertragsliste lassen sich die Verträge eines Bankkontos anzeigen, mit Summe der laufenden Zahlungen pro Jahr und Monat; auch „Ohne Konto“ zur Kontrolle. Details unter „Zahler:in &amp; Bankkonten“.</li>'+
       '<li><strong>Kosten aufteilen (Version 3.3):</strong> Ein Vertrag kann von mehreren Personen getragen werden (z. B. 50 / 50 oder 75 / 25). Die Hauptzahler:in zahlt den vollen Betrag, die anderen überweisen ihren Anteil. Die Aufteilung erscheint auf der Karte, im Druck, in der CSV-Tabelle und in „Nach Zahler:in“; Änderungen stehen im Verlauf. Details unter „Zahler:in &amp; Bankkonten“.</li>'+
@@ -3455,13 +3457,22 @@ function openContractModal(id){
   wireContractModal(overlay, source, isNew);
 }
 
-function payerSelectHTML(members, selectedId){
-  if (!members.length){
-    return '<div class="hint">Niemand aus dem/den gewählten Haushalt(en) erfasst. <a href="#" id="quick-add-member">Jetzt anlegen</a></div>';
+function payerSelectHTML(householdIds, selectedId){
+  /* Alle Personen sind wählbar; Personen der gewählten Haushalte stehen zuerst. */
+  if (!state.members.length){
+    return '<div class="hint">Noch niemand erfasst. <a href="#" id="quick-add-member">Jetzt anlegen</a></div>';
   }
-  return '<select id="f-payer"><option value="">– auswählen –</option>'+
-    members.map(function(m){ return '<option value="'+m.id+'"'+(selectedId===m.id?' selected':'')+'>'+escapeHtml(m.name)+'</option>'; }).join("")+
-  '</select>';
+  const inHH = membersForHouseholds(householdIds);
+  const others = state.members.filter(function(m){ return inHH.indexOf(m)<0; });
+  const opt = function(m){ return '<option value="'+m.id+'"'+(selectedId===m.id?' selected':'')+'>'+escapeHtml(m.name)+'</option>'; };
+  let options;
+  if (inHH.length && others.length){
+    options = '<optgroup label="Im gewählten Haushalt">'+inHH.map(opt).join("")+'</optgroup><optgroup label="Weitere Personen">'+others.map(opt).join("")+'</optgroup>';
+  } else {
+    options = state.members.map(opt).join("");
+  }
+  return '<select id="f-payer"><option value="">– auswählen –</option>'+options+'</select>'+
+    (inHH.length ? '' : '<div class="hint">Dem gewählten Haushalt ist noch niemand zugeordnet (unter „Mitglieder“ möglich). Alle Personen stehen trotzdem zur Auswahl. <a href="#" id="quick-add-member">Neue Person anlegen</a></div>');
 }
 
 function bankAccountFieldHTML(payerId, selectedId){
@@ -3546,7 +3557,7 @@ function contractModalHTML(c, isNew){
       '<div class="field-row">'+
         '<div class="field" id="payer-field">'+
           '<label for="f-payer">Zahler:in</label>'+
-          payerSelectHTML(membersForHouseholds(state.draftHouseholdIds), c.payerId)+
+          payerSelectHTML(state.draftHouseholdIds, c.payerId)+
         '</div>'+
         '<div class="field"><label for="f-bankaccount">Zahlungsquelle (Bankkonto)</label>'+
           '<div id="bankaccount-field">'+bankAccountFieldHTML(c.payerId, c.bankAccountId)+'</div>'+
@@ -3731,7 +3742,7 @@ function renderPayerSplit(overlay){
   const mainId = mainSel ? mainSel.value : "";
   const main = memberById(mainId);
   if (!main){ state.draftExtraPayers = []; host.innerHTML = ""; return; }
-  const candidates = membersForHouseholds(state.draftHouseholdIds).filter(function(m){ return m.id!==mainId; });
+  const candidates = state.members.filter(function(m){ return m.id!==mainId; });
   state.draftExtraPayers = (state.draftExtraPayers||[]).filter(function(x){
     return !x.payerId || candidates.some(function(m){ return m.id===x.payerId; });
   });
@@ -3821,11 +3832,10 @@ function collectPayerShares(mainId){
 function refreshContractPayerField(overlay){
   const field = overlay.querySelector("#payer-field");
   if (!field) return;
-  const members = membersForHouseholds(state.draftHouseholdIds);
   const payerSelectEl = overlay.querySelector("#f-payer");
   const currentPayerId = payerSelectEl ? payerSelectEl.value : "";
-  const stillValid = members.some(function(m){ return m.id===currentPayerId; });
-  field.innerHTML = '<label for="f-payer">Zahler:in</label>' + payerSelectHTML(members, stillValid ? currentPayerId : "");
+  const stillValid = !!memberById(currentPayerId);
+  field.innerHTML = '<label for="f-payer">Zahler:in</label>' + payerSelectHTML(state.draftHouseholdIds, stillValid ? currentPayerId : "");
   wireContractPayerField(overlay);
   if (!stillValid){
     const bf = overlay.querySelector("#bankaccount-field");
