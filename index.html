@@ -674,8 +674,8 @@
 /* ======================= Constants ======================= */
 
 /* Versionsnummer: wird bei jeder Lieferung hochgezählt und als dezente Fußzeile angezeigt (nicht Teil der Sicherung) */
-const APP_VERSION = "3.5.1";
-const APP_VERSION_DATE = "2026-10-16";
+const APP_VERSION = "3.6";
+const APP_VERSION_DATE = "2026-11-04";
 
 const CATEGORIES = [
   { id:"kfz",           label:"Kfz",                                   varName:"--cat-1" },
@@ -736,6 +736,7 @@ const ICON_PATHS = {
   home:'<path d="M3.5 9.3 10 4l6.5 5.3V16a1 1 0 0 1-1 1h-3.2v-5.2H7.7V17H4.5a1 1 0 0 1-1-1Z"/>',
   list:'<path d="M4 5.5h12M4 10h12M4 14.5h12"/>',
   folder:'<path d="M3 5.5h5l1.4 1.8H17a1 1 0 0 1 1 1V14a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V6.5a1 1 0 0 1 1-1Z"/>',
+  download:'<path d="M10 4v9m0 0L6.5 9.5M10 13l3.5-3.5"/><path d="M4 14v1.5a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V14"/>',
   upload:'<path d="M10 13V4m0 0L6.5 7.5M10 4l3.5 3.5"/><path d="M4 14v1.5a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V14"/>',
   refresh:'<path d="M15.8 8A6 6 0 1 0 16 11"/><path d="M16.3 4.5v3.7h-3.7"/>',
   info:'<circle cx="10" cy="10" r="7.2"/><path d="M10 9v4.2M10 6.6h.01"/>',
@@ -1722,6 +1723,7 @@ const HELP_TOPICS = [
       '<li><strong>Mac / PC:</strong> Dateien direkt aus dem Finder bzw. Explorer in das geöffnete Vertragsfenster ziehen (Drag &amp; Drop; das Dokumentfeld leuchtet dabei auf). Außerdem lässt sich ein kopiertes Bild, z. B. ein Screenshot, mit Cmd/Strg+V einfügen, solange der Vertrag geöffnet ist.</li>'+
     '</ul>'+
     '<p><strong>Reihenfolge ändern:</strong> Sind mehrere Dokumente angehängt, stehen links neben jedem zwei kleine Pfeile („nach oben“ / „nach unten“). Damit bringen Sie die Dokumente in die gewünschte Reihenfolge, ohne sie löschen und neu hochladen zu müssen; die Reihenfolge wird mit „Speichern“ übernommen. Bewusst sind es Pfeile statt Ziehen mit dem Finger oder der Maus, weil sie auf iPhone, iPad und Mac gleich zuverlässig funktionieren.</p>'+
+    '<p><strong>Dokument mit Originalnamen sichern oder senden:</strong> Neben jedem Dokument gibt es einen Pfeil-nach-unten-Button. Am Mac/PC lädt er die Datei mit dem hochgeladenen Namen in den Ordner „Downloads“; von dort hängen Sie sie an eine E-Mail an. Auf iPhone/iPad öffnet er das Teilen-Menü (Mail, Nachrichten, AirDrop, „In Dateien sichern“) – die Datei trägt ebenfalls den Originalnamen. Das Öffnen per Antippen des Namens bleibt unverändert; beim Öffnen im Browser-Tab kann das System nur einen neutralen Namen wie „Webpage“ anzeigen, deshalb ist zum Versenden der Download-Button der richtige Weg. Fotos werden beim Anhängen verkleinert und als JPEG abgelegt, die Datei heißt dann z. B. „Scan.jpg“.</p>'+
     '<p>Nicht passende Dateien (z. B. Textdateien, zu große oder nicht lesbare Dateien) werden übersprungen, die App meldet das kurz; die übrigen Dateien werden trotzdem angehängt.</p>'+
     '<p><strong>Empfohlener Ablauf für Scans:</strong> Legen Sie in iCloud Drive einen Ordner „Vertragsscans“ an. Ein Kombigerät oder Drucker mit „Scan an Ordner“ bzw. „Scan an E-Mail“ legt seine Scans dort oder in Ihrem Postfach ab; auf iPhone/iPad scannen Sie mit der Dateien-App („…“ → „Dokumente scannen“) direkt in diesen Ordner, am Mac mit „Digitale Bilder“. Anschließend wählen Sie die Datei im Vertrag aus oder ziehen sie hinein. Die App selbst kann nicht auf Drucker oder Scanner im Netzwerk zugreifen – sie läuft im Browser und hat dafür keine Berechtigung.</p>'+
     '<p><strong>Speicherbedarf:</strong> Ein gescanntes PDF hat schnell 1 bis 5 MB. Alle Anhänge sind auch in der Sicherungsdatei enthalten; wie viele es sind und wie groß sie zusammen etwa sind, zeigt der Bereich „Sicherung“.</p>' },
@@ -1859,6 +1861,7 @@ const HELP_TOPICS = [
 
   { title:"Neuerungen (Stand Oktober 2026)", body:
     '<ul style="margin:0 0 8px 18px;padding:0;">'+
+      '<li><strong>Dokumente mit Originalnamen sichern/senden (Version 3.6):</strong> Neben jedem angehängten Dokument gibt es einen Download-Button (Mac/PC: Download, iPhone/iPad: Teilen-Menü), damit der Dateiname beim Versenden stimmt. Details unter „Dokumente anhängen“.</li>'+
       '<li><strong>Korrektur (Version 3.5.1):</strong> Bei einem neuen Haushalt ohne zugeordnete Personen ließ sich im Vertrag nur eine neue Person anlegen. Jetzt stehen im Feld „Zahler:in“ immer alle Personen zur Auswahl (Personen des gewählten Haushalts zuerst).</li>'+
       '<li><strong>Jahresabrechnung (Version 3.5):</strong> Bei „Energie &amp; Wasser“ lassen sich Verbrauch und Kosten je Verbrauchsart und Jahr erfassen; die App zeigt Anteil, Monatsbetrag, Ø-Preis je Einheit und den Vergleich zum Vorjahr. Details unter „Jahresabrechnung (Strom, Gas, Wasser)“.</li>'+
       '<li><strong>Filter „Konto“ (Version 3.4):</strong> In der Vertragsliste lassen sich die Verträge eines Bankkontos anzeigen, mit Summe der laufenden Zahlungen pro Jahr und Monat; auch „Ohne Konto“ zur Kontrolle. Details unter „Zahler:in &amp; Bankkonten“.</li>'+
@@ -3656,6 +3659,7 @@ function renderAttachmentList(overlay){
         (isImg ? '<img src="'+a.dataUrl+'" alt="">' : '<span style="color:var(--text-muted);flex:none;">'+icon("doc")+'</span>')+
         '<span class="attachment-name">'+escapeHtml(a.name||"Dokument")+'</span>'+
       '</button>'+
+      '<button class="icon-btn" data-save-att="'+i+'" type="button" aria-label="Mit Originalnamen sichern oder senden" title="Mit Originalnamen sichern / senden">'+icon("download")+'</button>'+
       '<button class="icon-btn" data-remove-att="'+i+'" type="button" aria-label="Entfernen">'+icon("x")+'</button>'+
     '</div>';
   }).join("");
@@ -3663,6 +3667,12 @@ function renderAttachmentList(overlay){
     btn.addEventListener("click", function(){
       const a = state.draftAttachments[Number(btn.getAttribute("data-open-att"))];
       if (a) openAttachment(a);
+    });
+  });
+  host.querySelectorAll("[data-save-att]").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      const a = state.draftAttachments[Number(btn.getAttribute("data-save-att"))];
+      if (a) saveAttachment(a);
     });
   });
   host.querySelectorAll("[data-move-att]").forEach(function(btn){
@@ -3694,6 +3704,44 @@ function dataUrlToBlob(dataUrl){
     return new Blob([new Uint8Array(byteNumbers)], { type: contentType });
   }
   return new Blob([decodeURIComponent(body)], { type: contentType });
+}
+
+/* Dateiname für Sichern/Senden: Originalname; Fotos werden beim Anhängen zu JPEG, dann passt die Endung dazu */
+function attachmentFileName(a){
+  let name = String(a.name || "Dokument").replace(/[\\/:*?"<>|]+/g, "_").trim() || "Dokument";
+  const ct = (a.contentType || "").toLowerCase();
+  if (ct==="image/jpeg" && !/\.(jpe?g)$/i.test(name)) name = name.replace(/\.[A-Za-z0-9]{1,5}$/, "") + ".jpg";
+  else if (ct==="application/pdf" && !/\.pdf$/i.test(name)) name = name.replace(/\.[A-Za-z0-9]{1,5}$/, "") + ".pdf";
+  return name;
+}
+
+/* iPhone/iPad: Teilen-Menü (Mail, Nachrichten, „In Dateien sichern“); Mac/PC: Download in den Ordner „Downloads“ – jeweils mit dem Originalnamen */
+function saveAttachment(a){
+  if (!a || !a.dataUrl) return;
+  let blob;
+  try{ blob = dataUrlToBlob(a.dataUrl); }catch(e){ toast("Dokument konnte nicht gelesen werden.","error"); return; }
+  const fileName = attachmentFileName(a);
+  const download = function(){
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url; link.download = fileName;
+    document.body.appendChild(link); link.click(); link.remove();
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+    toast("„"+fileName+"“ wird heruntergeladen.");
+  };
+  const touch = window.matchMedia && window.matchMedia("(pointer:coarse)").matches;
+  try{
+    if (touch && navigator.share && navigator.canShare){
+      const file = new File([blob], fileName, { type: blob.type });
+      if (navigator.canShare({ files:[file] })){
+        navigator.share({ files:[file], title:fileName }).catch(function(err){
+          if (!err || err.name!=="AbortError") download();
+        });
+        return;
+      }
+    }
+  }catch(e){}
+  download();
 }
 
 function openAttachment(a){
