@@ -674,8 +674,8 @@
 /* ======================= Constants ======================= */
 
 /* Versionsnummer: wird bei jeder Lieferung hochgezählt und als dezente Fußzeile angezeigt (nicht Teil der Sicherung) */
-const APP_VERSION = "3.6";
-const APP_VERSION_DATE = "2026-11-04";
+const APP_VERSION = "3.6.1";
+const APP_VERSION_DATE = "2026-11-06";
 
 const CATEGORIES = [
   { id:"kfz",           label:"Kfz",                                   varName:"--cat-1" },
@@ -1798,7 +1798,7 @@ const HELP_TOPICS = [
 
   { title:"Serviceverträge & Prüfintervalle (z. B. Heizungswartung)", body:
     '<p>Für Leistungen, die erst bei Durchführung bezahlt werden (Feuerlöscherprüfung, Heizungswartung, Schornsteinfeger …), tragen Sie als Betrag die Kosten pro Termin ein und wählen als „Zahlungsrhythmus / Intervall“ den Abstand zwischen zwei Terminen – auch „alle 2 Jahre“, „alle 3 Jahre“ oder „alle 5 Jahre“ stehen zur Wahl. Die Übersicht rechnet das automatisch auf Jahres- und Monatskosten um (z. B. 120 € alle 2 Jahre = 60 € pro Jahr).</p>'+
-    '<p>Im Feld „Nächster Termin“ halten Sie fest, wann die Leistung wieder fällig ist. Dieses Datum erscheint auf der Vertragskarte und unter „Anstehende Fristen &amp; Termine“ auf der Übersicht, sobald es weniger als 90 Tage entfernt ist. Nach dem Termin tragen Sie einfach das nächste Datum ein. Eine eigene Kategorie gibt es dafür nicht – passend ist meist „Wohnen &amp; Hausrat“ oder „Sonstige“.</p>' },
+    '<p>Im Feld „Nächster Termin“ halten Sie fest, wann die Leistung wieder fällig ist. Dieses Datum erscheint auf der Vertragskarte und unter „Anstehende Fristen &amp; Termine“ auf der Übersicht, sobald es weniger als 90 Tage entfernt ist. Nach dem Termin tragen Sie einfach das nächste Datum ein; ein falsch eingetragenes Datum entfernen Sie mit „Datum entfernen“ unter dem Feld. „Nächster Termin“ ist nur für Leistungen gedacht, die erst bei Durchführung bezahlt werden. Hat ein Vertrag einen festen Zahlungstermin (z. B. Beitrag jährlich am 1. März), gehört das Datum in „Zahlung fällig am“ – die beiden Felder arbeiten unabhängig voneinander, und nur „Zahlung fällig am“ steuert Fälligkeits-Sortierung, Zahlungs-Karte und Zahlungs-Countdown. Eine eigene Kategorie gibt es dafür nicht – passend ist meist „Wohnen &amp; Hausrat“ oder „Sonstige“.</p>' },
 
   { title:"Kontakte beim Anbieter & Ansicht „Nach Anbieter“", body:
     '<p><strong>Im Vertrag</strong> pflegen Sie den Abschnitt „Kontakt beim Anbieter“: Ansprechpartner, zwei Rufnummern („Service / Kündigung“ und „Schaden / Hotline“) E-Mail-Adresse und – für die Schadenmeldung – eine Website („Schadenmeldung online“). Zusätzlich lässt sich beim Feld „URL / Login zum Vertragspartner“ die Adresse des Kundenportals hinterlegen. Die kleinen Symbole neben den Feldern öffnen die Adresse im Browser, starten einen Anruf bzw. eine E-Mail. (Ältere Einträge behalten ihre Angaben; die bisherige Rufnummer steht jetzt unter „Service / Kündigung“.)</p>'+
@@ -1861,6 +1861,7 @@ const HELP_TOPICS = [
 
   { title:"Neuerungen (Stand Oktober 2026)", body:
     '<ul style="margin:0 0 8px 18px;padding:0;">'+
+      '<li><strong>Datum entfernen (Version 3.6.1):</strong> Die Datumsfelder im Vertrag (Zahlung fällig am, Nächster Termin, Vertragsbeginn, Vertragsende) haben unter dem Feld den Link „Datum entfernen“. Bisher ließ sich ein einmal eingetragenes Datum, vor allem auf iPhone/iPad, nicht mehr herausnehmen.</li>'+
       '<li><strong>Dokumente mit Originalnamen sichern/senden (Version 3.6):</strong> Neben jedem angehängten Dokument gibt es einen Download-Button (Mac/PC: Download, iPhone/iPad: Teilen-Menü), damit der Dateiname beim Versenden stimmt. Details unter „Dokumente anhängen“.</li>'+
       '<li><strong>Korrektur (Version 3.5.1):</strong> Bei einem neuen Haushalt ohne zugeordnete Personen ließ sich im Vertrag nur eine neue Person anlegen. Jetzt stehen im Feld „Zahler:in“ immer alle Personen zur Auswahl (Personen des gewählten Haushalts zuerst).</li>'+
       '<li><strong>Jahresabrechnung (Version 3.5):</strong> Bei „Energie &amp; Wasser“ lassen sich Verbrauch und Kosten je Verbrauchsart und Jahr erfassen; die App zeigt Anteil, Monatsbetrag, Ø-Preis je Einheit und den Vergleich zum Vorjahr. Details unter „Jahresabrechnung (Strom, Gas, Wasser)“.</li>'+
@@ -3580,7 +3581,7 @@ function contractModalHTML(c, isNew){
 
       '<div class="field"><label for="f-paymentdate">Zahlung fällig am</label><input id="f-paymentdate" type="date" value="'+escapeHtml(c.paymentDate||"")+'"><span class="hint">Datum einer Fälligkeit (z. B. die nächste Abbuchung). Die weiteren Fälligkeiten rechnet die App aus dem Zahlungsrhythmus selbst fort – Sie müssen das Datum nicht jedes Jahr ändern.</span><span class="hint" id="payment-countdown" style="font-weight:600;"></span></div>'+
 
-      '<div class="field"><label for="f-nextdue">Nächster Termin (z. B. Wartung, Prüfung)</label><input id="f-nextdue" type="date" value="'+escapeHtml(c.nextDueDate)+'"><span class="hint">Für Serviceverträge, die erst bei erbrachter Leistung bezahlt werden: Das Datum erscheint in den anstehenden Fristen auf der Übersicht.</span></div>'+
+      '<div class="field"><label for="f-nextdue">Nächster Termin (z. B. Wartung, Prüfung)</label><input id="f-nextdue" type="date" value="'+escapeHtml(c.nextDueDate)+'"><span class="hint">Nur für Serviceverträge, die erst bei erbrachter Leistung bezahlt werden. Das Datum erscheint in den anstehenden Fristen auf der Übersicht. Für einen Vertrag mit festem Zahlungstermin nehmen Sie stattdessen „Zahlung fällig am“.</span></div>'+
 
       '<div class="field-row">'+
         '<div class="field"><label for="f-start">Vertragsbeginn</label><input id="f-start" type="date" value="'+escapeHtml(c.startDate)+'"></div>'+
@@ -3954,6 +3955,25 @@ function wireContractModal(overlay, source, isNew){
   renderPayerSplit(overlay);
   const amountEl = overlay.querySelector("#f-amount");
   if (amountEl){ amountEl.addEventListener("input", function(){ updateSplitSummary(overlay); }); }
+
+  /* Optionale Datumsfelder lassen sich mit einem Tipp leeren (das native Datumsfeld bietet das auf iPhone/iPad nicht) */
+  ["#f-paymentdate","#f-nextdue","#f-start","#f-end"].forEach(function(sel){
+    const inp = overlay.querySelector(sel);
+    if (!inp) return;
+    const btn = document.createElement("button");
+    btn.type = "button"; btn.className = "link-btn"; btn.textContent = "Datum entfernen";
+    btn.style.alignSelf = "flex-start";
+    inp.insertAdjacentElement("afterend", btn);
+    const sync = function(){ btn.style.display = inp.value ? "" : "none"; };
+    btn.addEventListener("click", function(){
+      inp.value = "";
+      inp.dispatchEvent(new Event("input", { bubbles:true }));
+      inp.dispatchEvent(new Event("change", { bubbles:true }));
+      sync();
+    });
+    inp.addEventListener("input", sync); inp.addEventListener("change", sync);
+    sync();
+  });
 
   const autoRenewCheckbox = overlay.querySelector("#f-autorenew");
   if (autoRenewCheckbox){
