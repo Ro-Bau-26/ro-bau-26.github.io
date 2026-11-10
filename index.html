@@ -674,8 +674,8 @@
 /* ======================= Constants ======================= */
 
 /* Versionsnummer: wird bei jeder Lieferung hochgezählt und als dezente Fußzeile angezeigt (nicht Teil der Sicherung) */
-const APP_VERSION = "3.6.1";
-const APP_VERSION_DATE = "2026-11-06";
+const APP_VERSION = "3.7";
+const APP_VERSION_DATE = "2026-11-10";
 
 const CATEGORIES = [
   { id:"kfz",           label:"Kfz",                                   varName:"--cat-1" },
@@ -1511,6 +1511,7 @@ function setView(v){
 
 function render(){
   state.lastRenderDay = todayISO();
+  applyPriceSchedule();
   document.querySelectorAll(".nav-item, .bottom-nav button").forEach(function(el){
     el.classList.toggle("active", el.getAttribute("data-view")===state.view);
   });
@@ -1758,6 +1759,13 @@ const HELP_TOPICS = [
       '<li><strong>Im Vertrag:</strong> Der Abschnitt „Preisverlauf“ unter Betrag und Rhythmus listet alle Beiträge mit Datum, Veränderung in Euro und Prozent sowie dem Grund; der neueste steht oben. Mit dem kleinen „x“ lässt sich ein fälschlich erfasster Eintrag entfernen (wirksam mit „Speichern“).</li>'+
       '<li><strong>Übersicht:</strong> Die Karte „Preisänderungen der letzten 12 Monate“ zeigt die Auswirkung auf Ihre Jahreskosten (Summe in Euro und Prozent, auch pro Monat) und darunter die Verträge mit der größten Veränderung; ein Klick öffnet den Vertrag. Gibt es keine Änderungen, erscheint die Karte nicht. Die Jahres- und Monatssummen darüber zeigen weiterhin den aktuellen Stand.</li>'+
     '</ul>'+
+    '<p><strong>Preise im Voraus und rückwirkend eintragen:</strong> Unter dem Preisverlauf im Vertrag gibt es „+ Preis eintragen“. Damit tragen Sie einen Preis mit „Gültig ab“-Datum, Betrag, Rhythmus und optionalem Grund ein, ohne den aktuellen Betrag zu überschreiben:</p>'+
+    '<ul style="margin:0 0 8px 18px;padding:0;">'+
+      '<li><strong>Angekündigte Erhöhung (Datum in der Zukunft):</strong> Der Eintrag steht im Verlauf als „angekündigt“. Bis zum Datum rechnen Karte, Jahreskosten und Übersicht mit dem bisherigen Preis; am Stichtag stellt die App den Vertrag von selbst auf den neuen Betrag um (sie nutzt dafür nur das Datum des Geräts, öffnen müssen Sie sie am Stichtag nicht). Dasselbe gilt, wenn Sie beim Ändern des Betrags ein „Gültig ab“ in der Zukunft wählen.</li>'+
+      '<li><strong>Früherer Preis (Datum in der Vergangenheit):</strong> So erfassen Sie nach, wie sich der Beitrag seit Vertragsbeginn entwickelt hat. Tragen Sie nur die Änderungen ein, nicht jedes Jahr einzeln. Ist der aktuelle Betrag bisher ohne Datum („Bisher“), fragt die App im Dialog „Der aktuelle Betrag gilt seit (optional)“: Mit diesem Datum bleibt der aktuelle Betrag der neuere Preis. Lassen Sie es leer, gilt der neue Eintrag als der neuere Preis und wird zum aktuellen Betrag.</li>'+
+      '<li><strong>Teuerungsrate:</strong> Über der Liste steht „Seit 01.03.2024: +12,5 % (Ø +5,6 % pro Jahr)“, gerechnet auf die Jahreskosten vom ersten Eintrag bis zum aktuellen Preis. Das Jahresmittel erscheint ab einem Jahr Abstand.</li>'+
+    '</ul>'+
+    '<p>Nach „+ Preis eintragen“ ergeben sich Betrag und Rhythmus oben im Vertrag aus dem Preisverlauf und sind bis zum Speichern gesperrt. Ein Eintrag lässt sich mit dem „x“ wieder entfernen; entfernen Sie den aktuell gültigen, bleibt der aktuelle Betrag erhalten.</p>'+
     '<p><strong>Gut zu wissen:</strong> Verglichen wird immer auf Jahresbasis. Wechselt der Rhythmus (z. B. von monatlich auf jährlich), sind die Änderungen dadurch vergleichbar. Bei bereits vorhandenen Verträgen beginnt der Verlauf mit der ersten Änderung: Der bisherige Beitrag wird dann als „Bisher“ gespeichert, sein genaues Datum kennt die App nicht. Der Preisverlauf ist Teil der Sicherungsdatei. Es gibt bewusst keine Diagramme und Prognosen – die App zeigt, was sich geändert hat, und bleibt eine schlanke Vertragsübersicht.</p>' },
 
   { title:"Jahresabrechnung (Strom, Gas, Wasser)", body:
@@ -1861,6 +1869,7 @@ const HELP_TOPICS = [
 
   { title:"Neuerungen (Stand Oktober 2026)", body:
     '<ul style="margin:0 0 8px 18px;padding:0;">'+
+      '<li><strong>Preise im Voraus und rückwirkend (Version 3.7):</strong> Im Preisverlauf gibt es „+ Preis eintragen“. Angekündigte Erhöhungen gelten erst ab ihrem Datum (der Vertrag stellt sich am Stichtag selbst um), frühere Preise lassen sich nacherfassen, und über dem Verlauf steht die Teuerungsrate seit Beginn. Wurde ein künftiger Preis bisher schon als aktuell eingetragen, gilt bis zum Stichtag wieder der bisherige. Details unter „Preisänderungen &amp; Preisverlauf“.</li>'+
       '<li><strong>Datum entfernen (Version 3.6.1):</strong> Die Datumsfelder im Vertrag (Zahlung fällig am, Nächster Termin, Vertragsbeginn, Vertragsende) haben unter dem Feld den Link „Datum entfernen“. Bisher ließ sich ein einmal eingetragenes Datum, vor allem auf iPhone/iPad, nicht mehr herausnehmen.</li>'+
       '<li><strong>Dokumente mit Originalnamen sichern/senden (Version 3.6):</strong> Neben jedem angehängten Dokument gibt es einen Download-Button (Mac/PC: Download, iPhone/iPad: Teilen-Menü), damit der Dateiname beim Versenden stimmt. Details unter „Dokumente anhängen“.</li>'+
       '<li><strong>Korrektur (Version 3.5.1):</strong> Bei einem neuen Haushalt ohne zugeordnete Personen ließ sich im Vertrag nur eine neue Person anlegen. Jetzt stehen im Feld „Zahler:in“ immer alle Personen zur Auswahl (Personen des gewählten Haushalts zuerst).</li>'+
@@ -2604,18 +2613,52 @@ function signedEUR(n){ return (n>0?"+":(n<0?"−":""))+formatEUR(Math.abs(n)); }
 function signedPct(p){ return (p>0?"+":(p<0?"−":""))+Math.abs(p).toFixed(1).replace(".",",")+" %"; }
 
 /* Chronologische Preisreihe eines Vertrags; der jeweils letzte Eintrag entspricht immer dem aktuellen Beitrag. */
+function sortPriceHist(h){ return h.sort(function(a,b){ return (a.date||"").localeCompare(b.date||""); }); }
+/* Index des aktuell gültigen Eintrags (letzter mit Datum bis heute; „Bisher“ ohne Datum zählt als ältester) in einer sortierten Liste */
+function priceEffIndex(sorted, today){
+  let idx = -1;
+  sorted.forEach(function(e, i){ if (!e.date || e.date<=(today||todayISO())) idx = i; });
+  return idx;
+}
 function priceSeries(c, hist){
-  const h = (hist || c.priceHistory || []).slice();
+  const h = sortPriceHist((hist || c.priceHistory || []).slice());
   if (!h.length) return [];
-  h.sort(function(a,b){ return (a.date||"").localeCompare(b.date||""); });
-  const out = h.map(function(e){
+  const ei = priceEffIndex(h);
+  const out = h.map(function(e, i){
     const f = FREQ_BY_ID[e.frequency];
     const amount = Number(e.amount)||0;
-    return { id:e.id, date:e.date||"", amount:amount, frequency:e.frequency, annual:amount*(f?f.perYear:0), reason:e.reason||"", base:!!e.base };
+    return { id:e.id, date:e.date||"", amount:amount, frequency:e.frequency, annual:amount*(f?f.perYear:0), reason:e.reason||"", base:!!e.base, current:i===ei, future:i>ei };
   });
-  const last = out[out.length-1];
-  last.amount = Number(c.amount)||0; last.frequency = c.frequency; last.annual = annualCost(c);
+  if (ei>=0){
+    const cur = out[ei];
+    cur.amount = Number(c.amount)||0; cur.frequency = c.frequency; cur.annual = annualCost(c);
+  }
   return out;
+}
+/* Gilt ein erfasster künftiger Preis ab heute, wird der aktuelle Betrag des Vertrags automatisch umgestellt (ohne Internet, nur Gerätedatum) */
+function applyPriceSchedule(){
+  const today = todayISO();
+  let amountChanged = false, refSet = false;
+  state.contracts.forEach(function(c){
+    const h = sortPriceHist((Array.isArray(c.priceHistory) ? c.priceHistory : []).slice());
+    if (h.length<2) return;
+    const ei = priceEffIndex(h, today);
+    if (ei<0) return;
+    const eff = h[ei];
+    const same = function(e){ return Number(e.amount)===Number(c.amount) && e.frequency===c.frequency; };
+    if (c.priceRef){
+      if (c.priceRef!==eff.id && h.some(function(e){ return e.id===c.priceRef; })){
+        c.amount = Number(eff.amount)||0; c.frequency = eff.frequency; c.priceRef = eff.id; amountChanged = true;
+      }
+    } else {
+      /* ältere Daten: wurde ein erst künftig gültiger Preis bereits als aktuell eingetragen, gilt bis dahin wieder der bisherige */
+      if (!same(eff) && h.some(function(e, i){ return i>ei && same(e); })){
+        c.amount = Number(eff.amount)||0; c.frequency = eff.frequency; amountChanged = true;
+      }
+      c.priceRef = eff.id; refSet = true;
+    }
+  });
+  if (amountChanged) markDirty(); else if (refSet) persist();
 }
 function priceDeltas(series){
   const out = [];
@@ -2649,8 +2692,22 @@ function priceBadgeHTML(c){
 
 function priceHistoryHTML(c){
   const series = priceSeries(c, state.draftPriceHistory);
-  if (series.length<2) return "";
+  const addBtn = '<div class="split-links" style="margin-top:6px;"><button class="link-btn" id="add-price-btn" type="button">+ Preis eintragen</button></div>';
+  const lockedHint = state.draftPriceTouched ? '<span class="hint">Betrag und Rhythmus oben ergeben sich jetzt aus dem Preisverlauf. Zum Ändern erst speichern.</span>' : '';
+  if (series.length<2){
+    return '<div class="field"><label>Preisverlauf</label><span class="hint">Früheren Preis nacherfassen oder angekündigte Erhöhung eintragen – der aktuelle Betrag bleibt, bis das Datum erreicht ist.</span>'+addBtn+lockedHint+'</div>';
+  }
   const deltas = priceDeltas(series);
+  const first = series[0], curE = series.find(function(e){ return e.current; });
+  let sinceHtml = "";
+  if (curE && curE!==first && first.annual>0 && curE.annual>0){
+    const total = (curE.annual/first.annual-1)*100;
+    const start = first.date || c.startDate || "";
+    const years = start ? (Date.now()-new Date(start+"T00:00:00").getTime())/(365.25*86400000) : 0;
+    const perYear = years>=1 ? (Math.pow(curE.annual/first.annual, 1/years)-1)*100 : null;
+    sinceHtml = '<span class="hint" style="font-weight:600;">'+(start ? 'Seit '+escapeHtml(formatDate(start)) : 'Seit Beginn')+': '+escapeHtml(signedPct(total))+
+      (perYear!=null ? ' (Ø '+escapeHtml(signedPct(perYear))+' pro Jahr)' : '')+'</span>';
+  }
   const rows = series.slice().reverse().map(function(e, ri){
     const i = series.length-1-ri;
     const f = FREQ_BY_ID[e.frequency];
@@ -2658,9 +2715,10 @@ function priceHistoryHTML(c){
     const deltaHtml = d && Math.abs(d.delta)>=0.005
       ? '<span class="price-delta '+(d.delta>0?"up":"down")+'">'+escapeHtml(signedEUR(d.delta))+(d.pct!=null?' ('+escapeHtml(signedPct(d.pct))+')':'')+' / Jahr</span>'
       : (i===0 ? '<span class="member-sub">Ausgangswert</span>' : '');
+    const tag = e.future ? ' <span class="badge badge-warning">angekündigt</span>' : (e.current ? ' <span class="badge badge-neutral">aktuell</span>' : '');
     return '<div class="payer-history-row price-row">'+
       '<span class="payer-history-date">'+(e.date ? escapeHtml(formatDate(e.date)) : 'Bisher')+'</span>'+
-      '<span class="price-main">'+escapeHtml(formatEUR(e.amount))+(freqSuffix(f)?' '+escapeHtml(freqSuffix(f)):'')+
+      '<span class="price-main">'+escapeHtml(formatEUR(e.amount))+(freqSuffix(f)?' '+escapeHtml(freqSuffix(f)):'')+tag+
         (f && f.perYear!==1 && f.perYear>0 ? ' <span style="color:var(--text-muted);font-weight:400;">· '+escapeHtml(formatEUR(e.annual))+' / Jahr</span>' : '')+
         (e.reason ? '<small>'+escapeHtml(e.reason)+'</small>' : '')+
       '</span>'+
@@ -2668,8 +2726,9 @@ function priceHistoryHTML(c){
       (!e.base ? '<button class="price-remove" type="button" data-remove-price="'+escapeHtml(e.id)+'" aria-label="Eintrag entfernen" title="Eintrag aus dem Verlauf entfernen">'+icon("x")+'</button>' : '')+
     '</div>';
   }).join("");
-  return '<div class="field"><label>Preisverlauf</label><div class="payer-history" style="max-height:240px;">'+rows+'</div></div>';
+  return '<div class="field"><label>Preisverlauf</label>'+sinceHtml+'<div class="payer-history" style="max-height:240px;">'+rows+'</div>'+addBtn+lockedHint+'</div>';
 }
+
 /* ======================= Jahresabrechnung (Kategorie Energie & Wasser) ======================= */
 
 const SETTLEMENT_ARTS = [
@@ -2831,18 +2890,123 @@ function settlementsPrintText(c){
   }).join(" · ");
 }
 
+function currentFormPrice(overlay){
+  const a = overlay.querySelector("#f-amount"), f = overlay.querySelector("#f-frequency");
+  return { amount: a && a.value!=="" ? Number(a.value) : 0, frequency: f ? f.value : "monatlich" };
+}
+function lockPriceFields(overlay){
+  const a = overlay.querySelector("#f-amount"), f = overlay.querySelector("#f-frequency");
+  if (a) a.readOnly = true;
+  if (f) f.disabled = true;
+}
+
 function renderPriceHistory(overlay){
   const host = overlay.querySelector("#price-history-host");
   if (!host) return;
   const c = Object.assign({}, state.editingSource || {});
+  if (state.draftPriceTouched){ const cur = currentFormPrice(overlay); c.amount = cur.amount; c.frequency = cur.frequency; }
+  const startEl = overlay.querySelector("#f-start");
+  if (startEl) c.startDate = startEl.value;
   host.innerHTML = priceHistoryHTML(c);
+  const addBtn = host.querySelector("#add-price-btn");
+  if (addBtn) addBtn.addEventListener("click", function(){ priceEntryDialog(overlay); });
   host.querySelectorAll("[data-remove-price]").forEach(function(btn){
     btn.addEventListener("click", function(){
       const id = btn.getAttribute("data-remove-price");
-      state.draftPriceHistory = state.draftPriceHistory.filter(function(e){ return e.id!==id; });
+      const today = todayISO();
+      const cur = currentFormPrice(overlay);
+      const list = sortPriceHist(state.draftPriceHistory.map(function(e){ return Object.assign({}, e); }));
+      const wasCurrent = list[priceEffIndex(list, today)] && list[priceEffIndex(list, today)].id===id;
+      const rest = list.filter(function(e){ return e.id!==id; });
+      if (wasCurrent && rest.length){
+        /* der aktuelle Betrag bleibt erhalten: der nun gültige Eintrag übernimmt ihn */
+        const ni = priceEffIndex(rest, today);
+        if (ni>=0){ rest[ni].amount = state.draftPriceTouched ? rest[ni].amount : cur.amount; rest[ni].frequency = state.draftPriceTouched ? rest[ni].frequency : cur.frequency; }
+      }
+      state.draftPriceHistory = rest;
+      if (state.draftPriceTouched){
+        const ni2 = priceEffIndex(sortPriceHist(rest), today);
+        const e2 = sortPriceHist(rest)[ni2];
+        if (e2){ const a = overlay.querySelector("#f-amount"), f = overlay.querySelector("#f-frequency"); if (a) a.value = e2.amount; if (f) f.value = e2.frequency; }
+      }
       renderPriceHistory(overlay);
     });
   });
+}
+
+/* Dialog „Preis eintragen“: früherer Preis (nacherfassen) oder künftiger Preis (angekündigte Erhöhung) */
+function priceEntryDialog(overlay){
+  const today = todayISO();
+  const cur = currentFormPrice(overlay);
+  const src = state.editingSource || {};
+  const isNewContract = state.editingId==="new";
+  if (!state.draftPriceTouched && !isNewContract && (cur.amount!==(Number(src.amount)||0) || cur.frequency!==src.frequency)){
+    toast("Der Betrag oben wurde geändert. Bitte zuerst speichern – danach lässt sich der Preisverlauf ergänzen.", "error"); return;
+  }
+  if (!state.draftPriceHistory.length && !(cur.amount>0)){ toast("Bitte zuerst den aktuellen Betrag eintragen.", "error"); return; }
+  const f0 = FREQ_BY_ID[cur.frequency];
+  const dlg = buildOverlay("modal confirm-box", ''+
+    '<div class="modal-head"><h2>Preis eintragen</h2><button class="icon-btn" data-close type="button">'+icon("x")+'</button></div>'+
+    '<div class="modal-body">'+
+      '<p class="hint" style="margin:0 0 10px;">Ein Preis, der ab einem Datum gilt – früher (zum Nacherfassen) oder künftig (angekündigte Erhöhung). Der aktuelle Betrag ändert sich nur, wenn der neue Preis bereits gilt.</p>'+
+      '<div class="field"><label for="pe-date">Gültig ab</label><input id="pe-date" type="date"></div>'+
+      '<div class="field-row">'+
+        '<div class="field"><label for="pe-amount">Betrag (€) pro Zahlung</label><input id="pe-amount" type="number" min="0" step="0.01" inputmode="decimal"></div>'+
+        '<div class="field"><label for="pe-freq">Rhythmus</label><select id="pe-freq">'+FREQUENCIES.map(function(f){ return '<option value="'+f.id+'"'+(cur.frequency===f.id?' selected':'')+'>'+escapeHtml(f.label)+'</option>'; }).join("")+'</select></div>'+
+      '</div>'+
+      '<div class="field"><label for="pe-reason">Grund (optional)</label><input id="pe-reason" type="text" maxlength="60" placeholder="z. B. Beitragsanpassung, Tarifwechsel"></div>'+
+      '<div class="field" id="pe-since-field" style="display:none;"><label for="pe-since">Der aktuelle Betrag ('+escapeHtml(formatEUR(cur.amount))+(freqSuffix(f0)?' '+escapeHtml(freqSuffix(f0)):'')+') gilt seit (optional)</label><input id="pe-since" type="date"><span class="hint">Nur bei einem früheren Preis: Mit diesem Datum bleibt der aktuelle Betrag der neuere. Ohne Datum gilt der neue Eintrag als der neuere Preis.</span></div>'+
+    '</div>'+
+    '<div class="modal-foot"><button class="btn btn-ghost" data-close type="button">Abbrechen</button><button class="btn btn-primary" id="pe-ok" type="button">Eintragen</button></div>'
+  );
+  document.removeEventListener("keydown", dlg._escHandler);
+  const esc = function(e){
+    if (e.key!=="Escape") return;
+    if (!document.body.contains(dlg)){ window.removeEventListener("keydown", esc, true); return; }
+    e.stopImmediatePropagation(); window.removeEventListener("keydown", esc, true); closeOverlay(dlg);
+  };
+  window.addEventListener("keydown", esc, true);
+  const effUndated = function(){
+    const h = sortPriceHist(state.draftPriceHistory.slice());
+    if (!h.length) return true;
+    const ei = priceEffIndex(h, today);
+    return ei>=0 && !h[ei].date;
+  };
+  const syncSince = function(){
+    const d = dlg.querySelector("#pe-date").value;
+    dlg.querySelector("#pe-since-field").style.display = (d && d<=today && effUndated()) ? "" : "none";
+  };
+  dlg.querySelector("#pe-date").addEventListener("input", syncSince);
+  dlg.querySelector("#pe-date").addEventListener("change", syncSince);
+  dlg.querySelector("#pe-ok").addEventListener("click", function(){
+    const date = dlg.querySelector("#pe-date").value;
+    const amountRaw = dlg.querySelector("#pe-amount").value;
+    const freq = dlg.querySelector("#pe-freq").value;
+    const reason = dlg.querySelector("#pe-reason").value.trim();
+    const since = dlg.querySelector("#pe-since").value;
+    if (!date){ toast("Bitte ein Datum eintragen.", "error"); return; }
+    if (amountRaw==="" || !(Number(amountRaw)>=0)){ toast("Bitte einen Betrag eintragen.", "error"); return; }
+    const h = sortPriceHist(state.draftPriceHistory.map(function(e){ return Object.assign({}, e); }));
+    if (!h.length) h.push({ id:newId(), date:"", amount:cur.amount, frequency:cur.frequency, reason:"", base:true });
+    sortPriceHist(h);
+    const ei = priceEffIndex(h, today);
+    const useSince = since && date<=today && ei>=0 && !h[ei].date;
+    if (useSince && since>today){ toast("„Gilt seit“ darf nicht in der Zukunft liegen.", "error"); return; }
+    if (h.some(function(e){ return e.date===date; }) || (useSince && since===date)){ toast("Für dieses Datum gibt es schon einen Eintrag.", "error"); return; }
+    if (useSince) h[ei].date = since;
+    h.push({ id:newId(), date:date, amount:Number(amountRaw), frequency:freq, reason:reason });
+    sortPriceHist(h);
+    state.draftPriceHistory = h;
+    state.draftPriceTouched = true;
+    const eff = h[priceEffIndex(h, today)];
+    const a = overlay.querySelector("#f-amount"), f = overlay.querySelector("#f-frequency");
+    if (eff){ if (a) a.value = eff.amount; if (f) f.value = eff.frequency; }
+    lockPriceFields(overlay);
+    closeOverlay(dlg);
+    renderPriceHistory(overlay);
+    if (overlay.querySelector("#f-paymentdate")) updateCountdownHints(overlay);
+  });
+  dlg.querySelector("#pe-date").focus();
 }
 
 /* Rückfrage beim Speichern, wenn sich der Beitrag geändert hat */
@@ -3448,6 +3612,7 @@ function openContractModal(id){
   const source = isNew ? blankContract() : Object.assign({}, state.contracts.find(function(c){ return c.id===id; }));
   state.draftAttachments = (source.attachments || []).slice();
   state.draftPriceHistory = (source.priceHistory || []).map(function(e){ return Object.assign({}, e); });
+  state.draftPriceTouched = false;
   state.draftSettlements = (Array.isArray(source.settlements) ? source.settlements : []).map(function(e){ return { id:e.id||newId(), year:e.year, lines:(e.lines||[]).map(function(l){ return Object.assign({ id:newId() }, l); }) }; });
   state.draftExtraPayers = isSplitContract(source) ? payerSharesOf(source).filter(function(x){ return x.payerId!==source.payerId; }).map(function(x){ return { payerId:x.payerId, percent:x.percent }; }) : [];
   state.editingSource = source;
@@ -4241,9 +4406,15 @@ function saveContract(overlay, source, isNew, priceMeta){
   const newAmount = amountRaw==="" ? 0 : Number(amountRaw);
   const newFreq = val("#f-frequency");
 
-  /* Preisverlauf: bei geändertem Beitrag nachfragen (gültig ab, Grund, ggf. nur Korrektur) */
+  /* Preisverlauf: bei geändertem Beitrag nachfragen (gültig ab, Grund, ggf. nur Korrektur); künftig gültige Preise ändern den aktuellen Betrag erst am Stichtag */
   let hist = (state.draftPriceHistory || []).map(function(e){ return Object.assign({}, e); });
-  if (!isNew){
+  const today = todayISO();
+  let finalAmount = newAmount, finalFreq = newFreq;
+  if (state.draftPriceTouched){
+    sortPriceHist(hist);
+    const eff = hist[priceEffIndex(hist, today)];
+    if (eff){ finalAmount = Number(eff.amount)||0; finalFreq = eff.frequency; }
+  } else if (!isNew){
     const oldAnnual = annualCost(source);
     const newAnnual = annualCost({ amount:newAmount, frequency:newFreq });
     const changed = oldAnnual>0 && newAnnual>0 && Math.abs(newAnnual-oldAnnual)>=0.005;
@@ -4253,14 +4424,21 @@ function saveContract(overlay, source, isNew, priceMeta){
     }
     if (changed && !priceMeta.correction){
       if (!hist.length) hist.push({ id:newId(), date:"", amount:Number(source.amount)||0, frequency:source.frequency, reason:"", base:true });
-      hist.push({ id:newId(), date:priceMeta.date, amount:newAmount, frequency:newFreq, reason:priceMeta.reason||"" });
+      const entry = { id:newId(), date:priceMeta.date, amount:newAmount, frequency:newFreq, reason:priceMeta.reason||"" };
+      hist.push(entry);
+      sortPriceHist(hist);
+      const eff = hist[priceEffIndex(hist, today)];
+      if (!eff || eff.id!==entry.id){ finalAmount = Number(source.amount)||0; finalFreq = source.frequency; }
     } else if (hist.length){
-      /* Korrektur oder gleichwertiger Rhythmus-Wechsel: letzten Eintrag mitziehen */
-      hist.sort(function(a,b){ return (a.date||"").localeCompare(b.date||""); });
-      hist[hist.length-1].amount = newAmount; hist[hist.length-1].frequency = newFreq;
+      /* Korrektur oder gleichwertiger Rhythmus-Wechsel: den aktuell gültigen Eintrag mitziehen */
+      sortPriceHist(hist);
+      const ei = priceEffIndex(hist, today);
+      if (ei>=0){ hist[ei].amount = newAmount; hist[ei].frequency = newFreq; }
     }
-    hist.sort(function(a,b){ return (a.date||"").localeCompare(b.date||""); });
+    sortPriceHist(hist);
   }
+  if (hist.length){ sortPriceHist(hist); }
+  const priceRef = hist.length>=2 && hist[priceEffIndex(hist, today)] ? hist[priceEffIndex(hist, today)].id : "";
 
   const payerId = val("#f-payer") || "";
   const bankAccountId = val("#f-bankaccount") || "";
@@ -4298,9 +4476,10 @@ function saveContract(overlay, source, isNew, priceMeta){
     payerShares: newShares,
     settlements: settlements,
     payerHistory: payerHistory,
-    amount: newAmount,
-    frequency: newFreq,
+    amount: finalAmount,
+    frequency: finalFreq,
     priceHistory: hist,
+    priceRef: priceRef,
     startDate: val("#f-start"),
     endDate: val("#f-end"),
     paymentDate: val("#f-paymentdate"),
